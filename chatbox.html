@@ -1,0 +1,22 @@
+<style>
+    /* Full-width textarea */
+    textarea {
+        width: 100%;
+        padding: 15px;
+        margin: 5px 0 22px 0;
+        border: none;
+        background: #f1f1f1;
+        resize: none;
+        min-height: 200px;
+    }
+
+    /* When the textarea gets focus, do something */
+    textarea:focus {
+        background-color: #ddd;
+        outline: none;
+    }
+</style>
+<div class="chat-popup" id="chat-box">
+    <textarea id="chat-entry" placeholder="Type message.." name="msg" maxlength="100" required></textarea>
+    <div id="char-count"></div>
+</div> 
