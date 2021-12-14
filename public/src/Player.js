@@ -22,6 +22,7 @@ export class Player extends Phaser.Physics.Matter.Sprite {
         this.setFrictionAir(0.2);
         this.keysPressed = [0, 0, 0, 0];
         this.setFixedRotation();
+        this.setMass(1);
 
         this.anims.create({
             key: 'down', 
@@ -131,7 +132,6 @@ export class Player extends Phaser.Physics.Matter.Sprite {
         } else {
             this.anims.pause();
         }
-        console.log(this.body.velocity.x);
     }
 
     updateFromData(playerData) {

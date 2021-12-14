@@ -207,7 +207,6 @@ export class DigitalPlanet extends Phaser.Scene {
         let player = new Player(this, x, y, this.looks[this.lookIndex], username);
         this.events.emit('playerLoaded', {texture: player.texture.key});
         this.players.set(this.serverClient.connection ? this.serverClient.connection.id : 1, player);
-        // console.log("players ", this.players)
         return player;
     }
     
@@ -240,7 +239,6 @@ export class DigitalPlanet extends Phaser.Scene {
         state.forEach((playerData) => {
             var playerToUpdate = this.players.get(playerData.socketId);
             // if(playerData.id !== this.player.playerId) {
-                // console.log(playerData, playerToUpdate);
                 if (!playerToUpdate && playerData.socketId !== this.player.playerId) {
                     this.players.set(playerData.socketId, this.generatePlayer(playerData.x, playerData.y, playerData.username));
                 } else if (playerToUpdate) {
@@ -312,18 +310,21 @@ export class DigitalPlanet extends Phaser.Scene {
     }
 
     updatePlayerFromInput(player) {
-        console.log(player.keysPressed, player.body.velocity);
         if (player.keysPressed[Key.a] === 1) {
-            this.player.setVelocity(-OL.WALKING_SPEED, this.player.body.velocity.y);
+            //this.player.setVelocity(-OL.WALKING_SPEED, this.player.body.velocity.y);
+            this.player.applyForce({x: -OL.WALKING_FORCE, y: 0});
         }
         if (player.keysPressed[Key.d] === 1) {
-            this.player.setVelocity(OL.WALKING_SPEED, this.player.body.velocity.y);
+            //this.player.setVelocity(OL.WALKING_SPEED, this.player.body.velocity.y);
+            this.player.applyForce({x: OL.WALKING_FORCE, y: 0});
         }
         if (player.keysPressed[Key.w] === 1) {
-            this.player.setVelocity(this.player.body.velocity.x, -OL.WALKING_SPEED);
+            //this.player.setVelocity(this.player.body.velocity.x, -OL.WALKING_SPEED);
+            this.player.applyForce({x: 0, y: -OL.WALKING_FORCE});
         }
         if (player.keysPressed[Key.s] === 1) {
-            this.player.setVelocity(this.player.body.velocity.x, OL.WALKING_SPEED);
+            //this.player.setVelocity(this.player.body.velocity.x, OL.WALKING_SPEED);
+            this.player.applyForce({x: 0, y: OL.WALKING_FORCE});
         }
     }
 

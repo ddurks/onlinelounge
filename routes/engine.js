@@ -1,6 +1,7 @@
 var Matter = require('matter-js');
 const ENGINE_RATE = 1000/60;
 const WALKING_SPEED = 2.5;
+const WALKING_FORCE = 0.002;
 
 const Key = {
     'w':0,
@@ -47,6 +48,7 @@ class GameEngine {
             this.players.set(player.id, this.Bodies.rectangle(player.x, player.y, player.width, player.height, {width:player.width, height:player.height, username:player.username, socketId:player.id}));
             let newPlayer = this.players.get(player.id);
             newPlayer.frictionAir = (0.2);
+            this.Body.setMass(newPlayer, 1);
             this.Composite.add(this.engine.world, newPlayer);
         }
     }
@@ -54,16 +56,21 @@ class GameEngine {
     handleInputState(player) {
         if (player.currentInputs) {
             if (player.currentInputs[Key.a] === 1) {
-                this.Body.setVelocity( player, {x: -WALKING_SPEED, y: player.velocity.y});
+                //this.Body.setVelocity( player, {x: -WALKING_SPEED, y: player.velocity.y});
+                this.Body.applyForce(player, { x: player.position.x, y: player.position.y }, {x: -WALKING_FORCE, y: 0});
             }
             if (player.currentInputs[Key.d] === 1) {
-                this.Body.setVelocity( player, {x: WALKING_SPEED, y: player.velocity.y});
+                //this.Body.setVelocity( player, {x: WALKING_SPEED, y: player.velocity.y});
+                this.Body.applyForce(player, { x: player.position.x, y: player.position.y }, {x: WALKING_FORCE, y: 0});
             }
             if (player.currentInputs[Key.w] === 1) {
-                this.Body.setVelocity( player, {x: player.velocity.x, y: -WALKING_SPEED});
+                //this.Body.setVelocity( player, {x: player.velocity.x, y: -WALKING_SPEED});
+                this.Body.applyForce(player, { x: player.position.x, y: player.position.y }, {x: 0, y: -WALKING_FORCE});
             }
             if (player.currentInputs[Key.s] === 1) {
-                this.Body.setVelocity( player, {x: player.velocity.x, y: WALKING_SPEED});
+                //this.Body.setVelocity( player, {x: player.velocity.x, y: WALKING_SPEED});
+                this.Body.applyForce(player, { x: player.position.x, y: player.position.y }, {x: 0, y: WALKING_FORCE});
+            
             }
         }
     }
