@@ -1,5 +1,5 @@
 var Matter = require('matter-js');
-const TICK_RATE = 1000/60;
+const ENGINE_RATE = 1000/60;
 const WALKING_SPEED = 2.5;
 
 const Key = {
@@ -26,7 +26,7 @@ class GameEngine {
     
         this.Composite.add(this.engine.world, [this.boxA, this.ground]);
         this.curr_timestamp = Date.now();
-        this.prev_timestamp, this.deltat = TICK_RATE, this.lastDeltat;
+        this.prev_timestamp, this.deltat = ENGINE_RATE, this.lastDeltat;
     }
 
     update() {
@@ -54,16 +54,16 @@ class GameEngine {
     handleInputState(player) {
         if (player.currentInputs) {
             if (player.currentInputs[Key.a] === 1) {
-                this.Body.setVelocity( player, {x: -WALKING_SPEED, y: 0});
+                this.Body.setVelocity( player, {x: -WALKING_SPEED, y: player.velocity.y});
             }
             if (player.currentInputs[Key.d] === 1) {
-                this.Body.setVelocity( player, {x: WALKING_SPEED, y: 0});
+                this.Body.setVelocity( player, {x: WALKING_SPEED, y: player.velocity.y});
             }
             if (player.currentInputs[Key.w] === 1) {
-                this.Body.setVelocity( player, {x: 0, y: -WALKING_SPEED});
+                this.Body.setVelocity( player, {x: player.velocity.x, y: -WALKING_SPEED});
             }
             if (player.currentInputs[Key.s] === 1) {
-                this.Body.setVelocity( player, {x: 0, y: WALKING_SPEED});
+                this.Body.setVelocity( player, {x: player.velocity.x, y: WALKING_SPEED});
             }
         }
     }

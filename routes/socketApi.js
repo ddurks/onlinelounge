@@ -5,7 +5,7 @@ var socketApi = {};
 
 socketApi.io = io;
 
-const UPDATE_RATE = 1000/60, TICK_RATE = 1000/60;
+const TICK_RATE = 1000/10, ENGINE_RATE = 1000/60;
 const CAPACITY = 10;
 let engine = new GameEngine();
 
@@ -51,11 +51,11 @@ setInterval(() => {
     //console.log(engine.getPlayers());
     io.sockets.emit('state', engine.getPlayers());
   }
-}, UPDATE_RATE);
+}, TICK_RATE);
 
 
 setInterval(() => {
     engine.update();
-}, TICK_RATE);
+}, ENGINE_RATE);
 
 module.exports = socketApi;

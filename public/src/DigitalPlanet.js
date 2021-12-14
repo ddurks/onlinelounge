@@ -4,6 +4,8 @@ import { Player, Key } from './Player';
 import { Butterfly, OnlineBouncer } from './Guys';
 import { Coin, Heart } from './Items';
 
+const INPUT_UPDATE_RATE = 1000/30;
+
 export class DigitalPlanet extends Phaser.Scene {
     constructor() {
         super('DigitalPlanet');
@@ -14,9 +16,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.looks = new Array();
         this.lookIndex = 0;
         this.MAX_BUTTERFLIES = 0;
-        this.subscribed = false;
         this.serverClient = new GamServerClient();
-        this.keyWasJustPressed = false;
     }
 
     init(data) {
@@ -35,7 +35,6 @@ export class DigitalPlanet extends Phaser.Scene {
 
     create() { 
         this.looks = ['computer_guy', 'phone_guy', 'cute_guy'];
-        //map
         this.map = this.make.tilemap({ key: this.startData.mapKey });
         this.groundTileset = this.map.addTilesetImage(this.startData.groundTileset.name, this.startData.groundTileset.ref);
         this.objectTileset = this.map.addTilesetImage(this.startData.objectTileset.name, this.startData.objectTileset.ref);
@@ -119,11 +118,8 @@ export class DigitalPlanet extends Phaser.Scene {
         this.serverClient.socket.on('state', (state) => this.updateGameState(state))
 
         setInterval(() => {
-            if (this.player.keysPressed[Key.w] || this.player.keysPressed[Key.a] || this.player.keysPressed[Key.s] || this.player.keysPressed[Key.d] || this.keyWasJustPressed) {
-                this.keyWasJustPressed = false;
                 this.serverClient.socket.emit('player input', this.player.keysPressed);
-            }
-        }, 1000/10);
+        }, INPUT_UPDATE_RATE);
     }
 
     changeLook() {
@@ -209,7 +205,6 @@ export class DigitalPlanet extends Phaser.Scene {
 
     generatePlayer(x, y, username) {
         let player = new Player(this, x, y, this.looks[this.lookIndex], username);
-        player.setFixedRotation(0);
         this.events.emit('playerLoaded', {texture: player.texture.key});
         this.players.set(this.serverClient.connection ? this.serverClient.connection.id : 1, player);
         // console.log("players ", this.players)
@@ -287,34 +282,29 @@ export class DigitalPlanet extends Phaser.Scene {
         if (this.controls.left.isDown) {
             this.player.keysPressed[Key.a] = 1;
             this.player.anims.play('left', true);
-            this.keyWasJustPressed = true;
         } else {
             this.player.keysPressed[Key.a] = 0;
         }
         if (this.controls.right.isDown) {
             this.player.keysPressed[Key.d] = 1;
             this.player.anims.play('right', true);
-            this.keyWasJustPressed = true;
         } else {
             this.player.keysPressed[Key.d] = 0;
         }
         if (this.controls.up.isDown) {
             this.player.keysPressed[Key.w] = 1;
             this.player.anims.play('up', true);
-            this.keyWasJustPressed = true;
         } else {
             this.player.keysPressed[Key.w] = 0;
         }
         if (this.controls.down.isDown) {
             this.player.keysPressed[Key.s] = 1;
             this.player.anims.play('down', true);
-            this.keyWasJustPressed = true;
         } else {
             this.player.keysPressed[Key.s] = 0;
         }
 
         this.updatePlayerFromInput(this.player);
-        console.log(this.player.body.velocity);
 
         if (!this.player.keysPressed[Key.w] && !this.player.keysPressed[Key.a] && !this.player.keysPressed[Key.s] && !this.player.keysPressed[Key.d]) {
             this.player.anims.pause();
@@ -322,6 +312,7 @@ export class DigitalPlanet extends Phaser.Scene {
     }
 
     updatePlayerFromInput(player) {
+        console.log(player.keysPressed, player.body.velocity);
         if (player.keysPressed[Key.a] === 1) {
             this.player.setVelocity(-OL.WALKING_SPEED, this.player.body.velocity.y);
         }

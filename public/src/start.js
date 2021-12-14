@@ -25,7 +25,7 @@ var gameConfig = {
     physics: {
 		default: 'matter',
 		matter: {
-			enableSleeping: true,
+			enableSleeping: false,
 			gravity: {
 				y: 0
 			},

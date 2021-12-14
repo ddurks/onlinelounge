@@ -21,7 +21,7 @@ export class Player extends Phaser.Physics.Matter.Sprite {
         });
         this.setFrictionAir(0.2);
         this.keysPressed = [0, 0, 0, 0];
-        this.setIgnoreGravity(true);
+        this.setFixedRotation();
 
         this.anims.create({
             key: 'down', 
