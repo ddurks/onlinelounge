@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+	<head>
+        <meta charset="utf-8">
+        <title><3 online lounge :)</title>
+        <style>
+          body {
+            padding: 0;
+            background-color: black;
+          }
+          canvas {
+            display: none;
+            margin:0;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: blanchedalmond;
+            z-index: 0;
+          }
+          .standardButton {
+            z-index: 2147483647;
+            position: absolute;
+            background: #7C7C7C;
+            border-bottom: 6px inset rgba(0,0,0,.5);
+            border-left: 6px inset rgba(0,0,0,.5);
+            border-right: 6px inset rgba(255,255,255,.5);
+            border-top: 6px inset rgba(255,255,255,.5);
+            box-sizing: border-box;
+            color: white;
+            cursor: pointer;
+            display: block;
+            font-size: 1rem;
+            margin: auto;
+            padding: .5rem;
+            width: auto;
+          }
+          button.standardButton {
+            top: 75%;
+            left: 52%;
+          }
+          input.standardButton {
+            background: rgb(197, 197, 197);
+            color: black;
+            top: 75%;
+            left: 43%;
+          }
+          #player {
+            z-index: 1;
+            position: absolute;
+            display: none;
+          }
+          #lounge-login-div {
+            position: relative;
+          }
+          #chat-div {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+          }
+          #chat-button {
+            width: 100px;
+            height: 50px;
+          }
+          #sendit-button {
+            display: none;
+            width: 100px;
+            height: 50px;
+          }
+          #chat-area {
+            opacity: 0;
+            width: 200px;
+            height: 200px;
+          }
+        </style>
+	</head>
+	<body>
+    <div id="player"></div>
+    <div id='lounge-login-div'></div>
+    <div id='chat-div'>
+      <textarea id='chat-area', placeholder="Type message.." name="msg" required></textarea>
+      <button id='chat-button', class='standardButton'>chat</button>
+      <button id='sendit-button', class='standardButton'>send</button>
+    </div>
+    <script src="js-stomp/stomp.min.js"></script>
+    <script src="js-stomp/client.js"></script>
+    <script src="js-stomp/onlinelounge.js"></script>
+  </body>
+</html>

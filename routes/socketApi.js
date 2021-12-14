@@ -1,0 +1,49 @@
+var GameEngine = require('./engine');
+var socket_io = require('socket.io');
+var io = socket_io();
+var socketApi = {};
+
+socketApi.io = io;
+
+const UPDATE_RATE = 1000/10, TICK_RATE = 1000/60;
+const CAPACITY = 10;
+let engine = new GameEngine();
+
+io.on('connection', (socket) => {
+  if (engine.players.size > CAPACITY) {
+    console.log("lounge full. closing connection");
+    socket.emit('lounge full');
+    socket.disconnect(true);
+  } else {
+    console.log("new player connected");
+  }
+
+  socket.on('new player', (newPlayer) => {
+    newPlayer.id = socket.id;
+    engine.addPlayer(newPlayer);
+  });
+
+  socket.on('player input', (playerInput) => {
+    console.log("player input", playerInput);
+  });
+
+  socket.on('disconnect', () => {
+    engine.removePlayer(socket.id);
+    console.log("player left. players: " + engine.players.size);
+    io.sockets.emit('state', engine.getPlayers());
+  });
+});
+
+setInterval(() => {
+  if (engine.players.size > 0) {
+    //console.log(engine.getPlayers());
+    io.sockets.emit('state', engine.getPlayers());
+  }
+}, UPDATE_RATE);
+
+
+setInterval(() => {
+    engine.update();
+}, TICK_RATE);
+
+module.exports = socketApi;
