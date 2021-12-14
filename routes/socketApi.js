@@ -5,9 +5,18 @@ var socketApi = {};
 
 socketApi.io = io;
 
-const UPDATE_RATE = 1000/10, TICK_RATE = 1000/60;
+const UPDATE_RATE = 1000/60, TICK_RATE = 1000/60;
 const CAPACITY = 10;
 let engine = new GameEngine();
+
+const Key = {
+  'w':0,
+  'a':1,
+  's':2,
+  'd':3
+}
+
+const WALKING_FORCE = 0.002;
 
 io.on('connection', (socket) => {
   if (engine.players.size > CAPACITY) {
@@ -24,7 +33,10 @@ io.on('connection', (socket) => {
   });
 
   socket.on('player input', (playerInput) => {
-    console.log("player input", playerInput);
+    //console.log("player input", playerInput, Key);
+    if (engine.players.has(socket.id)) {
+      engine.updatePlayer(socket.id, playerInput);
+    }
   });
 
   socket.on('disconnect', () => {

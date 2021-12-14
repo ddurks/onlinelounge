@@ -12,9 +12,6 @@ export class Player extends Phaser.Physics.Matter.Sprite {
         super(scene.matter.world, x, y, texture);
 
         scene.add.existing(this);
-        let drag = 700;
-        //player.setDrag(drag);
-        //player.body.setAllowDrag(true);
         this.bodyWidth = 20;
         this.bodyHeight = 30;
         this.setBody({
@@ -60,7 +57,6 @@ export class Player extends Phaser.Physics.Matter.Sprite {
         this.alive = true;
 
         this.username = username;
-        this.speed = OL.WALKING_SPEED;
         this.size = 32;
         this.msg = "";
         this.msg_duration = 0;

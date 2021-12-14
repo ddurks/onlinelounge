@@ -35,7 +35,7 @@ export class Butterfly extends Phaser.Physics.Matter.Sprite {
             repeat: -1
         });
 
-        this.body.gravityScale.y = 100;
+        // this.body.gravityScale.y = 100;
         this.homeY = y;
         OL.getRandomInt(0, 1) === 1 ? this.anims.play('left') : this.anims.play('right');
         return this;

@@ -16,6 +16,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.MAX_BUTTERFLIES = 0;
         this.subscribed = false;
         this.serverClient = new GamServerClient();
+        this.keyWasJustPressed = false;
     }
 
     init(data) {
@@ -114,12 +115,12 @@ export class DigitalPlanet extends Phaser.Scene {
             console.log("connected: " + sessionID);
             this.generatePlayer(this.player.x, this.player.y, this.player.username);
         });
-        console.log(this.serverClient);
 
         this.serverClient.socket.on('state', (state) => this.updateGameState(state))
 
         setInterval(() => {
-            if (this.player.keysPressed[Key.w] || this.player.keysPressed[Key.a] || this.player.keysPressed[Key.s] || this.player.keysPressed[Key.d]) {
+            if (this.player.keysPressed[Key.w] || this.player.keysPressed[Key.a] || this.player.keysPressed[Key.s] || this.player.keysPressed[Key.d] || this.keyWasJustPressed) {
+                this.keyWasJustPressed = false;
                 this.serverClient.socket.emit('player input', this.player.keysPressed);
             }
         }, 1000/10);
@@ -211,7 +212,7 @@ export class DigitalPlanet extends Phaser.Scene {
         player.setFixedRotation(0);
         this.events.emit('playerLoaded', {texture: player.texture.key});
         this.players.set(this.serverClient.connection ? this.serverClient.connection.id : 1, player);
-        console.log("players ", this.players)
+        // console.log("players ", this.players)
         return player;
     }
     
@@ -244,7 +245,7 @@ export class DigitalPlanet extends Phaser.Scene {
         state.forEach((playerData) => {
             var playerToUpdate = this.players.get(playerData.socketId);
             // if(playerData.id !== this.player.playerId) {
-                console.log(playerData, playerToUpdate);
+                // console.log(playerData, playerToUpdate);
                 if (!playerToUpdate && playerData.socketId !== this.player.playerId) {
                     this.players.set(playerData.socketId, this.generatePlayer(playerData.x, playerData.y, playerData.username));
                 } else if (playerToUpdate) {
@@ -284,37 +285,54 @@ export class DigitalPlanet extends Phaser.Scene {
 
     playerMovementHandler() {
         if (this.controls.left.isDown) {
-            this.player.applyForce({x: -OL.WALKING_FORCE, y: 0});
             this.player.keysPressed[Key.a] = 1;
             this.player.anims.play('left', true);
+            this.keyWasJustPressed = true;
         } else {
             this.player.keysPressed[Key.a] = 0;
         }
         if (this.controls.right.isDown) {
-            console.log("right");
-            this.player.applyForce({x: OL.WALKING_FORCE, y: 0});
             this.player.keysPressed[Key.d] = 1;
             this.player.anims.play('right', true);
+            this.keyWasJustPressed = true;
         } else {
             this.player.keysPressed[Key.d] = 0;
         }
         if (this.controls.up.isDown) {
-            this.player.applyForce({x: 0, y: -OL.WALKING_FORCE});
             this.player.keysPressed[Key.w] = 1;
             this.player.anims.play('up', true);
+            this.keyWasJustPressed = true;
         } else {
             this.player.keysPressed[Key.w] = 0;
         }
         if (this.controls.down.isDown) {
-            this.player.applyForce({x: 0, y: OL.WALKING_FORCE});
             this.player.keysPressed[Key.s] = 1;
             this.player.anims.play('down', true);
+            this.keyWasJustPressed = true;
         } else {
             this.player.keysPressed[Key.s] = 0;
         }
 
+        this.updatePlayerFromInput(this.player);
+        console.log(this.player.body.velocity);
+
         if (!this.player.keysPressed[Key.w] && !this.player.keysPressed[Key.a] && !this.player.keysPressed[Key.s] && !this.player.keysPressed[Key.d]) {
             this.player.anims.pause();
+        }
+    }
+
+    updatePlayerFromInput(player) {
+        if (player.keysPressed[Key.a] === 1) {
+            this.player.setVelocity(-OL.WALKING_SPEED, this.player.body.velocity.y);
+        }
+        if (player.keysPressed[Key.d] === 1) {
+            this.player.setVelocity(OL.WALKING_SPEED, this.player.body.velocity.y);
+        }
+        if (player.keysPressed[Key.w] === 1) {
+            this.player.setVelocity(this.player.body.velocity.x, -OL.WALKING_SPEED);
+        }
+        if (player.keysPressed[Key.s] === 1) {
+            this.player.setVelocity(this.player.body.velocity.x, OL.WALKING_SPEED);
         }
     }
 

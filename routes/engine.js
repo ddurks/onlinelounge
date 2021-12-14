@@ -1,5 +1,13 @@
 var Matter = require('matter-js');
 const TICK_RATE = 1000/60;
+const WALKING_SPEED = 2.5;
+
+const Key = {
+    'w':0,
+    'a':1,
+    's':2,
+    'd':3
+  }
 
 class GameEngine {
     constructor() {
@@ -7,9 +15,10 @@ class GameEngine {
         this.Runner = Matter.Runner;
         this.Bodies = Matter.Bodies;
         this.Composite = Matter.Composite;
+        this.Body = Matter.Body;
 
         this.engine = this.Engine.create();
-        // this.engine.gravity.y = 0;
+        this.engine.gravity.y = 0;
     
         this.boxA = this.Bodies.rectangle(400, 200, 80, 80);
         this.ground = this.Bodies.rectangle(400, 380, 810, 60, { isStatic: true });
@@ -27,13 +36,42 @@ class GameEngine {
         this.lastDeltat = this.deltat;
         this.deltat = this.curr_timestamp - this.prev_timestamp;
     
+        Array.from(this.players.values()).forEach((player) => {
+            this.handleInputState(player);
+        });
         this.Engine.update(this.engine, this.deltat, this.deltat/this.lastDeltat);
     }
 
     addPlayer(player) {
         if (!this.players.has(player.id)) {
             this.players.set(player.id, this.Bodies.rectangle(player.x, player.y, player.width, player.height, {width:player.width, height:player.height, username:player.username, socketId:player.id}));
-            this.Composite.add(this.engine.world, this.players.get(player.id));
+            let newPlayer = this.players.get(player.id);
+            newPlayer.frictionAir = (0.2);
+            this.Composite.add(this.engine.world, newPlayer);
+        }
+    }
+
+    handleInputState(player) {
+        if (player.currentInputs) {
+            if (player.currentInputs[Key.a] === 1) {
+                this.Body.setVelocity( player, {x: -WALKING_SPEED, y: 0});
+            }
+            if (player.currentInputs[Key.d] === 1) {
+                this.Body.setVelocity( player, {x: WALKING_SPEED, y: 0});
+            }
+            if (player.currentInputs[Key.w] === 1) {
+                this.Body.setVelocity( player, {x: 0, y: -WALKING_SPEED});
+            }
+            if (player.currentInputs[Key.s] === 1) {
+                this.Body.setVelocity( player, {x: 0, y: WALKING_SPEED});
+            }
+        }
+    }
+
+    updatePlayer(socketId, playerInput) {
+        if (this.players.has(socketId)) {
+            let playerToUpdate = this.players.get(socketId);
+            playerToUpdate.currentInputs = playerInput;
         }
     }
 
