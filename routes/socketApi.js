@@ -22,7 +22,7 @@ const WALKING_FORCE = 0.002;
 tmx.parseFile('./public/assets/tiles/onlinepluto-tilemap-new.tmx', (err, map) => {
   if (err) throw err;
   var tileMap = map;
-  console.log(map);
+  //console.log(map);
 })
 
 io.on('connection', (socket) => {

@@ -75,6 +75,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.matter.world.on('collisionstart', (event, bodyA, bodyB) => {
             if (bodyA.type === 'bouncer' || bodyB.type === 'bouncer') {
                 if (!this.player.inLounge) {
+                    console.log("bouncer collision");
                     this.player.inLounge = !this.player.inLounge;
                     this.enterLounge();
                 } else {
@@ -84,7 +85,6 @@ export class DigitalPlanet extends Phaser.Scene {
     
         });
 
-        // controls
         this.controls = {
             up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W, false),
             left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A, false),
@@ -111,6 +111,7 @@ export class DigitalPlanet extends Phaser.Scene {
 
         this.serverClient.connect(this.player, (sessionID) => {
             console.log("connected: " + sessionID);
+            this.sessionID = sessionID;
             this.players.set(sessionID, this.player);
         });
 
@@ -214,6 +215,7 @@ export class DigitalPlanet extends Phaser.Scene {
 
     generatePlayer(socketId, x, y, username) {
         let player = new Player(this, x, y, this.looks[this.lookIndex], username);
+        player.socketId = socketId;
         this.events.emit('playerLoaded', {texture: player.texture.key});
         if (socketId) {
             this.players.set(socketId, player);
@@ -302,8 +304,10 @@ export class DigitalPlanet extends Phaser.Scene {
             this.player.msgDecayHandler(delta);
             this.player.updatePlayerStuff();
             this.players.forEach( (player) => {
-                player.msgDecayHandler(delta);
-                player.updatePlayerStuff();
+                if (player.socketId && player.socketId !== this.sessionID) {
+                    player.msgDecayHandler(delta);
+                    player.updatePlayerStuff();
+                }
             })
         }
     }
