@@ -33,16 +33,4 @@ export class GamServerClient {
             onConnectCallback(sessionID);
         });
     }
-  
-    updatePlayer(input) {
-    }
-  
-    sendChat(message) {
-    }
-  
-    sendMessage(topic, message) {
-    }
-
-    sendMessageNoWait(topic, message) {
-    }
-  }
+}

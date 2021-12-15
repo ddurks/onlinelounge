@@ -23,13 +23,12 @@ io.on('connection', (socket) => {
     console.log("lounge full. closing connection");
     socket.emit('lounge full');
     socket.disconnect(true);
-  } else {
-    console.log("new player connected");
   }
 
   socket.on('new player', (newPlayer) => {
     newPlayer.id = socket.id;
     engine.addPlayer(newPlayer);
+    console.log("players connected: " + engine.players.size);
   });
 
   socket.on('player input', (playerInput) => {
@@ -41,18 +40,19 @@ io.on('connection', (socket) => {
 
   socket.on('player action', (actionArray) => {
     console.log("actions ", actionArray);
+    io.sockets.emit('player action', { socketId: socket.id, actions: actionArray });
   });
 
   socket.on('disconnect', () => {
     engine.removePlayer(socket.id);
     console.log("player left. players: " + engine.players.size);
+    io.sockets.emit('player left', socket.id);
     io.sockets.emit('state', engine.getPlayers());
   });
 });
 
 setInterval(() => {
   if (engine.players.size > 0) {
-    //console.log(engine.getPlayers());
     io.sockets.emit('state', engine.getPlayers());
   }
 }, TICK_RATE);

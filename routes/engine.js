@@ -93,10 +93,9 @@ class GameEngine {
             acc.push({
               x: curr.position.x,
               y: curr.position.y,
-              width: curr.width,
-              height: curr.height,
               username: curr.username,
-              socketId: curr.socketId
+              socketId: curr.socketId,
+              currentInputs: curr.currentInputs
             });
             return acc;
           }, new Array())

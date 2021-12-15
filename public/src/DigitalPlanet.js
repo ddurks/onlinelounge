@@ -112,10 +112,16 @@ export class DigitalPlanet extends Phaser.Scene {
         this.serverClient.connect(this.player, (sessionID) => {
             console.log("connected: " + sessionID);
             this.players.set(sessionID, this.player);
-            // this.generatePlayer(this.player.x, this.player.y, this.player.username);
         });
 
         this.serverClient.socket.on('state', (state) => this.updateGameState(state));
+        this.serverClient.socket.on('player action', (playerAction) => this.updatePlayerAction(playerAction));
+        this.serverClient.socket.on('player left', (socketId) => {
+            let playerWhoLeft = this.players.get(socketId);
+            playerWhoLeft.destroyStuff();
+            playerWhoLeft.destroy();
+            this.players.delete(socketId);
+        });
 
         setInterval(() => {
                 this.serverClient.socket.emit('player input', this.player.keysPressed);
@@ -178,7 +184,7 @@ export class DigitalPlanet extends Phaser.Scene {
     sendChat() {
         let message = document.getElementById("chat-entry").value;
         this.player.setMsg(message);
-        this.serverClient.socket.emit('player action', { message: message, typing: false });
+        this.serverClient.socket.emit('player action', { message: message ? message : "NULL", typing: false });
         this.input.keyboard.enabled = true;
     }
 
@@ -240,16 +246,48 @@ export class DigitalPlanet extends Phaser.Scene {
         }
     }
 
+
+    updatePlayerAction(playerAction) {
+        let playerToUpdate = this.players.get(playerAction.socketId);
+        if (playerToUpdate) {
+            if (playerAction.actions.message) {
+                if (playerAction.actions.message === "NULL") {
+                    playerToUpdate.setMsg("");
+                } else {
+                    playerToUpdate.setMsg(playerAction.actions.message);
+                }
+            }
+            if (playerAction.actions.typing) {
+                playerToUpdate.startTyping();
+            }
+        }
+    }
+
     updateGameState(state) {
         state.forEach((playerData) => {
             var playerToUpdate = this.players.get(playerData.socketId);
-            // if(playerData.socketId !== this.serverClient.connection.id) {
-                if (!playerToUpdate) {
-                    this.generatePlayer(playerData.socketId, playerData.x, playerData.y, playerData.username);
-                } else if (playerToUpdate) {
-                    playerToUpdate.setPosition(playerData.x, playerData.y);
+            if (!playerToUpdate) {
+                this.generatePlayer(playerData.socketId, playerData.x, playerData.y, playerData.username);
+            } else if (playerToUpdate) {
+                playerToUpdate.setPosition(playerData.x, playerData.y);
+                if (playerData.currentInputs) {
+                    if (playerData.currentInputs[Key.a] === 1) {
+                        playerToUpdate.anims.play('left', true);
+                    }
+                    if (playerData.currentInputs[Key.d] === 1) {
+                        playerToUpdate.anims.play('right', true);
+                    }
+                    if (playerData.currentInputs[Key.w] === 1) {
+                        playerToUpdate.anims.play('up', true);
+                    }
+                    if (playerData.currentInputs[Key.s] === 1) {
+                        playerToUpdate.anims.play('down', true);
+                    }
+                    if (!playerData.currentInputs[Key.w] && !playerData.currentInputs[Key.a] && !playerData.currentInputs[Key.s] && !playerData.currentInputs[Key.d]) {
+                        playerToUpdate.anims.pause();
+                    }
                 }
-            // }
+            }
         });
     }
 
@@ -263,6 +301,10 @@ export class DigitalPlanet extends Phaser.Scene {
             }
             this.player.msgDecayHandler(delta);
             this.player.updatePlayerStuff();
+            this.players.forEach( (player) => {
+                player.msgDecayHandler(delta);
+                player.updatePlayerStuff();
+            })
         }
     }
 
