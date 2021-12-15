@@ -57,6 +57,7 @@ export class Player extends Phaser.Physics.Matter.Sprite {
 
         this.alive = true;
 
+        this.fit = texture;
         this.username = username;
         this.size = 32;
         this.msg = "";

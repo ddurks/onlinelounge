@@ -27,7 +27,8 @@ export class GamServerClient {
                 y: player.y,
                 width: player.bodyWidth,
                 height: player.bodyHeight,
-                username: player.username
+                username: player.username,
+                fit: player.fit
             });
             onConnectCallback(sessionID);
         });

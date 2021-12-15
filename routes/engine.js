@@ -20,12 +20,9 @@ class GameEngine {
 
         this.engine = this.Engine.create();
         this.engine.gravity.y = 0;
-    
-        this.boxA = this.Bodies.rectangle(400, 200, 80, 80);
-        this.ground = this.Bodies.rectangle(400, 380, 810, 60, { isStatic: true });
+
         this.players = new Map();
     
-        this.Composite.add(this.engine.world, [this.boxA, this.ground]);
         this.curr_timestamp = Date.now();
         this.prev_timestamp, this.deltat = ENGINE_RATE, this.lastDeltat;
     }

@@ -171,11 +171,14 @@ export class DigitalPlanet extends Phaser.Scene {
 
     openChatBox() {
         this.player.startTyping();
+        this.serverClient.socket.emit('player action', { typing: this.player.typing });
         this.input.keyboard.enabled = false;
     }
 
     sendChat() {
-        this.player.setMsg(document.getElementById("chat-entry").value);
+        let message = document.getElementById("chat-entry").value;
+        this.player.setMsg(message);
+        this.serverClient.socket.emit('player action', { message: message, typing: false });
         this.input.keyboard.enabled = true;
     }
 
@@ -240,8 +243,8 @@ export class DigitalPlanet extends Phaser.Scene {
     updateGameState(state) {
         state.forEach((playerData) => {
             var playerToUpdate = this.players.get(playerData.socketId);
-            // if(playerData.id !== this.player.playerId) {
-                if (!playerToUpdate && playerData.socketId !== this.player.playerId) {
+            // if(playerData.socketId !== this.serverClient.connection.id) {
+                if (!playerToUpdate) {
                     this.generatePlayer(playerData.socketId, playerData.x, playerData.y, playerData.username);
                 } else if (playerToUpdate) {
                     playerToUpdate.setPosition(playerData.x, playerData.y);

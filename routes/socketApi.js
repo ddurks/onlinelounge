@@ -39,6 +39,10 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('player action', (actionArray) => {
+    console.log("actions ", actionArray);
+  });
+
   socket.on('disconnect', () => {
     engine.removePlayer(socket.id);
     console.log("player left. players: " + engine.players.size);
