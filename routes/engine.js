@@ -31,16 +31,18 @@ class GameEngine {
     }
 
     update() {
-        this.prev_timestamp = this.curr_timestamp;
-        this.curr_timestamp = Date.now();
+        if (this.players.size > 0) {
+            this.prev_timestamp = this.curr_timestamp;
+            this.curr_timestamp = Date.now();
+            
+            this.lastDeltat = this.deltat;
+            this.deltat = this.curr_timestamp - this.prev_timestamp;
         
-        this.lastDeltat = this.deltat;
-        this.deltat = this.curr_timestamp - this.prev_timestamp;
-    
-        Array.from(this.players.values()).forEach((player) => {
-            this.handleInputState(player);
-        });
-        this.Engine.update(this.engine, this.deltat, this.deltat/this.lastDeltat);
+            Array.from(this.players.values()).forEach((player) => {
+                this.handleInputState(player);
+            });
+            this.Engine.update(this.engine, this.deltat, this.deltat/this.lastDeltat);
+        }
     }
 
     addPlayer(player) {
@@ -70,7 +72,7 @@ class GameEngine {
             if (player.currentInputs[Key.s] === 1) {
                 //this.Body.setVelocity( player, {x: player.velocity.x, y: WALKING_SPEED});
                 this.Body.applyForce(player, { x: player.position.x, y: player.position.y }, {x: 0, y: WALKING_FORCE});
-            
+        
             }
         }
     }

@@ -45,12 +45,11 @@ export class DigitalPlanet extends Phaser.Scene {
 
         this.player, this.onlineBouncer;
         if (this.startData.spawn) {
-            this.player = this.generatePlayer(this.startData.spawn.x, this.startData.spawn.y, OL.username);
-            this.player.playerId = this.serverClient.playerId;
+            this.player = this.generatePlayer(null, this.startData.spawn.x, this.startData.spawn.y, OL.username);
         }
         this.map.findObject('player', (object) => {
             if (object.name === 'spawn' && !this.startData.spawn) {
-                this.player = this.generatePlayer(object.x, object.y, OL.username);
+                this.player = this.generatePlayer(null, object.x, object.y, OL.username);
             }
 
             if (object.name === 'bouncerSpawn') {
@@ -112,10 +111,11 @@ export class DigitalPlanet extends Phaser.Scene {
 
         this.serverClient.connect(this.player, (sessionID) => {
             console.log("connected: " + sessionID);
-            this.generatePlayer(this.player.x, this.player.y, this.player.username);
+            this.players.set(sessionID, this.player);
+            // this.generatePlayer(this.player.x, this.player.y, this.player.username);
         });
 
-        this.serverClient.socket.on('state', (state) => this.updateGameState(state))
+        this.serverClient.socket.on('state', (state) => this.updateGameState(state));
 
         setInterval(() => {
                 this.serverClient.socket.emit('player input', this.player.keysPressed);
@@ -134,7 +134,7 @@ export class DigitalPlanet extends Phaser.Scene {
         }
         this.player.destroyStuff();
         this.player.destroy();
-        this.player = this.generatePlayer(pos.x, pos.y, OL.username);
+        this.player = this.generatePlayer(this.serverClient.connection.id, pos.x, pos.y, OL.username);
         this.camera.startFollow(this.player, true);
         this.camera.setBounds(0, -48, this.map.widthInPixels, this.map.heightInPixels);
     }
@@ -203,10 +203,12 @@ export class DigitalPlanet extends Phaser.Scene {
         }
     }
 
-    generatePlayer(x, y, username) {
+    generatePlayer(socketId, x, y, username) {
         let player = new Player(this, x, y, this.looks[this.lookIndex], username);
         this.events.emit('playerLoaded', {texture: player.texture.key});
-        this.players.set(this.serverClient.connection ? this.serverClient.connection.id : 1, player);
+        if (socketId) {
+            this.players.set(socketId, player);
+        }
         return player;
     }
     
@@ -240,7 +242,7 @@ export class DigitalPlanet extends Phaser.Scene {
             var playerToUpdate = this.players.get(playerData.socketId);
             // if(playerData.id !== this.player.playerId) {
                 if (!playerToUpdate && playerData.socketId !== this.player.playerId) {
-                    this.players.set(playerData.socketId, this.generatePlayer(playerData.x, playerData.y, playerData.username));
+                    this.generatePlayer(playerData.socketId, playerData.x, playerData.y, playerData.username);
                 } else if (playerToUpdate) {
                     playerToUpdate.setPosition(playerData.x, playerData.y);
                 }
