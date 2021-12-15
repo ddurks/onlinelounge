@@ -379,31 +379,43 @@ export class DigitalPlanet extends Phaser.Scene {
         if (angle >= -22.5 && angle <= 22.5) { //right
             this.player.applyForce({x: OL.WALKING_FORCE, y: 0});
             this.player.anims.play('right', true);
+            this.player.keysPressed[Key.d] = 1;
         } else if (angle > 22.5 && angle <= 67.5) { //right-down
             this.player.applyForce({x: OL.WALKING_FORCE, y: 0});
             this.player.applyForce({x: 0, y: OL.WALKING_FORCE});
             this.player.anims.play('right', true);
+            this.player.keysPressed[Key.s] = 1;
+            this.player.keysPressed[Key.d] = 1;
         } else if (angle > 67.5 && angle <= 112.5) { //down
             this.player.applyForce({x: 0, y: OL.WALKING_FORCE});
             this.player.anims.play('down', true);
+            this.player.keysPressed[Key.s] = 1;
         } else if (angle > 112.5 && angle <= 157.5) { //left-down
             this.player.applyForce({x: -OL.WALKING_FORCE, y: 0});
             this.player.applyForce({x: 0, y: OL.WALKING_FORCE});
             this.player.anims.play('left', true);
+            this.player.keysPressed[Key.a] = 1;
+            this.player.keysPressed[Key.s] = 1;
         } else if ((angle > 157.5 && angle <= 180) || (angle >= -180 && angle < -157.5) ) { //left
             this.player.applyForce({x: -OL.WALKING_FORCE, y: 0});
             this.player.anims.play('left', true);
+            this.player.keysPressed[Key.a] = 1;
         } else if (angle >= -157.5 && angle < -112.5) { //left-up
             this.player.applyForce({x: -OL.WALKING_FORCE, y: 0});
             this.player.applyForce({x: 0, y: -OL.WALKING_FORCE});
             this.player.anims.play('left', true);
+            this.player.keysPressed[Key.a] = 1;
+            this.player.keysPressed[Key.w] = 1;
         } else if (angle >= -112.5 && angle < -67.5) { //up
             this.player.applyForce({x: 0, y: -OL.WALKING_FORCE});
             this.player.anims.play('up', true);
+            this.player.keysPressed[Key.w] = 1;
         } else if (angle >= -67.5 && angle < -22.5) { //right-up
             this.player.applyForce({x: OL.WALKING_FORCE, y: 0});
             this.player.applyForce({x: 0, y: -OL.WALKING_FORCE});
             this.player.anims.play('right', true);
+            this.player.keysPressed[Key.w] = 1;
+            this.player.keysPressed[Key.d] = 1;
         }
     }
 
@@ -420,6 +432,7 @@ export class DigitalPlanet extends Phaser.Scene {
             }
         } else {
             this.player.anims.pause();
+            this.player.keysPressed = [0, 0, 0, 0];
         }
     }
 }
