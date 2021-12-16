@@ -1,4 +1,5 @@
 var Matter = require('matter-js');
+var tmx = require('tmx-parser');
 const ENGINE_RATE = 1000/60;
 const WALKING_SPEED = 2.5;
 const WALKING_FORCE = 0.002;
@@ -8,7 +9,7 @@ const Key = {
     'a':1,
     's':2,
     'd':3
-  }
+}
 
 class GameEngine {
     constructor() {
@@ -25,6 +26,32 @@ class GameEngine {
     
         this.curr_timestamp = Date.now();
         this.prev_timestamp, this.deltat = ENGINE_RATE, this.lastDeltat;
+
+        tmx.parseFile('./public/assets/tiles/onlinepluto-tilemap-new.tmx', (err, map) => {
+            if (err) throw err;
+            var tileMap = map;
+            var currX = 0, currY = 0;
+            var row = 0, col = 0;
+            tileMap.layers.forEach((layer) => {
+                if (layer.name === 'world') {
+                    for (let i = 0; i < layer.tiles.length; i++) {
+                        currX = col*tileMap.tileWidth;
+                        currY = row*tileMap.tileHeight;
+                        if (layer.tiles[i] && layer.tiles[i] !== undefined) {
+                            if (layer.tiles[i].properties.collides) {
+                                this.addBlock(currX, currY, tileMap.tileWidth, tileMap.tileHeight);
+                            }
+                        }
+                        if (col < tileMap.width - 1) {
+                            col++;
+                        } else {
+                            col = 0;
+                            row++;
+                        }
+                    }
+                }
+            });
+        })
     }
 
     update() {
@@ -50,6 +77,12 @@ class GameEngine {
             this.Body.setMass(newPlayer, 1);
             this.Composite.add(this.engine.world, newPlayer);
         }
+    }
+
+    addBlock(x, y, width, height) {
+        let newBlock = this.Bodies.rectangle(x + width/2, y + height/2, width, height, {});
+        this.Body.setStatic(newBlock, true);
+        this.Composite.add(this.engine.world, newBlock);
     }
 
     handleInputState(player) {

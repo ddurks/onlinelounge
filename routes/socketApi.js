@@ -1,6 +1,5 @@
 var GameEngine = require('./engine');
 var socket_io = require('socket.io');
-var tmx = require('tmx-parser');
 var io = socket_io();
 var socketApi = {};
 
@@ -18,12 +17,6 @@ const Key = {
 }
 
 const WALKING_FORCE = 0.002;
-
-tmx.parseFile('./public/assets/tiles/onlinepluto-tilemap-new.tmx', (err, map) => {
-  if (err) throw err;
-  var tileMap = map;
-  //console.log(map);
-})
 
 io.on('connection', (socket) => {
   if (engine.players.size > CAPACITY) {
