@@ -54,18 +54,18 @@ export class DigitalPlanet extends Phaser.Scene {
 
             if (object.name === 'bouncerSpawn') {
                 this.onlineBouncer = new OnlineBouncer(this, object.x + 16, object.y - 24);
-                if (this.startData.mapKey === "map") {
-                    this.worldLayer.setTileLocationCallback(object.x / object.width, object.y / object.width - 1, 1, 1, this.enterLounge, this);
-                }
+                // if (this.startData.mapKey === "map") {
+                //     this.worldLayer.setTileLocationCallback(object.x / object.width, object.y / object.width - 1, 1, 1, this.enterLounge, this);
+                // }
             }
 
-            if (object.name === 'exit') {
-                this.worldLayer.setTileLocationCallback(object.x / object.width, object.y / object.width - 1, 1, 1, this.exit, this);
-            }
+            // if (object.name === 'exit') {
+            //     this.worldLayer.setTileLocationCallback(object.x / object.width, object.y / object.width - 1, 1, 1, this.exit, this);
+            // }
 
-            if (object.type === 'info') {
-                this.worldLayer.setTileLocationCallback(object.x / object.width, object.y / object.width - 1, 1, 1, () => this.events.emit('displayPopup', {text: object.name}), this);
-            }
+            // if (object.type === 'info') {
+            //     this.worldLayer.setTileLocationCallback(object.x / object.width, object.y / object.width - 1, 1, 1, () => this.events.emit('displayPopup', {text: object.name}), this);
+            // }
         });
 
         this.worldLayer.setCollisionByProperty({ collides: true });
@@ -75,7 +75,6 @@ export class DigitalPlanet extends Phaser.Scene {
         this.matter.world.on('collisionstart', (event, bodyA, bodyB) => {
             if (bodyA.type === 'bouncer' || bodyB.type === 'bouncer') {
                 if (!this.player.inLounge) {
-                    console.log("bouncer collision");
                     this.player.inLounge = !this.player.inLounge;
                     this.enterLounge();
                 } else {
@@ -384,42 +383,62 @@ export class DigitalPlanet extends Phaser.Scene {
             this.player.applyForce({x: OL.WALKING_FORCE, y: 0});
             this.player.anims.play('right', true);
             this.player.keysPressed[Key.d] = 1;
+            this.player.keysPressed[Key.a] = 0;
+            this.player.keysPressed[Key.w] = 0;
+            this.player.keysPressed[Key.s] = 0;
         } else if (angle > 22.5 && angle <= 67.5) { //right-down
             this.player.applyForce({x: OL.WALKING_FORCE, y: 0});
             this.player.applyForce({x: 0, y: OL.WALKING_FORCE});
             this.player.anims.play('right', true);
             this.player.keysPressed[Key.s] = 1;
             this.player.keysPressed[Key.d] = 1;
+            this.player.keysPressed[Key.w] = 0;
+            this.player.keysPressed[Key.a] = 0;
         } else if (angle > 67.5 && angle <= 112.5) { //down
             this.player.applyForce({x: 0, y: OL.WALKING_FORCE});
             this.player.anims.play('down', true);
             this.player.keysPressed[Key.s] = 1;
+            this.player.keysPressed[Key.a] = 0;
+            this.player.keysPressed[Key.w] = 0;
+            this.player.keysPressed[Key.d] = 0;
         } else if (angle > 112.5 && angle <= 157.5) { //left-down
             this.player.applyForce({x: -OL.WALKING_FORCE, y: 0});
             this.player.applyForce({x: 0, y: OL.WALKING_FORCE});
             this.player.anims.play('left', true);
             this.player.keysPressed[Key.a] = 1;
             this.player.keysPressed[Key.s] = 1;
+            this.player.keysPressed[Key.w] = 0;
+            this.player.keysPressed[Key.d] = 0;
         } else if ((angle > 157.5 && angle <= 180) || (angle >= -180 && angle < -157.5) ) { //left
             this.player.applyForce({x: -OL.WALKING_FORCE, y: 0});
             this.player.anims.play('left', true);
             this.player.keysPressed[Key.a] = 1;
+            this.player.keysPressed[Key.w] = 0;
+            this.player.keysPressed[Key.s] = 0;
+            this.player.keysPressed[Key.d] = 0;
         } else if (angle >= -157.5 && angle < -112.5) { //left-up
             this.player.applyForce({x: -OL.WALKING_FORCE, y: 0});
             this.player.applyForce({x: 0, y: -OL.WALKING_FORCE});
             this.player.anims.play('left', true);
             this.player.keysPressed[Key.a] = 1;
             this.player.keysPressed[Key.w] = 1;
+            this.player.keysPressed[Key.s] = 0;
+            this.player.keysPressed[Key.d] = 0;
         } else if (angle >= -112.5 && angle < -67.5) { //up
             this.player.applyForce({x: 0, y: -OL.WALKING_FORCE});
             this.player.anims.play('up', true);
             this.player.keysPressed[Key.w] = 1;
+            this.player.keysPressed[Key.a] = 0;
+            this.player.keysPressed[Key.s] = 0;
+            this.player.keysPressed[Key.d] = 0;
         } else if (angle >= -67.5 && angle < -22.5) { //right-up
             this.player.applyForce({x: OL.WALKING_FORCE, y: 0});
             this.player.applyForce({x: 0, y: -OL.WALKING_FORCE});
             this.player.anims.play('right', true);
             this.player.keysPressed[Key.w] = 1;
             this.player.keysPressed[Key.d] = 1;
+            this.player.keysPressed[Key.a] = 0;
+            this.player.keysPressed[Key.s] = 0;
         }
     }
 

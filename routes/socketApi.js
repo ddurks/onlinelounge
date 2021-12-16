@@ -32,7 +32,6 @@ io.on('connection', (socket) => {
   });
 
   socket.on('player input', (playerInput) => {
-    //console.log("player input", playerInput, Key);
     if (engine.players.has(socket.id)) {
       engine.updatePlayer(socket.id, playerInput);
     }
