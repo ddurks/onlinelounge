@@ -3,13 +3,13 @@ import { OL } from './utils';
 export class PopUp extends Phaser.GameObjects.Group {
     constructor(scene) {
         super(scene);
-        this.popup = scene.add.image(64, 74, 'popup');
-        this.popup.setOrigin(0, 0);
+        this.popup = scene.add.image(OL.world.width/2, OL.world.height/2, 'popup');
+        this.popup.setOrigin(0.5, 0.5);
         this.popup.setDepth(11);
         this.popup.setVisible(false);
         this.popup.setScrollFactor(0);
 
-        this.x = scene.add.image(416, 74, 'x').setInteractive();
+        this.x = scene.add.image(this.popup.x + 160, this.popup.y - 190, 'x').setInteractive();
         this.x.on('pointerdown', () => {
             this.close();
         })
@@ -18,13 +18,13 @@ export class PopUp extends Phaser.GameObjects.Group {
         this.x.setVisible(false);
         this.x.setScrollFactor(0);
 
-        this.title = scene.add.text(256, 74, "lounge", { fontFamily: 'gaming2',color:  '#000000' ,fontSize: '16px'} );
+        this.title = scene.add.text(this.popup.x, this.popup.y - 190, "lounge", { fontFamily: 'gaming2',color:  '#000000' ,fontSize: '16px'} );
         this.title.setOrigin(0.5, 0);
         this.title.setDepth(12);
         this.title.setVisible(false);
         this.title.setScrollFactor(0);
 
-        this.textBody = scene.add.text(90, 138, "", {
+        this.textBody = scene.add.text(this.popup.x, this.popup.y, "", {
             fontFamily: 'gaming1',
             fontSize: '32px',
             color:  '#000000',
@@ -34,18 +34,18 @@ export class PopUp extends Phaser.GameObjects.Group {
             },
             align: 'center'
         });
-        this.textBody.setOrigin(0, 0);
+        this.textBody.setOrigin(0.5, 0.5);
         this.textBody.setDepth(12);
         this.textBody.setVisible(false);
         this.textBody.setScrollFactor(0);
 
-        this.button = scene.add.image(280, 330, 'greenButton').setInteractive();
+        this.button = scene.add.image(this.popup.x - 10, this.popup.y + 100, 'greenButton').setInteractive();
         this.button.on('pointerdown', () => this.changeLook(scene));
-        this.button.setOrigin(0, 0);
+        this.button.setOrigin(0.5, 0.5);
         this.button.setDepth(11);
         this.button.setVisible(false);
         this.button.setScrollFactor(0);
-        this.buttonText = scene.add.text(300, 350, "", {
+        this.buttonText = scene.add.text(this.popup.x - 10, this.popup.y + 100, "", {
             fontFamily: 'Arial',
             fontSize: '16px',
             color:  '#000000',
@@ -55,7 +55,7 @@ export class PopUp extends Phaser.GameObjects.Group {
             },
             align: 'center'
         });
-        this.buttonText.setOrigin(0, 0);
+        this.buttonText.setOrigin(0.5, 0.5);
         this.buttonText.setDepth(13);
         this.buttonText.setVisible(false);
         this.buttonText.setScrollFactor(0);
@@ -117,7 +117,7 @@ export class PopUp extends Phaser.GameObjects.Group {
     }
 
     setSprite(scene, texture) {
-        this.sprite = scene.add.sprite(246, 256, texture);
+        this.sprite = scene.add.sprite(this.popup.x - 10, this.popup.y - 64, texture).setOrigin(0.5, 0.5);
 
         this.sprite.anims.create({
             key: 'down', 
