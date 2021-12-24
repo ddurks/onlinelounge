@@ -28,7 +28,8 @@ export class GamServerClient {
                 width: player.bodyWidth,
                 height: player.bodyHeight,
                 username: player.username,
-                fit: player.fit
+                fit: player.fit,
+                currentArea: player.currentArea
             });
             onConnectCallback(sessionID);
         });

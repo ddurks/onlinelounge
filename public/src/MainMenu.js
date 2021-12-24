@@ -1,4 +1,5 @@
 import { OL } from './utils';
+import { GamServerClient } from './GameServerClient';
 
 export class MainMenu extends Phaser.Scene {
     constructor() {
@@ -51,23 +52,37 @@ export class MainMenu extends Phaser.Scene {
     }
 
     clickStart() {
-        this.text.setText('Welcome ' + OL.username);
-        this.scene.start('Controls');
-        this.scene.start('DigitalPlanet', {
-            spawn: {
-                x: 50,
-                y: 50
-            },
-            butterflies: 3,
-            mapKey: "map",
-            groundTileset: {
-                name: "online-pluto-tileset-extruded",
-                ref: "groundTiles"
-            },
-            objectTileset: {
-                name: "online-tileset-extruded",
-                ref: "objectTiles"
-            }
+        this.serverClient = new GamServerClient();
+        let playerData = {
+            x: 50,
+            y: 50,
+            width: 20,
+            height: 30,
+            username: OL.username,
+            currentArea: 0,
+        }
+        this.serverClient.connect(playerData, (sessionID) => {
+            console.log("connected: " + sessionID);
+            this.serverClient.sessionID = sessionID;
+            this.text.setText('Welcome ' + OL.username);
+            this.scene.start('Controls');
+            this.scene.start('DigitalPlanet', {
+                spawn: {
+                    x: 50,
+                    y: 50
+                },
+                butterflies: 3,
+                mapKey: "map",
+                groundTileset: {
+                    name: "online-pluto-tileset-extruded",
+                    ref: "groundTiles"
+                },
+                objectTileset: {
+                    name: "online-tileset-extruded",
+                    ref: "objectTiles"
+                },
+                serverClient: this.serverClient
+            });
         });
     }
 }

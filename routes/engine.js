@@ -11,6 +11,11 @@ const Key = {
     'd':3
 }
 
+const AREAS = {
+    'digitalplanet':0,
+    'lounge':1
+}
+
 class GameEngine {
     constructor() {
         this.Engine = Matter.Engine;
@@ -21,6 +26,9 @@ class GameEngine {
 
         this.engine = this.Engine.create();
         this.engine.gravity.y = 0;
+
+        // this.loungeEngine = this.Engine.create();
+        // this.loungeEngine.gravity.y = 0;
 
         this.players = new Map();
     
@@ -66,12 +74,13 @@ class GameEngine {
                 this.handleInputState(player);
             });
             this.Engine.update(this.engine, this.deltat, this.deltat/this.lastDeltat);
+            //this.Engine.update(this.loungeEngine, this.deltat, this.deltat/this.lastDeltat);
         }
     }
 
     addPlayer(player) {
         if (!this.players.has(player.id)) {
-            this.players.set(player.id, this.Bodies.rectangle(player.x, player.y, player.width, player.height, {width:player.width, height:player.height, username:player.username, socketId:player.id}));
+            this.players.set(player.id, this.Bodies.rectangle(player.x, player.y, player.width, player.height, {width:player.width, height:player.height, username:player.username, socketId:player.id, currentArea:player.currentArea}));
             let newPlayer = this.players.get(player.id);
             newPlayer.frictionAir = (0.2);
             this.Body.setMass(newPlayer, 1);
@@ -102,9 +111,23 @@ class GameEngine {
             if (player.currentInputs[Key.s] === 1) {
                 //this.Body.setVelocity( player, {x: player.velocity.x, y: WALKING_SPEED});
                 this.Body.applyForce(player, { x: player.position.x, y: player.position.y }, {x: 0, y: WALKING_FORCE});
-        
             }
         }
+    }
+
+    enterLounge(socketId) {
+        let playerToMove = this.players.get(socketId);
+        console.log(playerToMove);
+        playerToMove.currentArea = AREAS.lounge;
+        this.Composite.remove(this.engine.world, playerToMove);
+        this.Composite.add(this.loungeEngine.world, playerToMove);
+    }
+
+    exitLounge(socketId) {
+        let playerToMove = this.players.get(socketId);
+        playerToMove.currentArea = AREAS.digitalplanet;
+        this.Composite.remove(this.loungeEngine.world, playerToMove);
+        this.Composite.add(this.engine.world, playerToMove);
     }
 
     updatePlayer(socketId, playerInput) {
@@ -128,7 +151,8 @@ class GameEngine {
               y: curr.position.y,
               username: curr.username,
               socketId: curr.socketId,
-              currentInputs: curr.currentInputs
+              currentInputs: curr.currentInputs,
+              currentArea: curr.currentArea
             });
             return acc;
           }, new Array())
