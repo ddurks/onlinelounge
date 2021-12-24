@@ -15,8 +15,8 @@ var gameConfig = {
 		parent: 'phaser-div',
 		mode: Phaser.Scale.FIT,
 		autoCenter: Phaser.Scale.CENTER_BOTH,
-		width: 512,
-		height: 512
+		width: window.innerWidth,
+		height: window.innerHeight
 	},
 	parent: "phaser-div",
 	dom: {

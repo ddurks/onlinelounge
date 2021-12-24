@@ -68,7 +68,7 @@ export class PopUp extends Phaser.GameObjects.Group {
     }
 
     loadPlayerIcon(scene, playerSprite) {
-        this.playerIcon = scene.add.image(475, 22, playerSprite.texture, 12).setInteractive();
+        this.playerIcon = scene.add.image(OL.world.width - 37, 22, playerSprite.texture, 12).setInteractive();
         this.playerIcon.setScale(2);
         this.playerIcon.setDepth(12);
         this.playerIcon.setScrollFactor(0);
