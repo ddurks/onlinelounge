@@ -5,9 +5,7 @@ export class Controls extends Phaser.Scene {
     constructor() {
         super('Controls');
 
-        this.CHAT_TEXT = "chat";
-        this.SEND_TEXT = "send";
-        this.chatText = this.CHAT_TEXT;
+        this.chatText = OL.CHAT_TEXT;
         this.zoomed = false;
         this.prevPopupText = "";
     }
@@ -56,7 +54,7 @@ export class Controls extends Phaser.Scene {
     }
 
     chat() {
-        if (this.chatText === this.CHAT_TEXT) {
+        if (this.chatText === OL.CHAT_TEXT) {
             this.openChatBox();
         } else {
             this.sendChat();
@@ -64,16 +62,16 @@ export class Controls extends Phaser.Scene {
     }
 
     openChatBox() {
-        this.chatText = this.SEND_TEXT;
+        this.chatText = OL.SEND_TEXT;
         this.events.emit('openChat');
-        this.chatButton.setText(this.SEND_TEXT);
+        this.chatButton.setText(OL.SEND_TEXT);
         document.getElementById("chat-box").style.display = "block";
         var chatBox = document.getElementById("chat-entry");
         chatBox.focus();
     }
 
     sendChat() {
-        this.chatText = this.CHAT_TEXT;
+        this.chatText = OL.CHAT_TEXT;
         this.events.emit('sendChat');
         document.getElementById("chat-entry").value = "";
         this.chatButton.setText(OL.CHAT_TEXT);
