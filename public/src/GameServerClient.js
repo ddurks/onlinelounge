@@ -20,7 +20,7 @@ export class GamServerClient {
 
     join(player, onConnectCallback) {
         this.socket.on('connect', () => {
-            const sessionID = this.connection.id;
+            this.sessionID = this.connection.id;
             this.connected = true;
             this.socket.emit('new player', {
                 x: player.x,
@@ -31,7 +31,7 @@ export class GamServerClient {
                 fit: player.fit,
                 currentArea: player.currentArea
             });
-            onConnectCallback(sessionID);
+            onConnectCallback(this.sessionID);
         });
     }
 }

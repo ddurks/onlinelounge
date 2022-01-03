@@ -121,20 +121,19 @@ export class DigitalPlanet extends Phaser.Scene {
         this.scene.get('Controls').events.on('zoomOut', () => this.zoomOut());
         this.scene.get('Controls').events.on('lookChange', () => this.changeLook());
 
-        console.log("logged in - " + OL.username, " (password: " + OL.password + ")");
+        this.sessionID = this.serverClient.sessionID ? this.serverClient.sessionID : undefined;
+        if (this.sessionID) {
+            this.players.set(this.sessionID, this.player);
+        }
 
-        // this.serverPos = this.generateCuteGuy(this.player.x, this.player.y);
-
-        // this.serverClient = this.startData.serverClient;
-        // this.sessionID = this.serverClient.sessionID;
-        // this.players.set(this.sessionID, this.player);
-        // console.log(this.players);
         this.serverClient.connect(this.player, (sessionID) => {
             console.log("connected: " + sessionID);
             this.sessionID = sessionID;
             this.players.set(sessionID, this.player);
-            console.log(this.players);
+            this.player = this.players.get(sessionID);
         });
+
+        console.log("logged in - " + OL.username, " (password: " + OL.password + ")" + " session ID: " + this.sessionID);
 
         this.serverClient.socket.on('state', (state) => this.updateGameState(state));
         this.serverClient.socket.on('player action', (playerAction) => this.updatePlayerAction(playerAction));
@@ -145,14 +144,12 @@ export class DigitalPlanet extends Phaser.Scene {
             let playerWhoLeft = this.players.get(socketId);
             if (playerWhoLeft) {
                 playerWhoLeft.currentArea = AREAS.lounge;
-                console.log(playerWhoLeft.currentArea);
             }
         });
         this.serverClient.socket.on('exit lounge', (socketId) => {
             let playerWhoLeft = this.players.get(socketId);
             if (playerWhoLeft) {
                 playerWhoLeft.currentArea = AREAS.digitalplanet;
-                console.log(playerWhoLeft.currentArea);
             }
         });
 
@@ -310,7 +307,6 @@ export class DigitalPlanet extends Phaser.Scene {
 
     updateGameState(state) {
         state.forEach((playerData) => {
-            console.log(playerData.currentArea, this.player.currentArea);
             if (playerData.currentArea === this.player.currentArea) {
                 var playerToUpdate = this.players.get(playerData.socketId);
                 if (!playerToUpdate) {
@@ -334,6 +330,9 @@ export class DigitalPlanet extends Phaser.Scene {
                             playerToUpdate.anims.pause();
                         }
                     }
+                } else {
+                    console.log(playerToUpdate, "no body");
+                    debugger;
                 }
             } else {
                 this.removePlayer(playerData.socketId);
@@ -342,7 +341,6 @@ export class DigitalPlanet extends Phaser.Scene {
     }
 
     playerHandler(delta) {
-        // this.physics.world.collide(this.player, this.onlineBouncer, () => this.enterLounge());
         if (this.player.alive) {
             if (OL.IS_MOBILE) {
                 this.playerMobileMovementHandler();
@@ -352,7 +350,7 @@ export class DigitalPlanet extends Phaser.Scene {
             this.player.msgDecayHandler(delta);
             this.player.updatePlayerStuff();
             this.players.forEach( (player) => {
-                if (player.body && player.socketId && player.socketId !== this.sessionID) {
+                if (player.body) {
                     player.msgDecayHandler(delta);
                     player.updatePlayerStuff();
                 }
