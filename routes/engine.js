@@ -27,8 +27,8 @@ class GameEngine {
         this.engine = this.Engine.create();
         this.engine.gravity.y = 0;
 
-        // this.loungeEngine = this.Engine.create();
-        // this.loungeEngine.gravity.y = 0;
+        this.loungeEngine = this.Engine.create();
+        this.loungeEngine.gravity.y = 0;
 
         this.players = new Map();
     
@@ -74,7 +74,7 @@ class GameEngine {
                 this.handleInputState(player);
             });
             this.Engine.update(this.engine, this.deltat, this.deltat/this.lastDeltat);
-            //this.Engine.update(this.loungeEngine, this.deltat, this.deltat/this.lastDeltat);
+            this.Engine.update(this.loungeEngine, this.deltat, this.deltat/this.lastDeltat);
         }
     }
 
@@ -117,7 +117,6 @@ class GameEngine {
 
     enterLounge(socketId) {
         let playerToMove = this.players.get(socketId);
-        console.log(playerToMove);
         playerToMove.currentArea = AREAS.lounge;
         this.Composite.remove(this.engine.world, playerToMove);
         this.Composite.add(this.loungeEngine.world, playerToMove);

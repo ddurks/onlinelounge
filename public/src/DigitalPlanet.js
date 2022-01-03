@@ -2,7 +2,7 @@ import { OL } from './utils';
 import { Player, Key } from './Player';
 import { Butterfly, OnlineBouncer } from './Guys';
 import { Coin, Heart } from './Items';
-import { io } from 'socket.io-client';
+import { GamServerClient } from './GameServerClient';
 
 const INPUT_UPDATE_RATE = 1000/30;
 
@@ -21,6 +21,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.looks = new Array();
         this.lookIndex = 0;
         this.MAX_BUTTERFLIES = 0;
+        this.serverClient = new GamServerClient();
     }
 
     init(data) {
@@ -116,10 +117,15 @@ export class DigitalPlanet extends Phaser.Scene {
 
         this.serverPos = this.generateCuteGuy(this.player.x, this.player.y);
 
-        this.serverClient = this.startData.serverClient;
-        this.sessionID = this.serverClient.sessionID;
-        this.players.set(this.sessionID, this.player);
-        console.log(this.players);
+        // this.serverClient = this.startData.serverClient;
+        // this.sessionID = this.serverClient.sessionID;
+        // this.players.set(this.sessionID, this.player);
+        // console.log(this.players);
+        this.serverClient.connect(this.player, (sessionID) => {
+            console.log("connected: " + sessionID);
+            this.sessionID = sessionID;
+            this.players.set(sessionID, this.player);
+        });
 
         this.serverClient.socket.on('state', (state) => this.updateGameState(state));
         this.serverClient.socket.on('player action', (playerAction) => this.updatePlayerAction(playerAction));
@@ -170,7 +176,7 @@ export class DigitalPlanet extends Phaser.Scene {
 
     exit() {
         this.player.currentArea = AREAS.digitalplanet;
-        this.serverClient.socket.emit('exit lounge', this.sessionID);
+        this.serverClient.socket.emit('exit lounge');
         if (this.exitTo) {
             this.exitTo.spawn = {
                 x: 525,
@@ -291,7 +297,7 @@ export class DigitalPlanet extends Phaser.Scene {
 
     updateGameState(state) {
         state.forEach((playerData) => {
-            // if (playerData.currentArea === this.player.currentArea) {
+            if (playerData.currentArea === this.player.currentArea) {
                 var playerToUpdate = this.players.get(playerData.socketId);
                 if (!playerToUpdate) {
                     this.generatePlayer(playerData.socketId, playerData.x, playerData.y, playerData.username);
@@ -315,7 +321,7 @@ export class DigitalPlanet extends Phaser.Scene {
                         }
                     }
                 }
-            // }
+            }
         });
     }
 
@@ -340,7 +346,7 @@ export class DigitalPlanet extends Phaser.Scene {
 
     enterLounge() {
         this.player.currentArea = AREAS.lounge;
-        this.serverClient.socket.emit('enter lounge', this.sessionID);
+        this.serverClient.socket.emit('enter lounge');
         this.scene.restart({
             mapKey: "loungeMap",
             groundTileset: {
