@@ -297,7 +297,7 @@ export class DigitalPlanet extends Phaser.Scene {
 
     updateGameState(state) {
         state.forEach((playerData) => {
-            // if (playerData.currentArea === this.player.currentArea) {
+            if (playerData.currentArea === this.player.currentArea) {
                 var playerToUpdate = this.players.get(playerData.socketId);
                 if (!playerToUpdate) {
                     this.generatePlayer(playerData.socketId, playerData.x, playerData.y, playerData.username);
@@ -321,7 +321,7 @@ export class DigitalPlanet extends Phaser.Scene {
                         }
                     }
                 }
-            // }
+            }
         });
     }
 

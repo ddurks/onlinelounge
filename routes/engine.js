@@ -117,7 +117,6 @@ class GameEngine {
 
     enterLounge(socketId) {
         let playerToMove = this.players.get(socketId);
-        console.log(playerToMove);
         playerToMove.currentArea = AREAS.lounge;
         this.Composite.remove(this.engine.world, playerToMove);
         this.Composite.add(this.loungeEngine.world, playerToMove);
