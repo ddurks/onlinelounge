@@ -55,10 +55,10 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    engine.removePlayer(socket.id);
-    console.log("player left: " + socket.id + " players: " + engine.players.size);
-    io.sockets.emit('player left', socket.id);
-    io.sockets.emit('state', engine.getPlayers());
+    if (engine.removePlayer(socket.id)) {
+      io.sockets.emit('player left', socket.id);
+      io.sockets.emit('state', engine.getPlayers());
+    }
   });
 });
 

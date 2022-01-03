@@ -38,6 +38,14 @@ export class DigitalPlanet extends Phaser.Scene {
         }
     }
 
+    getCurrentArea(mapKey) {
+        if (mapKey === "map") {
+            return AREAS.digitalplanet;
+        } else {
+            return AREAS.lounge;
+        }
+    }
+
     create() { 
         this.looks = ['computer_guy', 'phone_guy', 'cute_guy'];
         this.map = this.make.tilemap({ key: this.startData.mapKey });
@@ -52,13 +60,13 @@ export class DigitalPlanet extends Phaser.Scene {
         if (this.startData.spawn) {
             this.player = this.generatePlayer(null, this.startData.spawn.x, this.startData.spawn.y, OL.username);
             this.player.body.type = 'player1';
-            this.player.currentArea = AREAS.digitalplanet;
+            this.player.currentArea = this.getCurrentArea(this.startData.mapKey);
         }
         this.map.findObject('player', (object) => {
             if (object.name === 'spawn' && !this.startData.spawn) {
                 this.player = this.generatePlayer(null, object.x, object.y, OL.username);
                 this.player.body.type = 'player1';
-                this.player.currentArea = AREAS.digitalplanet;
+                this.player.currentArea = this.getCurrentArea(this.startData.mapKey);
             }
 
             if (object.name === 'bouncerSpawn') {
@@ -115,7 +123,7 @@ export class DigitalPlanet extends Phaser.Scene {
 
         console.log("logged in - " + OL.username, " (password: " + OL.password + ")");
 
-        this.serverPos = this.generateCuteGuy(this.player.x, this.player.y);
+        // this.serverPos = this.generateCuteGuy(this.player.x, this.player.y);
 
         // this.serverClient = this.startData.serverClient;
         // this.sessionID = this.serverClient.sessionID;
@@ -125,17 +133,13 @@ export class DigitalPlanet extends Phaser.Scene {
             console.log("connected: " + sessionID);
             this.sessionID = sessionID;
             this.players.set(sessionID, this.player);
+            console.log(this.players);
         });
 
         this.serverClient.socket.on('state', (state) => this.updateGameState(state));
         this.serverClient.socket.on('player action', (playerAction) => this.updatePlayerAction(playerAction));
         this.serverClient.socket.on('player left', (socketId) => {
-            let playerWhoLeft = this.players.get(socketId);
-            if (playerWhoLeft) {
-                playerWhoLeft.destroyStuff();
-                playerWhoLeft.destroy();
-                this.players.delete(socketId);
-            }
+            this.removePlayer(socketId);
         });
         this.serverClient.socket.on('enter lounge', (socketId) => {
             let playerWhoLeft = this.players.get(socketId);
@@ -252,6 +256,15 @@ export class DigitalPlanet extends Phaser.Scene {
         }
         return player;
     }
+
+    removePlayer(socketId) {
+        let playerWhoLeft = this.players.get(socketId);
+        if (playerWhoLeft) {
+            playerWhoLeft.destroyStuff();
+            playerWhoLeft.destroy();
+            this.players.delete(socketId);
+        }
+    }
     
     generateButterfly() {
         if(this.butterflies.length < this.MAX_BUTTERFLIES) {
@@ -297,6 +310,7 @@ export class DigitalPlanet extends Phaser.Scene {
 
     updateGameState(state) {
         state.forEach((playerData) => {
+            console.log(playerData.currentArea, this.player.currentArea);
             if (playerData.currentArea === this.player.currentArea) {
                 var playerToUpdate = this.players.get(playerData.socketId);
                 if (!playerToUpdate) {
@@ -321,6 +335,8 @@ export class DigitalPlanet extends Phaser.Scene {
                         }
                     }
                 }
+            } else {
+                this.removePlayer(playerData.socketId);
             }
         });
     }

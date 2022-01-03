@@ -23,6 +23,7 @@ export class Player extends Phaser.Physics.Matter.Sprite {
         this.keysPressed = [0, 0, 0, 0];
         this.setFixedRotation();
         this.setMass(1);
+        this.setOrigin(0.5, 0.5);
 
         this.anims.create({
             key: 'down', 
@@ -53,7 +54,7 @@ export class Player extends Phaser.Physics.Matter.Sprite {
             frameRate: 0,
             frames: this.anims.generateFrameNumbers(texture, { frames: [12] }),
             repeat: 0
-        })
+        });
 
         this.alive = true;
 
