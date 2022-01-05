@@ -23,6 +23,7 @@ export class Player extends Phaser.Physics.Matter.Sprite {
         this.keysPressed = [0, 0, 0, 0];
         this.setFixedRotation();
         this.setMass(1);
+        this.setOrigin(0.5, 0.5);
 
         this.anims.create({
             key: 'down', 
@@ -53,7 +54,7 @@ export class Player extends Phaser.Physics.Matter.Sprite {
             frameRate: 0,
             frames: this.anims.generateFrameNumbers(texture, { frames: [12] }),
             repeat: 0
-        })
+        });
 
         this.alive = true;
 
@@ -154,14 +155,16 @@ export class Player extends Phaser.Physics.Matter.Sprite {
     }
 
     updatePlayerStuff() {
-        this.speakText.x = this.x;
-        this.speakText.y = this.y - 3*this.size/2;
+        if (this.body) {
+            this.speakText.x = this.x;
+            this.speakText.y = this.y - 3*this.size/2;
 
-        this.typingIcon.x = this.x + this.size /2;
-        this.typingIcon.y = this.y - this.size;
+            this.typingIcon.x = this.x + this.size /2;
+            this.typingIcon.y = this.y - this.size;
 
-        this.usernameText.x = this.x;
-        this.usernameText.y = this.y + this.size/2;
+            this.usernameText.x = this.x;
+            this.usernameText.y = this.y + this.size/2;
+        }
     }
 
     startTyping() {

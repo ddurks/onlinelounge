@@ -1,10 +1,15 @@
 import { OL } from './utils';
-import { GamServerClient } from './GameServerClient';
 import { Player, Key } from './Player';
 import { Butterfly, OnlineBouncer } from './Guys';
 import { Coin, Heart } from './Items';
+import { GameServerClient } from './GameServerClient';
 
 const INPUT_UPDATE_RATE = 1000/30;
+
+const AREAS = {
+    'digitalplanet':0,
+    'lounge':1
+}
 
 export class DigitalPlanet extends Phaser.Scene {
     constructor() {
@@ -16,7 +21,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.looks = new Array();
         this.lookIndex = 0;
         this.MAX_BUTTERFLIES = 0;
-        this.serverClient = new GamServerClient();
+        this.serverClient = new GameServerClient();
     }
 
     init(data) {
@@ -33,6 +38,14 @@ export class DigitalPlanet extends Phaser.Scene {
         }
     }
 
+    getCurrentArea(mapKey) {
+        if (mapKey === "map") {
+            return AREAS.digitalplanet;
+        } else {
+            return AREAS.lounge;
+        }
+    }
+
     create() { 
         this.looks = ['computer_guy', 'phone_guy', 'cute_guy'];
         this.map = this.make.tilemap({ key: this.startData.mapKey });
@@ -46,10 +59,14 @@ export class DigitalPlanet extends Phaser.Scene {
         this.player, this.onlineBouncer;
         if (this.startData.spawn) {
             this.player = this.generatePlayer(null, this.startData.spawn.x, this.startData.spawn.y, OL.username);
+            this.player.body.type = 'player1';
+            this.player.currentArea = this.getCurrentArea(this.startData.mapKey);
         }
         this.map.findObject('player', (object) => {
             if (object.name === 'spawn' && !this.startData.spawn) {
                 this.player = this.generatePlayer(null, object.x, object.y, OL.username);
+                this.player.body.type = 'player1';
+                this.player.currentArea = this.getCurrentArea(this.startData.mapKey);
             }
 
             if (object.name === 'bouncerSpawn') {
@@ -73,12 +90,12 @@ export class DigitalPlanet extends Phaser.Scene {
 
         this.player.inLounge = this.startData.mapKey === 'loungeMap' ? true : false;
         this.matter.world.on('collisionstart', (event, bodyA, bodyB) => {
-            if (bodyA.type === 'bouncer' || bodyB.type === 'bouncer') {
+            if (bodyA.type === 'player1' && bodyB.type === 'bouncer') {
                 if (!this.player.inLounge) {
                     this.player.inLounge = !this.player.inLounge;
                     this.enterLounge();
                 } else {
-                    this.exit();
+                    this.exitLounge();
                 }
             }
     
@@ -104,23 +121,36 @@ export class DigitalPlanet extends Phaser.Scene {
         this.scene.get('Controls').events.on('zoomOut', () => this.zoomOut());
         this.scene.get('Controls').events.on('lookChange', () => this.changeLook());
 
-        console.log("logged in - " + OL.username, " (password: " + OL.password + ")");
-
-        this.serverPos = this.generateCuteGuy(this.player.x, this.player.y);
+        this.sessionID = this.serverClient.sessionID ? this.serverClient.sessionID : undefined;
+        if (this.sessionID) {
+            this.players.set(this.sessionID, this.player);
+        }
 
         this.serverClient.connect(this.player, (sessionID) => {
             console.log("connected: " + sessionID);
             this.sessionID = sessionID;
             this.players.set(sessionID, this.player);
+            this.player = this.players.get(sessionID);
         });
+
+        console.log("logged in - " + OL.username, " (password: " + OL.password + ")" + " session ID: " + this.sessionID);
 
         this.serverClient.socket.on('state', (state) => this.updateGameState(state));
         this.serverClient.socket.on('player action', (playerAction) => this.updatePlayerAction(playerAction));
         this.serverClient.socket.on('player left', (socketId) => {
-            let playerWhoLeft = this.players.get(socketId);
-            playerWhoLeft.destroyStuff();
-            playerWhoLeft.destroy();
-            this.players.delete(socketId);
+            this.removePlayer(socketId);
+        });
+        this.serverClient.socket.on('enter lounge', (socketId) => {
+            let playerWhoEnteredLounge = this.players.get(socketId);
+            if (playerWhoEnteredLounge) {
+                playerWhoEnteredLounge.currentArea = AREAS.lounge;
+            }
+        });
+        this.serverClient.socket.on('exit lounge', (socketId) => {
+            let playerWhoExitedLounge = this.players.get(socketId);
+            if (playerWhoExitedLounge) {
+                playerWhoExitedLounge.currentArea = AREAS.digitalplanet;
+            }
         });
 
         setInterval(() => {
@@ -145,7 +175,27 @@ export class DigitalPlanet extends Phaser.Scene {
         this.camera.setBounds(0, -48, this.map.widthInPixels, this.map.heightInPixels);
     }
 
-    exit() {
+    enterLounge() {
+        this.player.currentArea = AREAS.lounge;
+        this.serverClient.socket.emit('enter lounge');
+        this.scene.restart({
+            mapKey: "loungeMap",
+            groundTileset: {
+                name: "online-lounge-objects-extruded",
+                ref: "loungeTiles"
+            },
+            objectTileset: {
+                name: "online-lounge-objects-extruded",
+                ref: "loungeTiles"
+            },
+            serverClient: this.serverClient,
+            exitTo: this.startData
+        });
+    }
+
+    exitLounge() {
+        this.player.currentArea = AREAS.digitalplanet;
+        this.serverClient.socket.emit('exit lounge');
         if (this.exitTo) {
             this.exitTo.spawn = {
                 x: 525,
@@ -161,8 +211,14 @@ export class DigitalPlanet extends Phaser.Scene {
         }
         this.updateAllButterflies();
         // OL.getRandomInt(0,30) === 25 ? this.updateCoins() : this.updateHearts();
-        this.cameraDolly.x = Math.floor(this.player.x);
-        this.cameraDolly.y = Math.floor(this.player.y);
+        this.updateFollowCam();
+    }
+
+    updateFollowCam() {
+        if (this.player) {
+            this.cameraDolly.x = Math.floor(this.player.x);
+            this.cameraDolly.y = Math.floor(this.player.y);
+        }
     }
 
     zoomIn() {
@@ -219,7 +275,17 @@ export class DigitalPlanet extends Phaser.Scene {
         if (socketId) {
             this.players.set(socketId, player);
         }
+        // console.log("new player", player, player.body, this.players);
         return player;
+    }
+
+    removePlayer(socketId) {
+        let playerWhoLeft = this.players.get(socketId);
+        if (playerWhoLeft) {
+            playerWhoLeft.destroyStuff();
+            playerWhoLeft.destroy();
+            this.players.delete(socketId);
+        }
     }
     
     generateButterfly() {
@@ -266,44 +332,56 @@ export class DigitalPlanet extends Phaser.Scene {
 
     updateGameState(state) {
         state.forEach((playerData) => {
-            var playerToUpdate = this.players.get(playerData.socketId);
-            if (!playerToUpdate) {
-                this.generatePlayer(playerData.socketId, playerData.x, playerData.y, playerData.username);
-            } else if (playerToUpdate) {
-                playerToUpdate.setPosition(playerData.x, playerData.y);
-                if (playerData.currentInputs) {
-                    if (playerData.currentInputs[Key.a] === 1) {
-                        playerToUpdate.anims.play('left', true);
+            if (playerData.currentArea === this.player.currentArea) {
+                var playerToUpdate = this.players.get(playerData.socketId);
+                if (!playerToUpdate) {
+                    this.generatePlayer(playerData.socketId, playerData.x, playerData.y, playerData.username);
+                } else if (playerToUpdate && playerToUpdate.body) {
+                    playerToUpdate.setPosition(playerData.x, playerData.y);
+                    if (playerData.currentInputs) {
+                        if (playerData.currentInputs[Key.a] === 1) {
+                            playerToUpdate.anims.play('left', true);
+                        }
+                        if (playerData.currentInputs[Key.d] === 1) {
+                            playerToUpdate.anims.play('right', true);
+                        }
+                        if (playerData.currentInputs[Key.w] === 1) {
+                            playerToUpdate.anims.play('up', true);
+                        }
+                        if (playerData.currentInputs[Key.s] === 1) {
+                            playerToUpdate.anims.play('down', true);
+                        }
+                        if (!playerData.currentInputs[Key.w] && !playerData.currentInputs[Key.a] && !playerData.currentInputs[Key.s] && !playerData.currentInputs[Key.d]) {
+                            playerToUpdate.anims.pause();
+                        }
                     }
-                    if (playerData.currentInputs[Key.d] === 1) {
-                        playerToUpdate.anims.play('right', true);
-                    }
-                    if (playerData.currentInputs[Key.w] === 1) {
-                        playerToUpdate.anims.play('up', true);
-                    }
-                    if (playerData.currentInputs[Key.s] === 1) {
-                        playerToUpdate.anims.play('down', true);
-                    }
-                    if (!playerData.currentInputs[Key.w] && !playerData.currentInputs[Key.a] && !playerData.currentInputs[Key.s] && !playerData.currentInputs[Key.d]) {
-                        playerToUpdate.anims.pause();
-                    }
+                } else {
+                    console.log(playerToUpdate, "no body");
+                    this.removePlayer(playerData.socketId);
                 }
+            } else {
+                this.removePlayer(playerData.socketId);
             }
         });
     }
 
+    updatePlayer1(delta) {
+        if(this.player) {
+            this.player.msgDecayHandler(delta);
+            this.player.updatePlayerStuff();
+        }
+    }
+
     playerHandler(delta) {
-        // this.physics.world.collide(this.player, this.onlineBouncer, () => this.enterLounge());
         if (this.player.alive) {
             if (OL.IS_MOBILE) {
                 this.playerMobileMovementHandler();
             } else {
                 this.playerMovementHandler();
             }
-            this.player.msgDecayHandler(delta);
-            this.player.updatePlayerStuff();
+            this.updatePlayer1(delta);
             this.players.forEach( (player) => {
-                if (player.socketId && player.socketId !== this.sessionID) {
+                if (player.body && player.socketId && player.socketId !== this.sessionID) {
                     player.msgDecayHandler(delta);
                     player.updatePlayerStuff();
                 }
@@ -311,51 +389,38 @@ export class DigitalPlanet extends Phaser.Scene {
         }
     }
 
-    enterLounge() {
-        this.scene.restart({
-            mapKey: "loungeMap",
-            groundTileset: {
-                name: "online-lounge-objects-extruded",
-                ref: "loungeTiles"
-            },
-            objectTileset: {
-                name: "online-lounge-objects-extruded",
-                ref: "loungeTiles"
-            },
-            exitTo: this.startData
-        });
-    }
-
     playerMovementHandler() {
-        if (this.controls.left.isDown) {
-            this.player.keysPressed[Key.a] = 1;
-            this.player.anims.play('left', true);
-        } else {
-            this.player.keysPressed[Key.a] = 0;
-        }
-        if (this.controls.right.isDown) {
-            this.player.keysPressed[Key.d] = 1;
-            this.player.anims.play('right', true);
-        } else {
-            this.player.keysPressed[Key.d] = 0;
-        }
-        if (this.controls.up.isDown) {
-            this.player.keysPressed[Key.w] = 1;
-            this.player.anims.play('up', true);
-        } else {
-            this.player.keysPressed[Key.w] = 0;
-        }
-        if (this.controls.down.isDown) {
-            this.player.keysPressed[Key.s] = 1;
-            this.player.anims.play('down', true);
-        } else {
-            this.player.keysPressed[Key.s] = 0;
-        }
+        if (this.player.anims) {
+            if (this.controls.left.isDown) {
+                this.player.keysPressed[Key.a] = 1;
+                this.player.anims.play('left', true);
+            } else {
+                this.player.keysPressed[Key.a] = 0;
+            }
+            if (this.controls.right.isDown) {
+                this.player.keysPressed[Key.d] = 1;
+                this.player.anims.play('right', true);
+            } else {
+                this.player.keysPressed[Key.d] = 0;
+            }
+            if (this.controls.up.isDown) {
+                this.player.keysPressed[Key.w] = 1;
+                this.player.anims.play('up', true);
+            } else {
+                this.player.keysPressed[Key.w] = 0;
+            }
+            if (this.controls.down.isDown) {
+                this.player.keysPressed[Key.s] = 1;
+                this.player.anims.play('down', true);
+            } else {
+                this.player.keysPressed[Key.s] = 0;
+            }
 
-        this.updatePlayerFromInput(this.player);
+            this.updatePlayerFromInput(this.player);
 
-        if (!this.player.keysPressed[Key.w] && !this.player.keysPressed[Key.a] && !this.player.keysPressed[Key.s] && !this.player.keysPressed[Key.d]) {
-            this.player.anims.pause();
+            if (this.player.anims && !this.player.keysPressed[Key.w] && !this.player.keysPressed[Key.a] && !this.player.keysPressed[Key.s] && !this.player.keysPressed[Key.d]) {
+                this.player.anims.pause();
+            }
         }
     }
 

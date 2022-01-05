@@ -28,7 +28,7 @@ io.on('connection', (socket) => {
   socket.on('new player', (newPlayer) => {
     newPlayer.id = socket.id;
     engine.addPlayer(newPlayer);
-    console.log("players connected: " + engine.players.size);
+    console.log("adding " + socket.id + " players connected: " + engine.players.size, newPlayer.currentArea);
   });
 
   socket.on('player input', (playerInput) => {
@@ -42,11 +42,23 @@ io.on('connection', (socket) => {
     io.sockets.emit('player action', { socketId: socket.id, actions: actionArray });
   });
 
+  socket.on('enter lounge', () => {
+    console.log("enter lounge ", socket.id);
+    engine.enterLounge(socket.id);
+    io.sockets.emit('enter lounge', socket.id);
+  });
+
+  socket.on('exit lounge', () => {
+    console.log("exit lounge ", socket.id);
+    engine.exitLounge(socket.id);
+    io.sockets.emit('exit lounge', socket.id);
+  });
+
   socket.on('disconnect', () => {
-    engine.removePlayer(socket.id);
-    console.log("player left. players: " + engine.players.size);
-    io.sockets.emit('player left', socket.id);
-    io.sockets.emit('state', engine.getPlayers());
+    if (engine.removePlayer(socket.id)) {
+      io.sockets.emit('player left', socket.id);
+      io.sockets.emit('state', engine.getPlayers());
+    }
   });
 });
 
