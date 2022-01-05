@@ -127,12 +127,16 @@ export class DigitalPlanet extends Phaser.Scene {
         this.serverClient.connect(this.player, (sessionID) => {
             console.log("connected: " + sessionID);
             this.events.emit('connectionStatus', true);
+            this.events.emit('populationUpdate', this.population);
             this.sessionID = sessionID;
             this.players.set(sessionID, this.player);
             this.player = this.players.get(sessionID);
             this.serverClient.socket.on('disconnect', () => {
                 this.events.emit('connectionStatus', false);
                 this.events.emit('populationUpdate', "-");
+                this.players.forEach((player) => {
+                    this.removePlayer(player.socketId);
+                })
                 console.log("disconnected from server");
             })
         });
@@ -293,6 +297,7 @@ export class DigitalPlanet extends Phaser.Scene {
         if(this.butterflies.length < this.MAX_BUTTERFLIES) {
             let butterfly = new Butterfly(this, this.player.x + OL.getRandomInt(-250, 250), this.player.y + OL.getRandomInt(-250, 250));
             this.butterflies.push(butterfly);
+            console.log("new butterfly", butterfly, this.butterflies)
             return butterfly;
         }
         return null;
@@ -300,7 +305,7 @@ export class DigitalPlanet extends Phaser.Scene {
 
     updateAllButterflies() {
         if (this.MAX_BUTTERFLIES > 0) {
-            let random = OL.getRandomInt(0, 1000);
+            let random = OL.getRandomInt(0, 800);
             if (random === 25) {
                 this.generateButterfly();
             }

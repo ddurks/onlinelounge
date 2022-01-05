@@ -73,6 +73,10 @@ OL.getRandomInt= function(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+OL.getRandomNum= function(min, max) {;
+  return Math.random() * (max - min) + min;
+}
+
 OL.getAngle = function(cx, cy, ex, ey) {
   var dy = ey - cy;
   var dx = ex - cx;

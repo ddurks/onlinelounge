@@ -37,22 +37,25 @@ export class Butterfly extends Phaser.Physics.Matter.Sprite {
 
         // this.body.gravityScale.y = 100;
         this.homeY = y;
+        this.setFrictionAir(0.2);
+        this.setCollisionCategory(null);
+
         OL.getRandomInt(0, 1) === 1 ? this.anims.play('left') : this.anims.play('right');
         return this;
     }
 
     update() {
         if (this.body) {
-            // let rand = OL.getRandomInt(0,50);
-            // if (rand === 1) {
-            //     this.applyForce({ x: OL.getRandomInt(-0.001, 0.001), y :OL.getRandomInt(-0.003, 0.003) });
-            // } else if (rand > 43) {
-            //     this.applyForce({x: 0, y: 0});
-            // }
-            // if (this.y >= this.homeY) {
-            //     this.applyForce({ x: 0, y :OL.getRandomInt(-0.002, 0) });
+            let rand = OL.getRandomInt(0,50);
+            if (rand === 1) {
+                this.applyForce({ x: OL.getRandomNum(-0.005, 0.005), y :OL.getRandomNum(-0.008, 0.008) });
+            } else if (rand > 43) {
+                this.applyForce({x: 0, y: 0});
+            }
+            if (this.y >= this.homeY) {
+                this.applyForce({ x: 0, y :OL.getRandomNum(-0.008, 0) });
 
-            // }
+            }
             this.animForButterfly();
         }
     }
