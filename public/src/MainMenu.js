@@ -1,5 +1,5 @@
 import { OL } from './utils';
-import { GamServerClient } from './GameServerClient';
+import { GameServerClient } from './GameServerClient';
 
 export class MainMenu extends Phaser.Scene {
     constructor() {
@@ -51,7 +51,7 @@ export class MainMenu extends Phaser.Scene {
     }
 
     clickStart() {
-        // this.serverClient = new GamServerClient();
+        // this.serverClient = new GameServerClient();
         // let playerData = {
         //     x: 50,
         //     y: 50,

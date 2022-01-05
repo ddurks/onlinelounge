@@ -164,9 +164,9 @@ class GameEngine {
 
     removePlayer(socketId) {
         if (this.players.has(socketId)) {
-            console.log("player left: " + socketId + " players: " + this.players.size);
             this.Composite.remove(this.engine.world, this.players.get(socketId));
             this.players.delete(socketId);
+            console.log("player left: " + socketId + " players: " + this.players.size);
             return true;      
         } else {
             return false;

@@ -2,7 +2,7 @@ import { OL } from './utils';
 import { Player, Key } from './Player';
 import { Butterfly, OnlineBouncer } from './Guys';
 import { Coin, Heart } from './Items';
-import { GamServerClient } from './GameServerClient';
+import { GameServerClient } from './GameServerClient';
 
 const INPUT_UPDATE_RATE = 1000/30;
 
@@ -21,7 +21,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.looks = new Array();
         this.lookIndex = 0;
         this.MAX_BUTTERFLIES = 0;
-        this.serverClient = new GamServerClient();
+        this.serverClient = new GameServerClient();
     }
 
     init(data) {
@@ -95,7 +95,7 @@ export class DigitalPlanet extends Phaser.Scene {
                     this.player.inLounge = !this.player.inLounge;
                     this.enterLounge();
                 } else {
-                    this.exit();
+                    this.exitLounge();
                 }
             }
     
@@ -141,15 +141,15 @@ export class DigitalPlanet extends Phaser.Scene {
             this.removePlayer(socketId);
         });
         this.serverClient.socket.on('enter lounge', (socketId) => {
-            let playerWhoLeft = this.players.get(socketId);
-            if (playerWhoLeft) {
-                playerWhoLeft.currentArea = AREAS.lounge;
+            let playerWhoEnteredLounge = this.players.get(socketId);
+            if (playerWhoEnteredLounge) {
+                playerWhoEnteredLounge.currentArea = AREAS.lounge;
             }
         });
         this.serverClient.socket.on('exit lounge', (socketId) => {
-            let playerWhoLeft = this.players.get(socketId);
-            if (playerWhoLeft) {
-                playerWhoLeft.currentArea = AREAS.digitalplanet;
+            let playerWhoExitedLounge = this.players.get(socketId);
+            if (playerWhoExitedLounge) {
+                playerWhoExitedLounge.currentArea = AREAS.digitalplanet;
             }
         });
 
@@ -175,7 +175,25 @@ export class DigitalPlanet extends Phaser.Scene {
         this.camera.setBounds(0, -48, this.map.widthInPixels, this.map.heightInPixels);
     }
 
-    exit() {
+    enterLounge() {
+        this.player.currentArea = AREAS.lounge;
+        this.serverClient.socket.emit('enter lounge');
+        this.scene.restart({
+            mapKey: "loungeMap",
+            groundTileset: {
+                name: "online-lounge-objects-extruded",
+                ref: "loungeTiles"
+            },
+            objectTileset: {
+                name: "online-lounge-objects-extruded",
+                ref: "loungeTiles"
+            },
+            serverClient: this.serverClient,
+            exitTo: this.startData
+        });
+    }
+
+    exitLounge() {
         this.player.currentArea = AREAS.digitalplanet;
         this.serverClient.socket.emit('exit lounge');
         if (this.exitTo) {
@@ -193,6 +211,10 @@ export class DigitalPlanet extends Phaser.Scene {
         }
         this.updateAllButterflies();
         // OL.getRandomInt(0,30) === 25 ? this.updateCoins() : this.updateHearts();
+        this.updateFollowCam();
+    }
+
+    updateFollowCam() {
         if (this.player) {
             this.cameraDolly.x = Math.floor(this.player.x);
             this.cameraDolly.y = Math.floor(this.player.y);
@@ -343,6 +365,13 @@ export class DigitalPlanet extends Phaser.Scene {
         });
     }
 
+    updatePlayer1(delta) {
+        if(this.player) {
+            this.player.msgDecayHandler(delta);
+            this.player.updatePlayerStuff();
+        }
+    }
+
     playerHandler(delta) {
         if (this.player.alive) {
             if (OL.IS_MOBILE) {
@@ -350,10 +379,7 @@ export class DigitalPlanet extends Phaser.Scene {
             } else {
                 this.playerMovementHandler();
             }
-            if(this.player !== undefined) {
-                this.player.msgDecayHandler(delta);
-                this.player.updatePlayerStuff();
-            }
+            this.updatePlayer1(delta);
             this.players.forEach( (player) => {
                 if (player.body && player.socketId && player.socketId !== this.sessionID) {
                     player.msgDecayHandler(delta);
@@ -361,24 +387,6 @@ export class DigitalPlanet extends Phaser.Scene {
                 }
             })
         }
-    }
-
-    enterLounge() {
-        this.player.currentArea = AREAS.lounge;
-        this.serverClient.socket.emit('enter lounge');
-        this.scene.restart({
-            mapKey: "loungeMap",
-            groundTileset: {
-                name: "online-lounge-objects-extruded",
-                ref: "loungeTiles"
-            },
-            objectTileset: {
-                name: "online-lounge-objects-extruded",
-                ref: "loungeTiles"
-            },
-            serverClient: this.serverClient,
-            exitTo: this.startData
-        });
     }
 
     playerMovementHandler() {

@@ -1,7 +1,7 @@
 import { OL } from './utils';
 const { io } = require("socket.io-client");
 
-export class GamServerClient {
+export class GameServerClient {
     constructor() {
         this.socket = io({
             autoConnect: false
