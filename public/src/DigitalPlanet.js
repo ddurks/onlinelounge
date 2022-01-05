@@ -193,8 +193,10 @@ export class DigitalPlanet extends Phaser.Scene {
         }
         this.updateAllButterflies();
         // OL.getRandomInt(0,30) === 25 ? this.updateCoins() : this.updateHearts();
-        this.cameraDolly.x = Math.floor(this.player.x);
-        this.cameraDolly.y = Math.floor(this.player.y);
+        if (this.player) {
+            this.cameraDolly.x = Math.floor(this.player.x);
+            this.cameraDolly.y = Math.floor(this.player.y);
+        }
     }
 
     zoomIn() {
@@ -251,6 +253,7 @@ export class DigitalPlanet extends Phaser.Scene {
         if (socketId) {
             this.players.set(socketId, player);
         }
+        // console.log("new player", player, player.body, this.players);
         return player;
     }
 
@@ -332,7 +335,7 @@ export class DigitalPlanet extends Phaser.Scene {
                     }
                 } else {
                     console.log(playerToUpdate, "no body");
-                    debugger;
+                    this.removePlayer(playerData.socketId);
                 }
             } else {
                 this.removePlayer(playerData.socketId);
@@ -347,10 +350,12 @@ export class DigitalPlanet extends Phaser.Scene {
             } else {
                 this.playerMovementHandler();
             }
-            this.player.msgDecayHandler(delta);
-            this.player.updatePlayerStuff();
+            if(this.player !== undefined) {
+                this.player.msgDecayHandler(delta);
+                this.player.updatePlayerStuff();
+            }
             this.players.forEach( (player) => {
-                if (player.body) {
+                if (player.body && player.socketId && player.socketId !== this.sessionID) {
                     player.msgDecayHandler(delta);
                     player.updatePlayerStuff();
                 }
@@ -377,35 +382,37 @@ export class DigitalPlanet extends Phaser.Scene {
     }
 
     playerMovementHandler() {
-        if (this.controls.left.isDown) {
-            this.player.keysPressed[Key.a] = 1;
-            this.player.anims.play('left', true);
-        } else {
-            this.player.keysPressed[Key.a] = 0;
-        }
-        if (this.controls.right.isDown) {
-            this.player.keysPressed[Key.d] = 1;
-            this.player.anims.play('right', true);
-        } else {
-            this.player.keysPressed[Key.d] = 0;
-        }
-        if (this.controls.up.isDown) {
-            this.player.keysPressed[Key.w] = 1;
-            this.player.anims.play('up', true);
-        } else {
-            this.player.keysPressed[Key.w] = 0;
-        }
-        if (this.controls.down.isDown) {
-            this.player.keysPressed[Key.s] = 1;
-            this.player.anims.play('down', true);
-        } else {
-            this.player.keysPressed[Key.s] = 0;
-        }
+        if (this.player.anims) {
+            if (this.controls.left.isDown) {
+                this.player.keysPressed[Key.a] = 1;
+                this.player.anims.play('left', true);
+            } else {
+                this.player.keysPressed[Key.a] = 0;
+            }
+            if (this.controls.right.isDown) {
+                this.player.keysPressed[Key.d] = 1;
+                this.player.anims.play('right', true);
+            } else {
+                this.player.keysPressed[Key.d] = 0;
+            }
+            if (this.controls.up.isDown) {
+                this.player.keysPressed[Key.w] = 1;
+                this.player.anims.play('up', true);
+            } else {
+                this.player.keysPressed[Key.w] = 0;
+            }
+            if (this.controls.down.isDown) {
+                this.player.keysPressed[Key.s] = 1;
+                this.player.anims.play('down', true);
+            } else {
+                this.player.keysPressed[Key.s] = 0;
+            }
 
-        this.updatePlayerFromInput(this.player);
+            this.updatePlayerFromInput(this.player);
 
-        if (!this.player.keysPressed[Key.w] && !this.player.keysPressed[Key.a] && !this.player.keysPressed[Key.s] && !this.player.keysPressed[Key.d]) {
-            this.player.anims.pause();
+            if (this.player.anims && !this.player.keysPressed[Key.w] && !this.player.keysPressed[Key.a] && !this.player.keysPressed[Key.s] && !this.player.keysPressed[Key.d]) {
+                this.player.anims.pause();
+            }
         }
     }
 
