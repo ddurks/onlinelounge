@@ -149,7 +149,7 @@
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":false,
+         "visible":true,
          "x":0,
          "y":0
         }],
@@ -163,7 +163,7 @@
         {
          "columns":10,
          "firstgid":1,
-         "image":"..\/..\/..\/..\/..\/..\/..\/..\/code\/onlinelounge-phaser\/assets\/tiles\/online-pluto-tileset-extruded.png",
+         "image":"..\/..\/..\/..\/onlinelounge-phaser\/assets\/tiles\/online-pluto-tileset-extruded.png",
          "imageheight":204,
          "imagewidth":340,
          "margin":1,
@@ -176,7 +176,7 @@
         {
          "columns":8,
          "firstgid":61,
-         "image":"..\/..\/..\/..\/..\/..\/..\/..\/code\/onlinelounge-phaser\/assets\/tiles\/online-tileset-extruded.png",
+         "image":"..\/..\/..\/..\/onlinelounge-phaser\/assets\/tiles\/online-tileset-extruded.png",
          "imageheight":204,
          "imagewidth":272,
          "margin":1,
@@ -201,6 +201,11 @@
                          "name":"collides",
                          "type":"bool",
                          "value":true
+                        }, 
+                        {
+                         "name":"info",
+                         "type":"string",
+                         "value":"welcome to the digital planet! have a look around."
                         }]
                 }, 
                 {
@@ -210,6 +215,11 @@
                          "name":"collides",
                          "type":"bool",
                          "value":true
+                        }, 
+                        {
+                         "name":"info",
+                         "type":"string",
+                         "value":"weird vibes in this area. be careful!"
                         }]
                 }, 
                 {
@@ -282,6 +292,11 @@
                          "name":"collides",
                          "type":"bool",
                          "value":true
+                        }, 
+                        {
+                         "name":"info",
+                         "type":"string",
+                         "value":"the famous online lounge -->"
                         }]
                 }, 
                 {
@@ -291,6 +306,11 @@
                          "name":"collides",
                          "type":"bool",
                          "value":true
+                        }, 
+                        {
+                         "name":"info",
+                         "type":"string",
+                         "value":"online... bones! :O"
                         }]
                 }, 
                 {
@@ -309,6 +329,11 @@
                          "name":"collides",
                          "type":"bool",
                          "value":true
+                        }, 
+                        {
+                         "name":"info",
+                         "type":"string",
+                         "value":"locked. if only you had the key..."
                         }]
                 }, 
                 {
@@ -534,6 +559,11 @@
                          "name":"collides",
                          "type":"bool",
                          "value":true
+                        }, 
+                        {
+                         "name":"info",
+                         "type":"string",
+                         "value":"hmmm. locked."
                         }]
                 }, 
                 {

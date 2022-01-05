@@ -46,7 +46,7 @@ class GameEngine {
                         currX = col*tileMap.tileWidth;
                         currY = row*tileMap.tileHeight;
                         if (layer.tiles[i] && layer.tiles[i] !== undefined) {
-                            if (layer.tiles[i].properties.collides) {
+                            if (layer.tiles[i].properties.collides === true) {
                                 this.addBlock(this.engine.world, currX, currY, tileMap.tileWidth, tileMap.tileHeight);
                             }
                         }

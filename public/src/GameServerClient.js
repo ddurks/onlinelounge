@@ -1,4 +1,3 @@
-import { OL } from './utils';
 const { io } = require("socket.io-client");
 
 export class GameServerClient {

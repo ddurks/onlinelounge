@@ -22,6 +22,7 @@ export class Preloader extends Phaser.Scene {
 		this.load.spritesheet('coin', 'assets/sprites/coin-extruded.png', { frameWidth: 16, frameHeight: 16, margin: 1, spacing: 2 });
 		this.load.spritesheet('heart', 'assets/sprites/heart-extruded.png', { frameWidth: 16, frameHeight: 16, margin: 1, spacing: 2 });
 		this.load.spritesheet('onlineBouncer', 'assets/sprites/onlinebouncer-extruded.png', { frameWidth: 32, frameHeight: 48, margin: 1, spacing: 2 });
+		this.load.spritesheet('connection', 'assets/connection_icons.png', { frameWidth: 48, frameHeight: 48, margin: 0, spacing: 0 });
 		this.load.image('cute', 'assets/pleading_eyes_emoji.png');
 		this.load.image('menuBar', 'assets/menu-bar.png');
 		this.load.image('popup', 'assets/popup.png');

@@ -22,6 +22,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.lookIndex = 0;
         this.MAX_BUTTERFLIES = 0;
         this.serverClient = new GameServerClient();
+        this.population = 0;
     }
 
     init(data) {
@@ -56,6 +57,15 @@ export class DigitalPlanet extends Phaser.Scene {
         this.aboveLayer = this.map.createLayer("above", this.objectTileset, 0, 0);
         this.aboveLayer.setDepth(10);
 
+        this.worldLayer.setCollisionByProperty({ collides: true });
+        this.matter.world.convertTilemapLayer(this.worldLayer);
+
+        this.worldLayer.forEachTile((tile) => {
+            if (tile.properties.info) {
+                tile.physics.matterBody.body.info = tile.properties.info;
+            }
+        });
+
         this.player, this.onlineBouncer;
         if (this.startData.spawn) {
             this.player = this.generatePlayer(null, this.startData.spawn.x, this.startData.spawn.y, OL.username);
@@ -71,22 +81,8 @@ export class DigitalPlanet extends Phaser.Scene {
 
             if (object.name === 'bouncerSpawn') {
                 this.onlineBouncer = new OnlineBouncer(this, object.x + 16, object.y - 24);
-                // if (this.startData.mapKey === "map") {
-                //     this.worldLayer.setTileLocationCallback(object.x / object.width, object.y / object.width - 1, 1, 1, this.enterLounge, this);
-                // }
             }
-
-            // if (object.name === 'exit') {
-            //     this.worldLayer.setTileLocationCallback(object.x / object.width, object.y / object.width - 1, 1, 1, this.exit, this);
-            // }
-
-            // if (object.type === 'info') {
-            //     this.worldLayer.setTileLocationCallback(object.x / object.width, object.y / object.width - 1, 1, 1, () => this.events.emit('displayPopup', {text: object.name}), this);
-            // }
         });
-
-        this.worldLayer.setCollisionByProperty({ collides: true });
-        this.matter.world.convertTilemapLayer(this.worldLayer);
 
         this.player.inLounge = this.startData.mapKey === 'loungeMap' ? true : false;
         this.matter.world.on('collisionstart', (event, bodyA, bodyB) => {
@@ -98,7 +94,9 @@ export class DigitalPlanet extends Phaser.Scene {
                     this.exitLounge();
                 }
             }
-    
+            if (bodyA.info && bodyB.type === "player1") {
+                this.events.emit('displayPopup', {text: bodyA.info});
+            }
         });
 
         this.controls = {
@@ -128,12 +126,16 @@ export class DigitalPlanet extends Phaser.Scene {
 
         this.serverClient.connect(this.player, (sessionID) => {
             console.log("connected: " + sessionID);
+            this.events.emit('connectionStatus', true);
             this.sessionID = sessionID;
             this.players.set(sessionID, this.player);
             this.player = this.players.get(sessionID);
+            this.serverClient.socket.on('disconnect', () => {
+                this.events.emit('connectionStatus', false);
+                this.events.emit('populationUpdate', "-");
+                console.log("disconnected from server");
+            })
         });
-
-        console.log("logged in - " + OL.username, " (password: " + OL.password + ")" + " session ID: " + this.sessionID);
 
         this.serverClient.socket.on('state', (state) => this.updateGameState(state));
         this.serverClient.socket.on('player action', (playerAction) => this.updatePlayerAction(playerAction));
@@ -215,7 +217,7 @@ export class DigitalPlanet extends Phaser.Scene {
     }
 
     updateFollowCam() {
-        if (this.player) {
+        if (this.player.body) {
             this.cameraDolly.x = Math.floor(this.player.x);
             this.cameraDolly.y = Math.floor(this.player.y);
         }
@@ -275,7 +277,6 @@ export class DigitalPlanet extends Phaser.Scene {
         if (socketId) {
             this.players.set(socketId, player);
         }
-        // console.log("new player", player, player.body, this.players);
         return player;
     }
 
@@ -331,6 +332,10 @@ export class DigitalPlanet extends Phaser.Scene {
     }
 
     updateGameState(state) {
+        if (state.length > this.population || state.length < this.population) {
+            this.population = state.length;
+            this.events.emit('populationUpdate', this.population);
+        }
         state.forEach((playerData) => {
             if (playerData.currentArea === this.player.currentArea) {
                 var playerToUpdate = this.players.get(playerData.socketId);
