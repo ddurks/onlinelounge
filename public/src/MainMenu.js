@@ -1,5 +1,4 @@
 import { OL } from './utils';
-import { GameServerClient } from './GameServerClient';
 
 export class MainMenu extends Phaser.Scene {
     constructor() {
