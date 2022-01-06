@@ -40,13 +40,9 @@ export class MainMenu extends Phaser.Scene {
         var inputUsername = document.getElementById('username');
         var inputPassword = document.getElementById('password');
 
-        if (inputUsername.value !== '') {
-            OL.username = inputUsername.value;
-            OL.password = inputPassword.value;
-            this.clickStart();
-        } else {
-            this.scene.tweens.add({ targets: text, alpha: 0.1, duration: 200, ease: 'Power3', yoyo: true });
-        }
+        OL.username = inputUsername.value;
+        OL.password = inputPassword.value;
+        this.clickStart();
     }
 
     clickStart() {
