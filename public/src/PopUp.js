@@ -72,15 +72,18 @@ export class PopUp extends Phaser.GameObjects.Group {
         this.playerIcon.setScale(2);
         this.playerIcon.setDepth(12);
         this.playerIcon.setScrollFactor(0);
+        this.playerIcon.setVisible(true);
         this.playerIcon.on( 'pointerdown', () => this.displayLookPopup("look 👀", playerSprite.texture));
     }
 
 
     changeLook(scene) {
-        // this.sprite.destroy();
-        // this.playerIcon.destroy();
-        scene.events.emit('lookChange');
-        this.close();
+        this.playerIcon.setVisible(false);
+        if (!OL.RESTARTING) {
+            // this fires extra times if there are consecutive look changes without page reload. idk why
+            scene.events.emit('lookChange');
+            this.close();
+        }
     }
 
     displayLookPopup(title, text) {
@@ -113,7 +116,9 @@ export class PopUp extends Phaser.GameObjects.Group {
         this.button.setVisible(false);
         this.buttonText.setVisible(false);
         this.sprite.setVisible(false);
-        this.sprite.anims.stop();
+        if (this.sprite.anims) {
+            this.sprite.anims.stop();
+        }
     }
 
     setSprite(scene, texture) {

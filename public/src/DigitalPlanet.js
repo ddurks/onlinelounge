@@ -162,23 +162,23 @@ export class DigitalPlanet extends Phaser.Scene {
         setInterval(() => {
                 this.serverClient.socket.emit('player input', this.player.keysPressed);
         }, INPUT_UPDATE_RATE);
+        OL.RESTARTING = false;
     }
 
     changeLook() {
-        // if (this.lookIndex < this.looks.length - 1) {
-        //     this.lookIndex++;
-        // } else {
-        //     this.lookIndex = 0;
-        // }
-        // let pos = {
-        //     x: this.player.x,
-        //     y: this.player.y
-        // }
-        // this.player.destroyStuff();
-        // this.player.destroy();
-        // this.player = this.generatePlayer(this.serverClient.connection.id, pos.x, pos.y, OL.username);
-        // this.camera.startFollow(this.player, true);
-        // this.camera.setBounds(0, -48, this.map.widthInPixels, this.map.heightInPixels);
+        if (!OL.RESTARTING) {
+            OL.RESTARTING = true;
+            if (this.lookIndex < this.looks.length - 1) {
+                this.lookIndex++;
+            } else {
+                this.lookIndex = 0;
+            }
+            this.startData.spawn = {
+                x: this.player.x,
+                y: this.player.y
+            }
+            this.scene.restart();
+        }
     }
 
     enterLounge() {
@@ -214,8 +214,8 @@ export class DigitalPlanet extends Phaser.Scene {
     update(time, delta) {
         if (this.player) {
             this.playerHandler(delta);
+            this.updateAllButterflies();
         }
-        this.updateAllButterflies();
         // OL.getRandomInt(0,30) === 25 ? this.updateCoins() : this.updateHearts();
         this.updateFollowCam();
     }
@@ -310,7 +310,7 @@ export class DigitalPlanet extends Phaser.Scene {
             }
             this.butterflies.forEach( (butterfly, index, butterflies) => {
                 butterfly.update();
-                if (!this.camera.worldView.contains(butterfly.x,butterfly.y)) {
+                if (butterfly.body && !this.camera.worldView.contains(butterfly.x,butterfly.y)) {
                     butterflies.splice(index, 1);
                     butterfly.destroy();
                 }
