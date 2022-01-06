@@ -165,20 +165,20 @@ export class DigitalPlanet extends Phaser.Scene {
     }
 
     changeLook() {
-        if (this.lookIndex < this.looks.length - 1) {
-            this.lookIndex++;
-        } else {
-            this.lookIndex = 0;
-        }
-        let pos = {
-            x: this.player.x,
-            y: this.player.y
-        }
-        this.player.destroyStuff();
-        this.player.destroy();
-        this.player = this.generatePlayer(this.serverClient.connection.id, pos.x, pos.y, OL.username);
-        this.camera.startFollow(this.player, true);
-        this.camera.setBounds(0, -48, this.map.widthInPixels, this.map.heightInPixels);
+        // if (this.lookIndex < this.looks.length - 1) {
+        //     this.lookIndex++;
+        // } else {
+        //     this.lookIndex = 0;
+        // }
+        // let pos = {
+        //     x: this.player.x,
+        //     y: this.player.y
+        // }
+        // this.player.destroyStuff();
+        // this.player.destroy();
+        // this.player = this.generatePlayer(this.serverClient.connection.id, pos.x, pos.y, OL.username);
+        // this.camera.startFollow(this.player, true);
+        // this.camera.setBounds(0, -48, this.map.widthInPixels, this.map.heightInPixels);
     }
 
     enterLounge() {
@@ -297,7 +297,6 @@ export class DigitalPlanet extends Phaser.Scene {
         if(this.butterflies.length < this.MAX_BUTTERFLIES) {
             let butterfly = new Butterfly(this, this.player.x + OL.getRandomInt(-250, 250), this.player.y + OL.getRandomInt(-250, 250));
             this.butterflies.push(butterfly);
-            console.log("new butterfly", butterfly, this.butterflies)
             return butterfly;
         }
         return null;

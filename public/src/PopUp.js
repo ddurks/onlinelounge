@@ -77,8 +77,8 @@ export class PopUp extends Phaser.GameObjects.Group {
 
 
     changeLook(scene) {
-        this.sprite.destroy();
-        this.playerIcon.destroy();
+        // this.sprite.destroy();
+        // this.playerIcon.destroy();
         scene.events.emit('lookChange');
         this.close();
     }
