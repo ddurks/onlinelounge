@@ -27,7 +27,7 @@ export class GameServerClient {
                 width: player.bodyWidth,
                 height: player.bodyHeight,
                 username: player.username,
-                fit: player.fit,
+                lookIndex: player.lookIndex,
                 currentArea: player.currentArea
             });
             onConnectCallback(this.sessionID);

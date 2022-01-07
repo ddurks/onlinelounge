@@ -106,7 +106,7 @@ class GameEngine {
 
     addPlayer(player) {
         if (!this.players.has(player.id)) {
-            this.players.set(player.id, this.Bodies.rectangle(player.x, player.y, player.width, player.height, {width:player.width, height:player.height, username:player.username, socketId:player.id, currentArea:player.currentArea}));
+            this.players.set(player.id, this.Bodies.rectangle(player.x, player.y, player.width, player.height, {width:player.width, height:player.height, username:player.username, socketId:player.id, currentArea:player.currentArea, lookIndex:player.lookIndex}));
             let newPlayer = this.players.get(player.id);
             newPlayer.frictionAir = (0.2);
             this.Body.setMass(newPlayer, 1);
@@ -181,7 +181,8 @@ class GameEngine {
               username: curr.username,
               socketId: curr.socketId,
               currentInputs: curr.currentInputs,
-              currentArea: curr.currentArea
+              currentArea: curr.currentArea,
+              lookIndex: curr.lookIndex
             });
             return acc;
           }, new Array())

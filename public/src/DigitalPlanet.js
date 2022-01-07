@@ -68,15 +68,17 @@ export class DigitalPlanet extends Phaser.Scene {
 
         this.player, this.onlineBouncer;
         if (this.startData.spawn) {
-            this.player = this.generatePlayer(null, this.startData.spawn.x, this.startData.spawn.y, OL.username);
+            this.player = this.generatePlayer(null, this.startData.spawn.x, this.startData.spawn.y, OL.username, this.lookIndex);
             this.player.body.type = 'player1';
             this.player.currentArea = this.getCurrentArea(this.startData.mapKey);
+            this.events.emit('playerLoaded', {texture: this.player.texture.key});
         }
         this.map.findObject('player', (object) => {
             if (object.name === 'spawn' && !this.startData.spawn) {
-                this.player = this.generatePlayer(null, object.x, object.y, OL.username);
+                this.player = this.generatePlayer(null, object.x, object.y, OL.username, this.lookIndex);
                 this.player.body.type = 'player1';
                 this.player.currentArea = this.getCurrentArea(this.startData.mapKey);
+                this.events.emit('playerLoaded', {texture: this.player.texture.key});
             }
 
             if (object.name === 'bouncerSpawn') {
@@ -124,6 +126,7 @@ export class DigitalPlanet extends Phaser.Scene {
             this.players.set(this.sessionID, this.player);
         }
 
+        this.player.lookIndex = this.lookIndex;
         this.serverClient.connect(this.player, (sessionID) => {
             console.log("connected: " + sessionID);
             this.events.emit('connectionStatus', true);
@@ -173,6 +176,21 @@ export class DigitalPlanet extends Phaser.Scene {
             } else {
                 this.lookIndex = 0;
             }
+            this.startData.spawn = {
+                x: this.player.x,
+                y: this.player.y
+            }
+            this.serverClient.socket.emit('player action', { lookIndex: this.lookIndex });
+            this.scene.restart();
+        }
+    }
+
+    changePlayerLook(player, index) {
+        console.log("changePlayerLook");
+        if (!OL.RESTARTING) {
+            console.log("restarting", index);
+            OL.RESTARTING = true;
+            player.lookIndex = index;
             this.startData.spawn = {
                 x: this.player.x,
                 y: this.player.y
@@ -274,10 +292,9 @@ export class DigitalPlanet extends Phaser.Scene {
         }
     }
 
-    generatePlayer(socketId, x, y, username) {
-        let player = new Player(this, x, y, this.looks[this.lookIndex], username);
+    generatePlayer(socketId, x, y, username, lookIndex) {
+        let player = new Player(this, x, y, this.looks[lookIndex], username);
         player.socketId = socketId;
-        this.events.emit('playerLoaded', {texture: player.texture.key});
         if (socketId) {
             this.players.set(socketId, player);
         }
@@ -332,6 +349,9 @@ export class DigitalPlanet extends Phaser.Scene {
             if (playerAction.actions.typing) {
                 playerToUpdate.startTyping();
             }
+            if (playerAction.actions.lookIndex && playerAction.actions.lookIndex >= 0) {
+                this.changePlayerLook(playerToUpdate, playerAction.actions.lookIndex);
+            }
         }
     }
 
@@ -344,7 +364,10 @@ export class DigitalPlanet extends Phaser.Scene {
             if (playerData.currentArea === this.player.currentArea) {
                 var playerToUpdate = this.players.get(playerData.socketId);
                 if (!playerToUpdate) {
-                    this.generatePlayer(playerData.socketId, playerData.x, playerData.y, playerData.username);
+                    if (playerData.socketId === this.sessionID) {
+                        this.events.emit('playerLoaded', {texture: playerToUpdate.texture.key});
+                    }
+                    this.generatePlayer(playerData.socketId, playerData.x, playerData.y, playerData.username, playerData.lookIndex);
                 } else if (playerToUpdate && playerToUpdate.body) {
                     playerToUpdate.setPosition(playerData.x, playerData.y);
                     if (playerData.currentInputs) {
