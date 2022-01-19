@@ -88,7 +88,6 @@ export class PopUp extends Phaser.GameObjects.Group {
     }
 
     displayLookPopup(title, text) {
-        console.log("displayLookPopup");
         this.title.setText(title);
         this.sprite.setVisible(true);
         this.display(text);

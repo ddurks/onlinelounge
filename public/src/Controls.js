@@ -144,7 +144,6 @@ export class Controls extends Phaser.Scene {
     }
 
     displayPopup(info) {
-        console.log("displayPopup");
         if (info.text !== this.prevPopupText) {
             this.popup.display(info.text);
             this.prevPopupText = info.text;
