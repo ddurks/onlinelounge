@@ -17,7 +17,7 @@ const Key = {
 }
 
 const WALKING_FORCE = 0.002;
-
+ 
 io.on('connection', (socket) => {
   if (engine.players.size > CAPACITY) {
     console.log("lounge full. closing connection");
@@ -39,6 +39,12 @@ io.on('connection', (socket) => {
 
   socket.on('player action', (actionArray) => {
     console.log("actions ", actionArray);
+    if (actionArray.lookIndex) {
+      let playerToChange = engine.players.get(socket.id);
+      if (playerToChange) {
+        playerToChange.lookIndex = actionArray.lookIndex;
+      }
+    }
     io.sockets.emit('player action', { socketId: socket.id, actions: actionArray });
   });
 

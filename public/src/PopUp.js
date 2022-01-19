@@ -59,7 +59,8 @@ export class PopUp extends Phaser.GameObjects.Group {
         this.buttonText.setDepth(13);
         this.buttonText.setVisible(false);
         this.buttonText.setScrollFactor(0);
-
+    
+        scene.scene.get('DigitalPlanet').events.off('playerLoaded');
         scene.scene.get('DigitalPlanet').events.on('playerLoaded', (playerSprite) => {
             this.loadPlayerIcon(scene, playerSprite);
             this.setSprite(scene, playerSprite.texture);
@@ -78,12 +79,10 @@ export class PopUp extends Phaser.GameObjects.Group {
 
 
     changeLook(scene) {
-        this.playerIcon.setVisible(false);
-        if (!OL.RESTARTING) {
-            // this fires extra times if there are consecutive look changes without page reload. idk why
-            scene.events.emit('lookChange');
-            this.close();
-        }
+        this.sprite.destroy();
+        this.playerIcon.destroy();
+        scene.events.emit('lookChange');
+        this.close();
     }
 
     displayLookPopup(title, text) {
@@ -99,7 +98,9 @@ export class PopUp extends Phaser.GameObjects.Group {
         this.x.setVisible(true);
         this.title.setVisible(true);
         this.textBody.setVisible(true);
-        this.sprite.anims.play('down');
+        if (this.sprite.anims) {
+            this.sprite.anims.play('down');
+        }
     }
 
     displayButton(label) {
