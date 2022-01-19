@@ -86,18 +86,17 @@ export class DigitalPlanet extends Phaser.Scene {
             }
         });
 
-        this.player.inLounge = this.startData.mapKey === 'loungeMap' ? true : false;
         this.matter.world.on('collisionstart', (event, bodyA, bodyB) => {
-            if (bodyA.type === 'player1' && bodyB.type === 'bouncer') {
-                if (!this.player.inLounge) {
-                    this.player.inLounge = !this.player.inLounge;
+            if ((bodyA.type === 'player1' && bodyB.type === 'bouncer') || (bodyB.type === 'player1' && bodyA.type === 'bouncer')) {
+                if (this.player.currentArea !== AREAS.lounge) {
+                    this.player.currentArea = AREAS.lounge
                     this.enterLounge();
                 } else {
                     this.exitLounge();
                 }
             }
-            if (bodyA.info && bodyB.type === "player1") {
-                this.events.emit('displayPopup', {text: bodyA.info});
+            if ((bodyA.info && bodyB.type === "player1") || (bodyB.info && bodyA.type === "player1")) {
+                this.events.emit('displayPopup', {text: bodyA.info ? bodyA.info : bodyB.info});
             }
         });
 
@@ -114,6 +113,13 @@ export class DigitalPlanet extends Phaser.Scene {
         this.cameraDolly = new Phaser.Geom.Point(this.player.x, this.player.y);
         this.camera.startFollow(this.player, true);
         this.camera.setBounds(0, -48, this.map.widthInPixels, this.map.heightInPixels);
+
+        // turn off events so they don't duplicate upon restart
+        this.scene.get('Controls').events.off('openChat');
+        this.scene.get('Controls').events.off('sendChat');
+        this.scene.get('Controls').events.off('zoomIn');
+        this.scene.get('Controls').events.off('zoomOut');
+        this.scene.get('Controls').events.off('lookChange');
 
         this.scene.get('Controls').events.on('openChat', () => this.openChatBox());
         this.scene.get('Controls').events.on('sendChat', () => this.sendChat());
@@ -168,6 +174,7 @@ export class DigitalPlanet extends Phaser.Scene {
     }
 
     changeLook() {
+        console.log("changeLook");
         if (this.lookIndex < this.looks.length - 1) {
             this.lookIndex++;
         } else {
@@ -192,6 +199,7 @@ export class DigitalPlanet extends Phaser.Scene {
     }
 
     changePlayerLook(player, index) {
+        console.log("changePlayerLook");
         let socketId = player.socketId;
         let username = player.username;
         let pos = {
@@ -394,11 +402,11 @@ export class DigitalPlanet extends Phaser.Scene {
                         }
                     }
                 } else {
-                        console.log(playerToUpdate, "no body");
-                        this.removePlayer(playerData.socketId);
+                    console.log(playerToUpdate, "no body");
+                    this.removePlayer(playerData.socketId);
                 }
             } else {
-                    this.removePlayer(playerData.socketId);
+                this.removePlayer(playerData.socketId);
             }
         });
     }

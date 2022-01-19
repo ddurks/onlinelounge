@@ -59,7 +59,8 @@ export class PopUp extends Phaser.GameObjects.Group {
         this.buttonText.setDepth(13);
         this.buttonText.setVisible(false);
         this.buttonText.setScrollFactor(0);
-
+    
+        scene.scene.get('DigitalPlanet').events.off('playerLoaded');
         scene.scene.get('DigitalPlanet').events.on('playerLoaded', (playerSprite) => {
             this.loadPlayerIcon(scene, playerSprite);
             this.setSprite(scene, playerSprite.texture);
@@ -97,7 +98,9 @@ export class PopUp extends Phaser.GameObjects.Group {
         this.x.setVisible(true);
         this.title.setVisible(true);
         this.textBody.setVisible(true);
-        this.sprite.anims.play('down');
+        if (this.sprite.anims) {
+            this.sprite.anims.play('down');
+        }
     }
 
     displayButton(label) {

@@ -29,7 +29,7 @@ var gameConfig = {
 			gravity: {
 				y: 0
 			},
-			debug: true
+			debug: false
 		}
     },
 	scene: [Boot, Preloader, MainMenu, DigitalPlanet, Controls]
