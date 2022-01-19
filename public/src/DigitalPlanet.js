@@ -165,38 +165,44 @@ export class DigitalPlanet extends Phaser.Scene {
         setInterval(() => {
                 this.serverClient.socket.emit('player input', this.player.keysPressed);
         }, INPUT_UPDATE_RATE);
-        OL.RESTARTING = false;
     }
 
     changeLook() {
-        if (!OL.RESTARTING) {
-            OL.RESTARTING = true;
-            if (this.lookIndex < this.looks.length - 1) {
-                this.lookIndex++;
-            } else {
-                this.lookIndex = 0;
-            }
-            this.startData.spawn = {
-                x: this.player.x,
-                y: this.player.y
-            }
-            this.serverClient.socket.emit('player action', { lookIndex: this.lookIndex });
-            this.scene.restart();
+        if (this.lookIndex < this.looks.length - 1) {
+            this.lookIndex++;
+        } else {
+            this.lookIndex = 0;
         }
+        let pos = {
+            x: this.player.x,
+            y: this.player.y
+        }
+        this.serverClient.socket.emit('player action', { lookIndex: this.lookIndex });
+        this.camera.stopFollow();
+        this.player.setCollisionCategory(null);
+        // matter body is not actually removed by this, not sure why (works in changePlayerLook)
+        this.matter.world.remove(this.player);
+        this.removePlayer(this.sessionID);
+        this.player = this.generatePlayer(this.sessionID, pos.x, pos.y, OL.username, this.lookIndex);
+        this.player.body.type = 'player1';
+        this.player.currentArea = this.getCurrentArea(this.startData.mapKey);
+        this.players.set(this.sessionID, this.player);
+        this.events.emit('playerLoaded', {texture: this.looks[this.lookIndex]});
+        this.camera.startFollow(this.player, true);
     }
 
     changePlayerLook(player, index) {
-        console.log("changePlayerLook");
-        if (!OL.RESTARTING) {
-            console.log("restarting", index);
-            OL.RESTARTING = true;
-            player.lookIndex = index;
-            this.startData.spawn = {
-                x: this.player.x,
-                y: this.player.y
-            }
-            this.scene.restart();
+        let socketId = player.socketId;
+        let username = player.username;
+        let pos = {
+            x: player.x,
+            y: player.y
         }
+        player.setCollisionCategory(null);
+        this.matter.world.remove(player);
+        this.removePlayer(socketId);
+        let newPlayer = this.generatePlayer(socketId, pos.x, pos.y, username, index);
+        this.players.set(socketId, newPlayer);
     }
 
     enterLounge() {
@@ -230,7 +236,7 @@ export class DigitalPlanet extends Phaser.Scene {
     }
 
     update(time, delta) {
-        if (this.player) {
+        if (this.player && this.player.body) {
             this.playerHandler(delta);
             this.updateAllButterflies();
         }
@@ -338,7 +344,7 @@ export class DigitalPlanet extends Phaser.Scene {
 
     updatePlayerAction(playerAction) {
         let playerToUpdate = this.players.get(playerAction.socketId);
-        if (playerToUpdate) {
+        if (playerToUpdate && playerToUpdate.socketId !== this.sessionID) {
             if (playerAction.actions.message) {
                 if (playerAction.actions.message === "NULL") {
                     playerToUpdate.setMsg("");
@@ -349,7 +355,7 @@ export class DigitalPlanet extends Phaser.Scene {
             if (playerAction.actions.typing) {
                 playerToUpdate.startTyping();
             }
-            if (playerAction.actions.lookIndex && playerAction.actions.lookIndex >= 0) {
+            if ( (playerAction.actions.lookIndex || playerAction.actions.lookIndex === 0) && playerAction.actions.lookIndex >= 0) {
                 this.changePlayerLook(playerToUpdate, playerAction.actions.lookIndex);
             }
         }
@@ -365,7 +371,7 @@ export class DigitalPlanet extends Phaser.Scene {
                 var playerToUpdate = this.players.get(playerData.socketId);
                 if (!playerToUpdate) {
                     if (playerData.socketId === this.sessionID) {
-                        this.events.emit('playerLoaded', {texture: playerToUpdate.texture.key});
+                        this.events.emit('playerLoaded', {texture: this.player.texture.key});
                     }
                     this.generatePlayer(playerData.socketId, playerData.x, playerData.y, playerData.username, playerData.lookIndex);
                 } else if (playerToUpdate && playerToUpdate.body) {
@@ -388,11 +394,11 @@ export class DigitalPlanet extends Phaser.Scene {
                         }
                     }
                 } else {
-                    console.log(playerToUpdate, "no body");
-                    this.removePlayer(playerData.socketId);
+                        console.log(playerToUpdate, "no body");
+                        this.removePlayer(playerData.socketId);
                 }
             } else {
-                this.removePlayer(playerData.socketId);
+                    this.removePlayer(playerData.socketId);
             }
         });
     }

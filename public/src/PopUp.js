@@ -78,12 +78,10 @@ export class PopUp extends Phaser.GameObjects.Group {
 
 
     changeLook(scene) {
-        this.playerIcon.setVisible(false);
-        if (!OL.RESTARTING) {
-            // this fires extra times if there are consecutive look changes without page reload. idk why
-            scene.events.emit('lookChange');
-            this.close();
-        }
+        this.sprite.destroy();
+        this.playerIcon.destroy();
+        scene.events.emit('lookChange');
+        this.close();
     }
 
     displayLookPopup(title, text) {
