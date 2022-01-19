@@ -19,7 +19,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.coins = new Array();
         this.hearts = new Array();
         this.looks = new Array();
-        this.lookIndex = 0;
+        this.lookIndex = OL.IS_MOBILE ? 1 : 0;
         this.MAX_BUTTERFLIES = 0;
         this.serverClient = new GameServerClient();
         this.population = 0;
