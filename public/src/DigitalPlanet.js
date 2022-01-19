@@ -174,7 +174,6 @@ export class DigitalPlanet extends Phaser.Scene {
     }
 
     changeLook() {
-        console.log("changeLook");
         if (this.lookIndex < this.looks.length - 1) {
             this.lookIndex++;
         } else {
@@ -199,7 +198,6 @@ export class DigitalPlanet extends Phaser.Scene {
     }
 
     changePlayerLook(player, index) {
-        console.log("changePlayerLook");
         let socketId = player.socketId;
         let username = player.username;
         let pos = {
