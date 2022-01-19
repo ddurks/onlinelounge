@@ -69,23 +69,26 @@ export class PopUp extends Phaser.GameObjects.Group {
     }
 
     loadPlayerIcon(scene, playerSprite) {
+        if (this.playerIcon) {
+            this.playerIcon.destroy();
+        }
         this.playerIcon = scene.add.image(OL.world.width - 37, 22, playerSprite.texture, 12).setInteractive();
         this.playerIcon.setScale(2);
         this.playerIcon.setDepth(12);
         this.playerIcon.setScrollFactor(0);
         this.playerIcon.setVisible(true);
+        this.playerIcon.off('pointerdown');
         this.playerIcon.on( 'pointerdown', () => this.displayLookPopup("look 👀", playerSprite.texture));
     }
 
 
     changeLook(scene) {
-        this.sprite.destroy();
-        this.playerIcon.destroy();
         scene.events.emit('lookChange');
         this.close();
     }
 
     displayLookPopup(title, text) {
+        console.log("displayLookPopup");
         this.title.setText(title);
         this.sprite.setVisible(true);
         this.display(text);
@@ -123,6 +126,9 @@ export class PopUp extends Phaser.GameObjects.Group {
     }
 
     setSprite(scene, texture) {
+        if (this.sprite) {
+            this.sprite.destroy();
+        }
         this.sprite = scene.add.sprite(this.popup.x - 10, this.popup.y - 64, texture).setOrigin(0.5, 0.5);
 
         this.sprite.anims.create({

@@ -69,6 +69,9 @@ export class Controls extends Phaser.Scene {
         this.zoomButton.setDepth(12);
         this.add.existing(this.zoomButton).setScrollFactor(0);
 
+        if (this.popup) {
+            this.popup.destroy();
+        }
         this.popup = new PopUp(this);
 
         this.scene.get('DigitalPlanet').events.on('displayPopup', (info) => this.displayPopup(info));
@@ -141,6 +144,7 @@ export class Controls extends Phaser.Scene {
     }
 
     displayPopup(info) {
+        console.log("displayPopup");
         if (info.text !== this.prevPopupText) {
             this.popup.display(info.text);
             this.prevPopupText = info.text;
