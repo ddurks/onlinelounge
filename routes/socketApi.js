@@ -79,7 +79,7 @@ io.on('connection', (socket) => {
 setInterval(() => {
   if (engine.players.size > 0) {
     let state = { players: engine.getPlayers() };
-    engine.bullets.length > 0 ? state.bullets = engine.getBullets() : null;
+    engine.bullets.size > 0 ? state.bullets = engine.getBullets() : null;
     io.sockets.emit('state', state);
   }
 }, TICK_RATE);

@@ -1,5 +1,9 @@
 var Matter = require('matter-js');
 var tmx = require('tmx-parser');
+const {
+    v1: uuidv1,
+    v4: uuidv4
+} = require('uuid');
 const ENGINE_RATE = 1000/60;
 const WALKING_SPEED = 2.5;
 const WALKING_FORCE = 0.002;
@@ -32,7 +36,7 @@ class GameEngine {
         this.loungeEngine.gravity.y = 0;
 
         this.players = new Map();
-        this.bullets = new Array();
+        this.bullets = new Map();
     
         this.curr_timestamp = Date.now();
         this.prev_timestamp, this.deltat = ENGINE_RATE, this.lastDeltat;
@@ -100,19 +104,14 @@ class GameEngine {
         });
 
         Matter.Events.on(this.engine, 'collisionStart', (event) => {
-            console.log("collision", event.pairs[0].bodyA.isWall, event.pairs[0].bodyB.isWall);
             if (event.pairs[0].bodyA.isBullet || event.pairs[0].bodyB.isBullet) {
                 if (event.pairs[0].bodyA.isBullet && event.pairs[0].bodyA.firedBy !== event.pairs[0].bodyB.socketId) {
-                    console.log(event.pairs[0].bodyA.firedBy, event.pairs[0].bodyB.socketId);
-                    this.bullets.splice(event.pairs[0].bodyA.index, 1);
+                    this.bullets.delete(event.pairs[0].bodyA.bulletId);
                     this.Composite.remove(this.engine.world, event.pairs[0].bodyA);
-                    console.log(event.pairs[0].bodyA.index, this.bullets.length);
                 }
                 if (event.pairs[0].bodyB.isBullet && event.pairs[0].bodyB.firedBy !== event.pairs[0].bodyA.socketId) {
-                    console.log(event.pairs[0].bodyB.firedBy, event.pairs[0].bodyA.socketId);
-                    this.bullets.splice(event.pairs[0].bodyB.index, 1);
+                    this.bullets.delete(event.pairs[0].bodyB.bulletId);
                     this.Composite.remove(this.engine.world, event.pairs[0].bodyB);
-                    console.log(event.pairs[0].bodyB.index, this.bullets.length);
                 }
             }
         })
@@ -175,11 +174,12 @@ class GameEngine {
         let player = this.players.get(socketId);
         if (player && player.currentArea === AREAS.digitalplanet) {
             let newBullet = this.Bodies.rectangle(player.position.x, player.position.y, 16, 16, {isBullet: true, direction: direction});
-            newBullet.index = this.bullets.length;
+            newBullet.index = this.bullets.size;
             newBullet.firedBy = player.socketId;
+            newBullet.bulletId = uuidv1();
             this.Composite.add(this.engine.world, newBullet);
             this.setBulletVelocity(newBullet, direction);
-            this.bullets.push(newBullet);
+            this.bullets.set(newBullet.bulletId, newBullet);
             return newBullet;
         } else {
             return null;
@@ -297,8 +297,9 @@ class GameEngine {
     }
 
     getBullets() {
-        return this.bullets.map((curr, index) => {
+        return Array.from(this.bullets.values()).map((curr) => {
             return {
+                bulletId: curr.bulletId,
                 x: curr.position.x,
                 y: curr.position.y,
                 direction: curr.direction

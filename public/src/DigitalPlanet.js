@@ -15,7 +15,7 @@ export class DigitalPlanet extends Phaser.Scene {
     constructor() {
         super('DigitalPlanet');
         this.players = new Map();
-        this.bullets = new Array();
+        this.bullets = new Map();
         this.butterflies = new Array();
         this.coins = new Array();
         this.hearts = new Array();
@@ -194,7 +194,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.camera.stopFollow();
         this.player.setCollisionCategory(null);
         // matter body is not actually removed by this, not sure why (works in changePlayerLook)
-        this.matter.world.remove(this.player);
+        this.matter.world.remove(this.players.get(this.sessionID));
         this.removePlayer(this.sessionID);
         this.player = this.generatePlayer(this.sessionID, pos.x, pos.y, OL.username, this.lookIndex);
         this.player.body.type = 'player1';
@@ -420,23 +420,28 @@ export class DigitalPlanet extends Phaser.Scene {
                 this.removePlayer(playerData.socketId);
             }
         });
+        let idSet = new Set();
         if (state.bullets) {
-            console.log(state.bullets.length, this.bullets.length);
-            if (state.bullets.length < this.bullets.length) {
-                for (let i = state.bullets.length; i < this.bullets.length; i++) {
-                    this.bullets[i].destroy();
-                    this.matter.world.remove(this.bullets[i]);
-                }
-                this.bullets.splice(state.bullets.length, this.bullets.length - state.bullets.length + 1);
-            }
-            state.bullets.forEach((bullet, index) => {
-                if (!this.bullets[index]) {
-                    this.bullets[index] = new Bullet(this, bullet.x, bullet.y, bullet.direction);
+            state.bullets.forEach((bullet) => {
+                idSet.add(bullet.bulletId);
+                var bulletToUpdate = this.bullets.get(bullet.bulletId);
+                if (!bulletToUpdate) {
+                    this.bullets.set(bullet.bulletId, new Bullet(this, bullet.bulletId, bullet.x, bullet.y, bullet.direction));
                 } else {
-                    this.bullets[index].setPosition(bullet.x, bullet.y);
+                    bulletToUpdate.setPosition(bullet.x, bullet.y);
                 }
-            })
+            });
         }
+        Array.from(this.bullets.values()).forEach((bullet) => {
+            if (!idSet.has(bullet.bulletId)) {
+                let destroyedBullet = this.bullets.get(bullet.bulletId);
+                if (destroyedBullet) {
+                    this.matter.world.remove(destroyedBullet);
+                    destroyedBullet.destroy();
+                    this.bullets.delete(bullet.bulletId);
+                }
+            }
+        });
     }
 
     updatePlayer1(delta) {
@@ -529,6 +534,7 @@ export class DigitalPlanet extends Phaser.Scene {
             this.player.keysPressed[Key.a] = 0;
             this.player.keysPressed[Key.w] = 0;
             this.player.keysPressed[Key.s] = 0;
+            this.player.direction = Key.d;
         } else if (angle > 22.5 && angle <= 67.5) { //right-down
             this.player.applyForce({x: OL.WALKING_FORCE, y: 0});
             this.player.applyForce({x: 0, y: OL.WALKING_FORCE});
@@ -537,6 +543,7 @@ export class DigitalPlanet extends Phaser.Scene {
             this.player.keysPressed[Key.d] = 1;
             this.player.keysPressed[Key.w] = 0;
             this.player.keysPressed[Key.a] = 0;
+            this.player.direction = Key.d;
         } else if (angle > 67.5 && angle <= 112.5) { //down
             this.player.applyForce({x: 0, y: OL.WALKING_FORCE});
             this.player.anims.play('down', true);
@@ -544,6 +551,7 @@ export class DigitalPlanet extends Phaser.Scene {
             this.player.keysPressed[Key.a] = 0;
             this.player.keysPressed[Key.w] = 0;
             this.player.keysPressed[Key.d] = 0;
+            this.player.direction = Key.s;
         } else if (angle > 112.5 && angle <= 157.5) { //left-down
             this.player.applyForce({x: -OL.WALKING_FORCE, y: 0});
             this.player.applyForce({x: 0, y: OL.WALKING_FORCE});
@@ -552,6 +560,7 @@ export class DigitalPlanet extends Phaser.Scene {
             this.player.keysPressed[Key.s] = 1;
             this.player.keysPressed[Key.w] = 0;
             this.player.keysPressed[Key.d] = 0;
+            this.player.direction = Key.a;
         } else if ((angle > 157.5 && angle <= 180) || (angle >= -180 && angle < -157.5) ) { //left
             this.player.applyForce({x: -OL.WALKING_FORCE, y: 0});
             this.player.anims.play('left', true);
@@ -559,6 +568,7 @@ export class DigitalPlanet extends Phaser.Scene {
             this.player.keysPressed[Key.w] = 0;
             this.player.keysPressed[Key.s] = 0;
             this.player.keysPressed[Key.d] = 0;
+            this.player.direction = Key.a;
         } else if (angle >= -157.5 && angle < -112.5) { //left-up
             this.player.applyForce({x: -OL.WALKING_FORCE, y: 0});
             this.player.applyForce({x: 0, y: -OL.WALKING_FORCE});
@@ -567,6 +577,7 @@ export class DigitalPlanet extends Phaser.Scene {
             this.player.keysPressed[Key.w] = 1;
             this.player.keysPressed[Key.s] = 0;
             this.player.keysPressed[Key.d] = 0;
+            this.player.direction = Key.a;
         } else if (angle >= -112.5 && angle < -67.5) { //up
             this.player.applyForce({x: 0, y: -OL.WALKING_FORCE});
             this.player.anims.play('up', true);
@@ -574,6 +585,7 @@ export class DigitalPlanet extends Phaser.Scene {
             this.player.keysPressed[Key.a] = 0;
             this.player.keysPressed[Key.s] = 0;
             this.player.keysPressed[Key.d] = 0;
+            this.player.direction = Key.w;
         } else if (angle >= -67.5 && angle < -22.5) { //right-up
             this.player.applyForce({x: OL.WALKING_FORCE, y: 0});
             this.player.applyForce({x: 0, y: -OL.WALKING_FORCE});
@@ -582,6 +594,7 @@ export class DigitalPlanet extends Phaser.Scene {
             this.player.keysPressed[Key.d] = 1;
             this.player.keysPressed[Key.a] = 0;
             this.player.keysPressed[Key.s] = 0;
+            this.player.direction = Key.d;
         }
     }
 
@@ -590,7 +603,7 @@ export class DigitalPlanet extends Phaser.Scene {
         if ((!this.player.typing && pointer.isDown)) {
             var touchX = pointer.x;
             var touchY = pointer.y;
-            if (touchX <= 410 || (touchY <= 440 && touchY >= 48)) {
+            if (touchY > 48 && !(touchY > OL.world.height - 150 && touchX > OL.world.width - 128)) {
                 var touchWorldPoint = this.camera.getWorldPoint(touchX, touchY);
                 if (OL.getDistance(this.player.body.position.x, this.player.body.position.y, touchWorldPoint.x, touchWorldPoint.y) > 29) {
                     this.setPlayerSpeedFromTouchAngle(OL.getAngle(this.player.body.position.x, this.player.body.position.y, touchWorldPoint.x, touchWorldPoint.y));

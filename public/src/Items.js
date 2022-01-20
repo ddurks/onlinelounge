@@ -37,9 +37,10 @@ export class Heart extends Phaser.Physics.Matter.Sprite {
 }
 
 export class Bullet extends Phaser.Physics.Matter.Sprite {
-    constructor(scene, x, y, direction) {
+    constructor(scene, bulletId, x, y, direction) {
         super(scene.matter.world, x, y, 'bullet');
         scene.add.existing(this);
+        this.bulletId = bulletId;
         this.direction = direction;
         switch (this.direction) {
             case Key.s:

@@ -130,7 +130,6 @@ export class Player extends Phaser.Physics.Matter.Sprite {
     }
 
     animForPlayerFromVelocity() {
-        console.log(this.frame);
         if (this.body.velocity.x > 0) {
             this.anims.play('right', true);
             this.direction = Key.d;
