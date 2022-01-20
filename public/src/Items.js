@@ -65,19 +65,15 @@ export class GunFlash extends Phaser.Physics.Matter.Sprite {
         let frame, pos = {x: x, y: y};
         switch (direction) {
             case Key.s:
-                pos = {x: x - 16, y: y + 6}
                 frame = 0;
                 break;
             case Key.d:
-                pos = {x: x + 30, y: y + 6}
                 frame = 1;
                 break;
             case Key.w:
-                pos = {x: x + 6, y: y - 10}
                 frame = 2
                 break;
             case Key.a:
-                pos = {x: x - 30, y: y + 6}
                 frame = 3;
                 break;
         }

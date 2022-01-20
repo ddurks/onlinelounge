@@ -179,7 +179,6 @@ export class DigitalPlanet extends Phaser.Scene {
 
     shootGun() {
         this.serverClient.socket.emit('shoot bullet', this.player.direction);
-        new GunFlash(this, this.player.x, this.player.y, this.player.direction);
     }
 
     changeLook() {
@@ -418,6 +417,7 @@ export class DigitalPlanet extends Phaser.Scene {
                 var bulletToUpdate = this.bullets.get(bullet.bulletId);
                 if (!bulletToUpdate) {
                     this.bullets.set(bullet.bulletId, new Bullet(this, bullet.bulletId, bullet.x, bullet.y, bullet.direction));
+                    new GunFlash(this, bullet.x, bullet.y, bullet.direction);
                 } else {
                     bulletToUpdate.setPosition(bullet.x, bullet.y);
                 }
