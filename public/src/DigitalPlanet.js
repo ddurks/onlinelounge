@@ -609,19 +609,53 @@ export class DigitalPlanet extends Phaser.Scene {
     }
 
     playerMobileMovementHandler() {
-        var pointer = this.input.activePointer;
-        if ((!this.player.typing && pointer.isDown)) {
-            var touchX = pointer.x;
-            var touchY = pointer.y;
-            if (touchY > 48 && !(touchY > OL.world.height - 150 && touchX > OL.world.width - 128)) {
-                var touchWorldPoint = this.camera.getWorldPoint(touchX, touchY);
-                if (OL.getDistance(this.player.body.position.x, this.player.body.position.y, touchWorldPoint.x, touchWorldPoint.y) > 29) {
-                    this.setPlayerSpeedFromTouchAngle(OL.getAngle(this.player.body.position.x, this.player.body.position.y, touchWorldPoint.x, touchWorldPoint.y));
-                }
+        // var pointer = this.input.activePointer;
+        // if ((!this.player.typing && pointer.isDown)) {
+        //     var touchX = pointer.x;
+        //     var touchY = pointer.y;
+        //     if (touchY > 48 && !(touchY > OL.world.height - 150 && touchX > OL.world.width - 128)) {
+        //         var touchWorldPoint = this.camera.getWorldPoint(touchX, touchY);
+        //         if (OL.getDistance(this.player.body.position.x, this.player.body.position.y, touchWorldPoint.x, touchWorldPoint.y) > 29) {
+        //             this.setPlayerSpeedFromTouchAngle(OL.getAngle(this.player.body.position.x, this.player.body.position.y, touchWorldPoint.x, touchWorldPoint.y));
+        //         }
+        //     }
+        // } else {
+        //     this.player.anims.pause();
+        //     this.player.keysPressed = [0, 0, 0, 0];
+        // }
+        if (!this.scene.get('Controls').joystick.nokey) {
+            if (this.scene.get('Controls').joystick.left) {
+                this.player.keysPressed[Key.a] = 1;
+                this.player.anims.play('left', true);
+                this.player.direction = Key.a;
+            } else {
+                this.player.keysPressed[Key.a] = 0;
+            }
+            if (this.scene.get('Controls').joystick.right) {
+                this.player.keysPressed[Key.d] = 1;
+                this.player.direction = Key.d;
+                this.player.anims.play('right', true);
+            } else {
+                this.player.keysPressed[Key.d] = 0;
+            }
+            if (this.scene.get('Controls').joystick.up) {
+                this.player.keysPressed[Key.w] = 1;
+                this.player.direction = Key.w;
+                this.player.anims.play('up', true);
+            } else {
+                this.player.keysPressed[Key.w] = 0;
+            }
+            if (this.scene.get('Controls').joystick.down) {
+                this.player.keysPressed[Key.s] = 1;
+                this.player.direction = Key.s;
+                this.player.anims.play('down', true);
+            } else {
+                this.player.keysPressed[Key.s] = 0;
             }
         } else {
             this.player.anims.pause();
-            this.player.keysPressed = [0, 0, 0, 0];
         }
+
+        this.updatePlayerFromInput(this.player);
     }
 }

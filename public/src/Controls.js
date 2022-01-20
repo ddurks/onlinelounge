@@ -1,5 +1,6 @@
 import { PopUp } from "./PopUp";
 import { TextButton, OL } from "./utils";
+import VirtualJoystick from 'phaser3-rex-plugins/plugins/virtualjoystick.js';
 
 export class HealthBar extends Phaser.GameObjects.Group {
     constructor(scene, heartsNum) {
@@ -108,6 +109,13 @@ export class Controls extends Phaser.Scene {
         }
         this.popup = new PopUp(this);
         this.healthBar = new HealthBar(this, 3);
+        if (OL.IS_MOBILE) {
+            this.joystick = new VirtualJoystick(this, {
+                x: 125,
+                y: OL.world.height - 125,
+                radius: 100,
+            }).setScrollFactor(0);
+        }
 
         this.scene.get('DigitalPlanet').events.on('displayPopup', (info) => this.displayPopup(info));
         this.scene.get('DigitalPlanet').events.on('populationUpdate', (pop) => this.populationUpdate(pop));
