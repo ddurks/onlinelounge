@@ -69,6 +69,10 @@ export class Controls extends Phaser.Scene {
         this.zoomButton.setDepth(12);
         this.add.existing(this.zoomButton).setScrollFactor(0);
 
+        this.gunButton = this.add.image(OL.world.width - 40, OL.world.height - 108, 'gunButton').setVisible(false).setInteractive({ useHandCursor: true }).on('pointerdown', () => {
+            this.events.emit('shootGun');
+        });
+
         if (this.popup) {
             this.popup.destroy();
         }
@@ -77,6 +81,7 @@ export class Controls extends Phaser.Scene {
         this.scene.get('DigitalPlanet').events.on('displayPopup', (info) => this.displayPopup(info));
         this.scene.get('DigitalPlanet').events.on('populationUpdate', (pop) => this.populationUpdate(pop));
         this.scene.get('DigitalPlanet').events.on('connectionStatus', (status) => this.setConnected(status));
+        this.scene.get('DigitalPlanet').events.on('holdingGun', (status) => this.holdingGun(status));
     }
 
     setConnected(status) {
@@ -89,6 +94,10 @@ export class Controls extends Phaser.Scene {
 
     populationUpdate(pop) {
         this.populationText.setText(pop);
+    }
+
+    holdingGun(status) {
+        this.gunButton.setVisible(status);
     }
 
     createMenuBar() {

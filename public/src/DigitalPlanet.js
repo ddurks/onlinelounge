@@ -1,7 +1,7 @@
 import { OL } from './utils';
 import { Player, Key } from './Player';
 import { Butterfly, OnlineBouncer } from './Guys';
-import { Coin, Heart } from './Items';
+import { Coin, Heart, Bullet } from './Items';
 import { GameServerClient } from './GameServerClient';
 
 const INPUT_UPDATE_RATE = 1000/30;
@@ -15,6 +15,7 @@ export class DigitalPlanet extends Phaser.Scene {
     constructor() {
         super('DigitalPlanet');
         this.players = new Map();
+        this.bullets = new Array();
         this.butterflies = new Array();
         this.coins = new Array();
         this.hearts = new Array();
@@ -120,12 +121,14 @@ export class DigitalPlanet extends Phaser.Scene {
         this.scene.get('Controls').events.off('zoomIn');
         this.scene.get('Controls').events.off('zoomOut');
         this.scene.get('Controls').events.off('lookChange');
+        this.scene.get('Controls').events.off('shootGun');
 
         this.scene.get('Controls').events.on('openChat', () => this.openChatBox());
         this.scene.get('Controls').events.on('sendChat', () => this.sendChat());
         this.scene.get('Controls').events.on('zoomIn', () => this.zoomIn());
         this.scene.get('Controls').events.on('zoomOut', () => this.zoomOut());
         this.scene.get('Controls').events.on('lookChange', () => this.changeLook());
+        this.scene.get('Controls').events.on('shootGun', () => this.shootGun());
 
         this.sessionID = this.serverClient.sessionID ? this.serverClient.sessionID : undefined;
         if (this.sessionID) {
@@ -171,6 +174,10 @@ export class DigitalPlanet extends Phaser.Scene {
         setInterval(() => {
                 this.serverClient.socket.emit('player input', this.player.keysPressed);
         }, INPUT_UPDATE_RATE);
+    }
+
+    shootGun() {
+        this.serverClient.socket.emit('shoot bullet', this.player.direction);
     }
 
     changeLook() {
@@ -350,7 +357,7 @@ export class DigitalPlanet extends Phaser.Scene {
 
     updatePlayerAction(playerAction) {
         let playerToUpdate = this.players.get(playerAction.socketId);
-        if (playerToUpdate && playerToUpdate.socketId !== this.sessionID) {
+        if (playerToUpdate && playerAction.socketId !== this.sessionID) {
             if (playerAction.actions.message) {
                 if (playerAction.actions.message === "NULL") {
                     playerToUpdate.setMsg("");
@@ -364,15 +371,21 @@ export class DigitalPlanet extends Phaser.Scene {
             if ( (playerAction.actions.lookIndex || playerAction.actions.lookIndex === 0) && playerAction.actions.lookIndex >= 0) {
                 this.changePlayerLook(playerToUpdate, playerAction.actions.lookIndex);
             }
+        } else if(playerAction.actions.commandResult !== null && playerAction.actions.commandResult !== undefined) {
+            if (playerAction.actions.commandResult.gun === true || playerAction.actions.commandResult.gun === false) {
+                this.player.setMsg("*holding gun: " + playerAction.actions.commandResult.gun + "*");
+                this.player.setHoldGun(playerAction.actions.commandResult.gun);
+                this.events.emit('holdingGun', playerAction.actions.commandResult.gun);
+            }
         }
     }
 
     updateGameState(state) {
-        if (state.length > this.population || state.length < this.population) {
-            this.population = state.length;
+        if (state.players.length > this.population || state.players.length < this.population) {
+            this.population = state.players.length;
             this.events.emit('populationUpdate', this.population);
         }
-        state.forEach((playerData) => {
+        state.players.forEach((playerData) => {
             if (playerData.currentArea === this.player.currentArea) {
                 var playerToUpdate = this.players.get(playerData.socketId);
                 if (!playerToUpdate) {
@@ -407,6 +420,23 @@ export class DigitalPlanet extends Phaser.Scene {
                 this.removePlayer(playerData.socketId);
             }
         });
+        if (state.bullets) {
+            console.log(state.bullets.length, this.bullets.length);
+            if (state.bullets.length < this.bullets.length) {
+                for (let i = state.bullets.length; i < this.bullets.length; i++) {
+                    this.bullets[i].destroy();
+                    this.matter.world.remove(this.bullets[i]);
+                }
+                this.bullets.splice(state.bullets.length, this.bullets.length - state.bullets.length + 1);
+            }
+            state.bullets.forEach((bullet, index) => {
+                if (!this.bullets[index]) {
+                    this.bullets[index] = new Bullet(this, bullet.x, bullet.y, bullet.direction);
+                } else {
+                    this.bullets[index].setPosition(bullet.x, bullet.y);
+                }
+            })
+        }
     }
 
     updatePlayer1(delta) {
@@ -438,23 +468,27 @@ export class DigitalPlanet extends Phaser.Scene {
             if (this.controls.left.isDown) {
                 this.player.keysPressed[Key.a] = 1;
                 this.player.anims.play('left', true);
+                this.player.direction = Key.a;
             } else {
                 this.player.keysPressed[Key.a] = 0;
             }
             if (this.controls.right.isDown) {
                 this.player.keysPressed[Key.d] = 1;
+                this.player.direction = Key.d;
                 this.player.anims.play('right', true);
             } else {
                 this.player.keysPressed[Key.d] = 0;
             }
             if (this.controls.up.isDown) {
                 this.player.keysPressed[Key.w] = 1;
+                this.player.direction = Key.w;
                 this.player.anims.play('up', true);
             } else {
                 this.player.keysPressed[Key.w] = 0;
             }
             if (this.controls.down.isDown) {
                 this.player.keysPressed[Key.s] = 1;
+                this.player.direction = Key.s;
                 this.player.anims.play('down', true);
             } else {
                 this.player.keysPressed[Key.s] = 0;
