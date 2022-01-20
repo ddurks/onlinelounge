@@ -9,7 +9,7 @@ export class PopUp extends Phaser.GameObjects.Group {
         this.popup.setVisible(false);
         this.popup.setScrollFactor(0);
 
-        this.x = scene.add.image(this.popup.x + 160, this.popup.y - 190, 'x').setInteractive();
+        this.x = scene.add.image(this.popup.x + 160, this.popup.y - 190, 'x').setInteractive({ useHandCursor: true });
         this.x.on('pointerdown', () => {
             this.close();
         })
@@ -39,7 +39,7 @@ export class PopUp extends Phaser.GameObjects.Group {
         this.textBody.setVisible(false);
         this.textBody.setScrollFactor(0);
 
-        this.button = scene.add.image(this.popup.x - 10, this.popup.y + 100, 'greenButton').setInteractive();
+        this.button = scene.add.image(this.popup.x - 10, this.popup.y + 100, 'greenButton').setInteractive({ useHandCursor: true });
         this.button.on('pointerdown', () => this.changeLook(scene));
         this.button.setOrigin(0.5, 0.5);
         this.button.setDepth(11);
@@ -72,7 +72,7 @@ export class PopUp extends Phaser.GameObjects.Group {
         if (this.playerIcon) {
             this.playerIcon.destroy();
         }
-        this.playerIcon = scene.add.image(OL.world.width - 37, 22, playerSprite.texture, 12).setInteractive();
+        this.playerIcon = scene.add.image(OL.world.width - 37, 22, playerSprite.texture, 12).setInteractive({ useHandCursor: true });
         this.playerIcon.setScale(2);
         this.playerIcon.setDepth(12);
         this.playerIcon.setScrollFactor(0);

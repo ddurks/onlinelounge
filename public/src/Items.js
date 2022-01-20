@@ -1,3 +1,5 @@
+import { Key } from './Player';
+
 export class Coin extends Phaser.Physics.Matter.Sprite {
     constructor(scene, x, y) {
         super(scene.matter.world, x, y, 'coin');
@@ -30,6 +32,30 @@ export class Heart extends Phaser.Physics.Matter.Sprite {
         });
 
         this.anims.play('spin');
+        return this;
+    }
+}
+
+export class Bullet extends Phaser.Physics.Matter.Sprite {
+    constructor(scene, bulletId, x, y, direction) {
+        super(scene.matter.world, x, y, 'bullet');
+        scene.add.existing(this);
+        this.bulletId = bulletId;
+        this.direction = direction;
+        switch (this.direction) {
+            case Key.s:
+                this.setFrame(0);
+                break;
+            case Key.d:
+                this.setFrame(1);
+                break;
+            case Key.w:
+                this.setFrame(2);
+                break;
+            case Key.a:
+                this.setFrame(3);
+                break;
+        }
         return this;
     }
 }

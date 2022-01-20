@@ -40,12 +40,15 @@ io.on('connection', (socket) => {
   socket.on('player action', (actionArray) => {
     console.log("actions ", actionArray);
     if (actionArray.lookIndex) {
-      let playerToChange = engine.players.get(socket.id);
-      if (playerToChange) {
-        playerToChange.lookIndex = actionArray.lookIndex;
-      }
+      engine.setPlayerLook(socket.id, actionArray.lookIndex);
     }
-    io.sockets.emit('player action', { socketId: socket.id, actions: actionArray });
+    if (actionArray.message && actionArray.message.startsWith("/")) {
+      let result = engine.executeCommand(socket.id, actionArray.message);
+      console.log("result", result);
+      io.sockets.emit('player action', { socketId: socket.id, actions: { message: "NULL", commandResult: result } });
+    } else {
+      io.sockets.emit('player action', { socketId: socket.id, actions: actionArray });
+    }
   });
 
   socket.on('enter lounge', () => {
@@ -60,6 +63,11 @@ io.on('connection', (socket) => {
     io.sockets.emit('exit lounge', socket.id);
   });
 
+  socket.on('shoot bullet', (direction) => {
+    console.log("shooting bullet");
+    engine.shootBullet(socket.id, direction);
+  })
+
   socket.on('disconnect', () => {
     if (engine.removePlayer(socket.id)) {
       io.sockets.emit('player left', socket.id);
@@ -70,7 +78,9 @@ io.on('connection', (socket) => {
 
 setInterval(() => {
   if (engine.players.size > 0) {
-    io.sockets.emit('state', engine.getPlayers());
+    let state = { players: engine.getPlayers() };
+    engine.bullets.size > 0 ? state.bullets = engine.getBullets() : null;
+    io.sockets.emit('state', state);
   }
 }, TICK_RATE);
 
