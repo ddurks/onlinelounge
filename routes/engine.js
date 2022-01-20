@@ -22,7 +22,8 @@ const AREAS = {
 }
 
 class GameEngine {
-    constructor() {
+    constructor(io) {
+        this.io = io;
         this.Engine = Matter.Engine;
         this.Runner = Matter.Runner;
         this.Bodies = Matter.Bodies;
@@ -108,13 +109,31 @@ class GameEngine {
                 if (event.pairs[0].bodyA.isBullet && event.pairs[0].bodyA.firedBy !== event.pairs[0].bodyB.socketId) {
                     this.bullets.delete(event.pairs[0].bodyA.bulletId);
                     this.Composite.remove(this.engine.world, event.pairs[0].bodyA);
+                    if (event.pairs[0].bodyB.socketId) {
+                        this.hitByBullet(event.pairs[0].bodyB);
+                    }
                 }
                 if (event.pairs[0].bodyB.isBullet && event.pairs[0].bodyB.firedBy !== event.pairs[0].bodyA.socketId) {
                     this.bullets.delete(event.pairs[0].bodyB.bulletId);
                     this.Composite.remove(this.engine.world, event.pairs[0].bodyB);
+                    if (event.pairs[0].bodyA.socketId) {
+                        this.hitByBullet(event.pairs[0].bodyA);
+                    }
                 }
             }
         })
+    }
+
+    hitByBullet(player) {
+        if (player.health > 0) {
+            player.health -= 1;
+            this.io.to(player.socketId).emit('health update', player.health);
+            if (player.health === 0) {
+                this.io.sockets.emit('player action', { socketId: player.socketId, actions: { faint: true } });
+            } else {
+                this.io.sockets.emit('player action', { socketId: player.socketId, actions: { flinch: true } });
+            }
+        }
     }
 
     update() {
@@ -146,7 +165,8 @@ class GameEngine {
                         username:player.username, 
                         socketId:player.id, 
                         currentArea:player.currentArea, 
-                        lookIndex:player.lookIndex, 
+                        lookIndex:player.lookIndex,
+                        health: 3,
                         gun: false
                     }
                 ));
@@ -254,6 +274,13 @@ class GameEngine {
                 //this.Body.setVelocity( player, {x: player.velocity.x, y: WALKING_SPEED});
                 this.Body.applyForce(player, { x: player.position.x, y: player.position.y }, {x: 0, y: WALKING_FORCE});
             }
+
+            if ((player.currentInputs[Key.a] === 1) || (player.currentInputs[Key.d] === 1) || (player.currentInputs[Key.w] === 1) || (player.currentInputs[Key.s] === 1)) {
+                if (player.health === 0) {
+                    player.health = 3;
+                    this.io.to(player.socketId).emit('health update', player.health);
+                }
+            }
         }
     }
 
@@ -310,6 +337,7 @@ class GameEngine {
               currentInputs: curr.currentInputs,
               currentArea: curr.currentArea,
               lookIndex: curr.lookIndex,
+              health: curr.health,
               gun: curr.gun
             });
             return acc;

@@ -24,6 +24,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.MAX_BUTTERFLIES = 0;
         this.serverClient = new GameServerClient();
         this.population = 0;
+        this.paused = false;
     }
 
     init(data) {
@@ -97,7 +98,7 @@ export class DigitalPlanet extends Phaser.Scene {
                 }
             }
             if ((bodyA.info && bodyB.type === "player1") || (bodyB.info && bodyA.type === "player1")) {
-                this.events.emit('displayPopup', {text: bodyA.info ? bodyA.info : bodyB.info});
+                this.events.emit('displayPopup', {title: "info", text: bodyA.info ? bodyA.info : bodyB.info});
             }
         });
 
@@ -111,7 +112,6 @@ export class DigitalPlanet extends Phaser.Scene {
 
         this.camera = this.cameras.main;
 
-        this.cameraDolly = new Phaser.Geom.Point(this.player.x, this.player.y);
         this.camera.startFollow(this.player, true);
         this.camera.setBounds(0, -48, this.map.widthInPixels, this.map.heightInPixels);
 
@@ -122,6 +122,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.scene.get('Controls').events.off('zoomOut');
         this.scene.get('Controls').events.off('lookChange');
         this.scene.get('Controls').events.off('shootGun');
+        this.scene.get('Controls').events.off('closeEvent');
 
         this.scene.get('Controls').events.on('openChat', () => this.openChatBox());
         this.scene.get('Controls').events.on('sendChat', () => this.sendChat());
@@ -129,6 +130,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.scene.get('Controls').events.on('zoomOut', () => this.zoomOut());
         this.scene.get('Controls').events.on('lookChange', () => this.changeLook());
         this.scene.get('Controls').events.on('shootGun', () => this.shootGun());
+        this.scene.get('Controls').events.on('closeEvent', () => this.windowClosed());
 
         this.sessionID = this.serverClient.sessionID ? this.serverClient.sessionID : undefined;
         if (this.sessionID) {
@@ -171,10 +173,17 @@ export class DigitalPlanet extends Phaser.Scene {
                 playerWhoExitedLounge.currentArea = AREAS.digitalplanet;
             }
         });
+        this.serverClient.socket.on('health update', (update) => {
+            this.events.emit('healthUpdate', update);
+        })
 
         setInterval(() => {
                 this.serverClient.socket.emit('player input', this.player.keysPressed);
         }, INPUT_UPDATE_RATE);
+    }
+
+    windowClosed() {
+        this.paused = false;
     }
 
     shootGun() {
@@ -250,19 +259,13 @@ export class DigitalPlanet extends Phaser.Scene {
     }
 
     update(time, delta) {
-        if (this.player && this.player.body) {
-            this.playerHandler(delta);
-            this.updateAllButterflies();
+        if (!this.paused) {
+            if (this.player && this.player.body) {
+                this.playerHandler(delta);
+                this.updateAllButterflies();
+            }
         }
         // OL.getRandomInt(0,30) === 25 ? this.updateCoins() : this.updateHearts();
-        this.updateFollowCam();
-    }
-
-    updateFollowCam() {
-        if (this.player.body) {
-            this.cameraDolly.x = Math.floor(this.player.x);
-            this.cameraDolly.y = Math.floor(this.player.y);
-        }
     }
 
     zoomIn() {
@@ -358,6 +361,18 @@ export class DigitalPlanet extends Phaser.Scene {
 
     updatePlayerAction(playerAction) {
         let playerToUpdate = this.players.get(playerAction.socketId);
+        if (playerToUpdate) {
+            if (playerAction.actions.flinch) {
+                playerToUpdate.flinch();
+            }
+            if (playerAction.actions.faint) {
+                playerToUpdate.faint();
+                if (playerAction.socketId === this.sessionID) {
+                    this.events.emit('displayPopup', {title: "💀", text: "close this window to continue"});
+                    this.paused = true;
+                }
+            }
+        }
         if (playerToUpdate && playerAction.socketId !== this.sessionID) {
             if (playerAction.actions.message) {
                 if (playerAction.actions.message === "NULL") {
@@ -418,8 +433,12 @@ export class DigitalPlanet extends Phaser.Scene {
                 if (!bulletToUpdate) {
                     this.bullets.set(bullet.bulletId, new Bullet(this, bullet.bulletId, bullet.x, bullet.y, bullet.direction));
                     new GunFlash(this, bullet.x, bullet.y, bullet.direction);
-                } else {
+                } else if (bulletToUpdate && bulletToUpdate.body) {
                     bulletToUpdate.setPosition(bullet.x, bullet.y);
+                } else {
+                    this.matter.world.remove(bulletToUpdate);
+                    bulletToUpdate.destroy();
+                    this.bullets.delete(bulletToUpdate.bulletId);
                 }
             });
         }

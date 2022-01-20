@@ -11,6 +11,7 @@ export class PopUp extends Phaser.GameObjects.Group {
 
         this.x = scene.add.image(this.popup.x + 160, this.popup.y - 190, 'x').setInteractive({ useHandCursor: true });
         this.x.on('pointerdown', () => {
+            scene.scene.get('Controls').events.emit('closeEvent');
             this.close();
         })
         this.x.setOrigin(0, 0);
@@ -88,13 +89,13 @@ export class PopUp extends Phaser.GameObjects.Group {
     }
 
     displayLookPopup(title, text) {
-        this.title.setText(title);
         this.sprite.setVisible(true);
-        this.display(text);
+        this.display(title, text);
         this.displayButton("change");
     }
 
-    display(text) {
+    display(title, text) {
+        this.title.setText(title);
         this.textBody.setText(text);
         this.popup.setVisible(true);
         this.x.setVisible(true);

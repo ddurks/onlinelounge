@@ -1,6 +1,36 @@
 import { PopUp } from "./PopUp";
 import { TextButton, OL } from "./utils";
 
+export class HealthBar extends Phaser.GameObjects.Group {
+    constructor(scene, heartsNum) {
+        super(scene);
+        this.hearts = new Array();
+        let xCurr = OL.world.width - 30;
+        for (let i = 0; i < heartsNum; i++) {
+            this.hearts.push(scene.add.image(xCurr, 75, 'heart', 0).setScale(2))
+            this.add(this.hearts[i]);
+            xCurr -= 45;
+        }
+        return this;
+    }
+
+    setHealth(number) {
+        if (number < 0) {
+            number = 0;
+        } else if (number > 3) {
+            number = 3;
+        }
+        this.hearts.forEach((heart) => {
+            if (number > 0) {
+                heart.setVisible(true);
+            } else {
+                heart.setVisible(false);
+            }
+            number--;
+        })
+    }
+}
+
 export class Controls extends Phaser.Scene {
     constructor() {
         super('Controls');
@@ -65,7 +95,7 @@ export class Controls extends Phaser.Scene {
             document.getElementById('char-count').innerHTML = (this.value.length) + "/" + MAX_LENGTH;
         };
 
-        this.zoomButton = new TextButton(this, OL.world.width - 147, 15, "zoom", { fontFamily: 'gaming2',color:  '#000000' ,fontSize: '16px'}, () => this.zoom());
+        this.zoomButton = new TextButton(this, OL.world.width - 135, 15, "zoom", { fontFamily: 'gaming2',color:  '#000000' ,fontSize: '16px'}, () => this.zoom());
         this.zoomButton.setDepth(12);
         this.add.existing(this.zoomButton).setScrollFactor(0);
 
@@ -77,11 +107,13 @@ export class Controls extends Phaser.Scene {
             this.popup.destroy();
         }
         this.popup = new PopUp(this);
+        this.healthBar = new HealthBar(this, 3);
 
         this.scene.get('DigitalPlanet').events.on('displayPopup', (info) => this.displayPopup(info));
         this.scene.get('DigitalPlanet').events.on('populationUpdate', (pop) => this.populationUpdate(pop));
         this.scene.get('DigitalPlanet').events.on('connectionStatus', (status) => this.setConnected(status));
         this.scene.get('DigitalPlanet').events.on('holdingGun', (status) => this.holdingGun(status));
+        this.scene.get('DigitalPlanet').events.on('healthUpdate', (healthNum) => this.healthUpdate(healthNum));
     }
 
     setConnected(status) {
@@ -90,6 +122,10 @@ export class Controls extends Phaser.Scene {
         } else {
             this.connectionIcon.setFrame(1);
         }
+    }
+
+    healthUpdate(healthNum) {
+        this.healthBar.setHealth(healthNum);
     }
 
     populationUpdate(pop) {
@@ -153,8 +189,8 @@ export class Controls extends Phaser.Scene {
     }
 
     displayPopup(info) {
-        if (info.text !== this.prevPopupText) {
-            this.popup.display(info.text);
+        if (info.text !== this.prevPopupText || info.title !== "info") {
+            this.popup.display(info.title, info.text);
             this.prevPopupText = info.text;
         }
     }

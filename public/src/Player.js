@@ -208,6 +208,14 @@ export class Player extends Phaser.Physics.Matter.Sprite {
         }
     }
 
+    flinch() {
+        this.setFrame(13);
+    }
+
+    faint() {
+        this.setFrame(14);
+    }
+
     startTyping() {
         this.typingIcon.setActive(true).setVisible(true);
         this.typing = true;
