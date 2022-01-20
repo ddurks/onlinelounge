@@ -59,3 +59,38 @@ export class Bullet extends Phaser.Physics.Matter.Sprite {
         return this;
     }
 }
+
+export class GunFlash extends Phaser.Physics.Matter.Sprite {
+    constructor(scene, x, y, direction) {
+        let frame, pos = {x: x, y: y};
+        switch (direction) {
+            case Key.s:
+                pos = {x: x - 16, y: y + 6}
+                frame = 0;
+                break;
+            case Key.d:
+                pos = {x: x + 30, y: y + 6}
+                frame = 1;
+                break;
+            case Key.w:
+                pos = {x: x + 6, y: y - 10}
+                frame = 2
+                break;
+            case Key.a:
+                pos = {x: x - 30, y: y + 6}
+                frame = 3;
+                break;
+        }
+        super(scene.matter.world, pos.x, pos.y, 'gunflash');
+        this.setFrame(frame);
+        this.setCollisionCategory(null);
+        scene.add.existing(this);
+
+        setTimeout(() => {
+            scene.matter.world.remove(this);
+            this.destroy();
+        }, 200)
+
+        return this;
+    }
+}

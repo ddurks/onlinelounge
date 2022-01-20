@@ -148,21 +148,31 @@ export class Player extends Phaser.Physics.Matter.Sprite {
     }
 
     updateFromData(playerData) {
-        this.setVelocityX(playerData.velocity.x);
-        this.setVelocityY(playerData.velocity.y);
-        this.x = playerData.position.x;
-        this.y = playerData.position.y;
-        this.animForPlayerFromVelocity();
-        if (playerData.typing) {
-            this.typingIcon.setActive(true).setVisible(true);
-        } else {
-            if (this.typingIcon.active) {
-                this.typingIcon.setActive(false).setVisible(false);
-            }
-            this.speakText.setText(playerData.msg);
+        if (playerData.gun === true || playerData.gun === false) {
+            this.setHoldGun(playerData.gun);
         }
-
-        this.updatePlayerStuff();
+        this.setPosition(playerData.x, playerData.y);
+        if (playerData.currentInputs) {
+            if (playerData.currentInputs[Key.a] === 1) {
+                this.anims.play('left', true);
+                this.direction = Key.a;
+            }
+            if (playerData.currentInputs[Key.d] === 1) {
+                this.anims.play('right', true);
+                this.direction = Key.d;
+            }
+            if (playerData.currentInputs[Key.w] === 1) {
+                this.anims.play('up', true);
+                this.direction = Key.w;
+            }
+            if (playerData.currentInputs[Key.s] === 1) {
+                this.anims.play('down', true);
+                this.direction = Key.s;
+            }
+            if (!playerData.currentInputs[Key.w] && !playerData.currentInputs[Key.a] && !playerData.currentInputs[Key.s] && !playerData.currentInputs[Key.d]) {
+                this.anims.pause();
+            }
+        }
     }
 
     updatePlayerStuff() {

@@ -173,7 +173,8 @@ class GameEngine {
     shootBullet(socketId, direction) {
         let player = this.players.get(socketId);
         if (player && player.currentArea === AREAS.digitalplanet) {
-            let newBullet = this.Bodies.rectangle(player.position.x, player.position.y, 16, 16, {isBullet: true, direction: direction});
+            let pos = this.getBulletPos(player.position, direction);
+            let newBullet = this.Bodies.rectangle(pos.x, pos.y, 16, 16, {isBullet: true, direction: direction});
             newBullet.firedBy = player.socketId;
             newBullet.bulletId = uuidv1();
             this.Composite.add(this.engine.world, newBullet);
@@ -183,6 +184,25 @@ class GameEngine {
         } else {
             return null;
         }
+    }
+
+    getBulletPos(position, direction) {
+        let returnPos = position;
+        switch(direction) {
+            case Key.s:
+                returnPos = {x: position.x, y: position.y + 18}
+                break;
+            case Key.d:
+                returnPos = {x: position.x + 16, y: position.y}
+                break;
+            case Key.w:
+                returnPos = {x: position.x, y: position.y - 18}
+                break;
+            case Key.a:
+                returnPos = {x: position.x - 16, y: position.y}
+                break;
+        }
+        return returnPos;
     }
 
     setBulletVelocity(newBullet, direction) {
@@ -289,7 +309,8 @@ class GameEngine {
               socketId: curr.socketId,
               currentInputs: curr.currentInputs,
               currentArea: curr.currentArea,
-              lookIndex: curr.lookIndex
+              lookIndex: curr.lookIndex,
+              gun: curr.gun
             });
             return acc;
           }, new Array())

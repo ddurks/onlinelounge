@@ -1,7 +1,7 @@
 import { OL } from './utils';
 import { Player, Key } from './Player';
 import { Butterfly, OnlineBouncer } from './Guys';
-import { Coin, Heart, Bullet } from './Items';
+import { Coin, Heart, Bullet, GunFlash } from './Items';
 import { GameServerClient } from './GameServerClient';
 
 const INPUT_UPDATE_RATE = 1000/30;
@@ -148,7 +148,8 @@ export class DigitalPlanet extends Phaser.Scene {
                 this.events.emit('populationUpdate', "-");
                 this.players.forEach((player) => {
                     this.removePlayer(player.socketId);
-                })
+                });
+                this.events.emit('holdingGun', false);
                 console.log("disconnected from server");
             })
         });
@@ -178,6 +179,7 @@ export class DigitalPlanet extends Phaser.Scene {
 
     shootGun() {
         this.serverClient.socket.emit('shoot bullet', this.player.direction);
+        new GunFlash(this, this.player.x, this.player.y, this.player.direction);
     }
 
     changeLook() {
@@ -371,12 +373,6 @@ export class DigitalPlanet extends Phaser.Scene {
             if ( (playerAction.actions.lookIndex || playerAction.actions.lookIndex === 0) && playerAction.actions.lookIndex >= 0) {
                 this.changePlayerLook(playerToUpdate, playerAction.actions.lookIndex);
             }
-            if (playerAction.actions.commandResult !== null && playerAction.actions.commandResult !== undefined) {
-                if (playerAction.actions.commandResult.gun === true || playerAction.actions.commandResult.gun === false) {
-                    playerToUpdate.setHoldGun(playerAction.actions.commandResult.gun);
-                    this.events.emit('holdingGun', playerAction.actions.commandResult.gun);
-                }
-            }
         } else if(playerAction.actions.commandResult !== null && playerAction.actions.commandResult !== undefined) {
             if (playerAction.actions.commandResult.gun === true || playerAction.actions.commandResult.gun === false) {
                 this.player.setMsg("*holding gun: " + playerAction.actions.commandResult.gun + "*");
@@ -387,52 +383,37 @@ export class DigitalPlanet extends Phaser.Scene {
     }
 
     updateGameState(state) {
-        if (state.players.length > this.population || state.players.length < this.population) {
-            this.population = state.players.length;
-            this.events.emit('populationUpdate', this.population);
-        }
-        state.players.forEach((playerData) => {
-            if (playerData.currentArea === this.player.currentArea) {
-                var playerToUpdate = this.players.get(playerData.socketId);
-                if (!playerToUpdate) {
-                    if (playerData.socketId === this.sessionID) {
-                        this.events.emit('playerLoaded', {texture: this.player.texture.key});
-                    }
-                    this.generatePlayer(playerData.socketId, playerData.x, playerData.y, playerData.username, playerData.lookIndex);
-                } else if (playerToUpdate && playerToUpdate.body) {
-                    playerToUpdate.setPosition(playerData.x, playerData.y);
-                    if (playerData.currentInputs) {
-                        if (playerData.currentInputs[Key.a] === 1) {
-                            playerToUpdate.anims.play('left', true);
-                            playerToUpdate.direction = Key.a;
+        if (state.players) {
+            if (state.players.length > this.population || state.players.length < this.population) {
+                this.population = state.players.length;
+                this.events.emit('populationUpdate', this.population);
+            }
+            state.players.forEach((playerData) => {
+                if (playerData.currentArea === this.player.currentArea) {
+                    var playerToUpdate = this.players.get(playerData.socketId);
+                    if (!playerToUpdate) {
+                        if (playerData.socketId === this.sessionID) {
+                            this.events.emit('playerLoaded', {texture: this.player.texture.key});
                         }
-                        if (playerData.currentInputs[Key.d] === 1) {
-                            playerToUpdate.anims.play('right', true);
-                            playerToUpdate.direction = Key.d;
-                        }
-                        if (playerData.currentInputs[Key.w] === 1) {
-                            playerToUpdate.anims.play('up', true);
-                            playerToUpdate.direction = Key.w;
-                        }
-                        if (playerData.currentInputs[Key.s] === 1) {
-                            playerToUpdate.anims.play('down', true);
-                            playerToUpdate.direction = Key.s;
-                        }
-                        if (!playerData.currentInputs[Key.w] && !playerData.currentInputs[Key.a] && !playerData.currentInputs[Key.s] && !playerData.currentInputs[Key.d]) {
-                            playerToUpdate.anims.pause();
-                        }
+                        this.generatePlayer(playerData.socketId, playerData.x, playerData.y, playerData.username, playerData.lookIndex);
+                    } else if (playerToUpdate && playerToUpdate.body) {
+                        playerToUpdate.updateFromData(playerData);
+                    } else {
+                        console.log(playerToUpdate, "no body");
+                        this.removePlayer(playerData.socketId);
                     }
                 } else {
-                    console.log(playerToUpdate, "no body");
                     this.removePlayer(playerData.socketId);
                 }
-            } else {
-                this.removePlayer(playerData.socketId);
-            }
-        });
+            });
+        }
+        this.updateBulletState(state.bullets);
+    }
+
+    updateBulletState(bulletsList) {
         let idSet = new Set();
-        if (state.bullets) {
-            state.bullets.forEach((bullet) => {
+        if (bulletsList) {
+            bulletsList.forEach((bullet) => {
                 idSet.add(bullet.bulletId);
                 var bulletToUpdate = this.bullets.get(bullet.bulletId);
                 if (!bulletToUpdate) {
