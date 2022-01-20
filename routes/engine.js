@@ -174,7 +174,6 @@ class GameEngine {
         let player = this.players.get(socketId);
         if (player && player.currentArea === AREAS.digitalplanet) {
             let newBullet = this.Bodies.rectangle(player.position.x, player.position.y, 16, 16, {isBullet: true, direction: direction});
-            newBullet.index = this.bullets.size;
             newBullet.firedBy = player.socketId;
             newBullet.bulletId = uuidv1();
             this.Composite.add(this.engine.world, newBullet);
