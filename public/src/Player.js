@@ -205,6 +205,7 @@ export class Player extends Phaser.Physics.Matter.Sprite {
 
     setHoldGun(isHolding) {
         this.gun.setVisible(isHolding);
+        this.updatePlayerStuff();
     }
 
     setMsg(text) {

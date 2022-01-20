@@ -64,7 +64,6 @@ io.on('connection', (socket) => {
   });
 
   socket.on('shoot bullet', (direction) => {
-    console.log("shooting bullet");
     engine.shootBullet(socket.id, direction);
   })
 

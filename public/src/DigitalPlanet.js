@@ -371,6 +371,12 @@ export class DigitalPlanet extends Phaser.Scene {
             if ( (playerAction.actions.lookIndex || playerAction.actions.lookIndex === 0) && playerAction.actions.lookIndex >= 0) {
                 this.changePlayerLook(playerToUpdate, playerAction.actions.lookIndex);
             }
+            if (playerAction.actions.commandResult !== null && playerAction.actions.commandResult !== undefined) {
+                if (playerAction.actions.commandResult.gun === true || playerAction.actions.commandResult.gun === false) {
+                    playerToUpdate.setHoldGun(playerAction.actions.commandResult.gun);
+                    this.events.emit('holdingGun', playerAction.actions.commandResult.gun);
+                }
+            }
         } else if(playerAction.actions.commandResult !== null && playerAction.actions.commandResult !== undefined) {
             if (playerAction.actions.commandResult.gun === true || playerAction.actions.commandResult.gun === false) {
                 this.player.setMsg("*holding gun: " + playerAction.actions.commandResult.gun + "*");
@@ -398,15 +404,19 @@ export class DigitalPlanet extends Phaser.Scene {
                     if (playerData.currentInputs) {
                         if (playerData.currentInputs[Key.a] === 1) {
                             playerToUpdate.anims.play('left', true);
+                            playerToUpdate.direction = Key.a;
                         }
                         if (playerData.currentInputs[Key.d] === 1) {
                             playerToUpdate.anims.play('right', true);
+                            playerToUpdate.direction = Key.d;
                         }
                         if (playerData.currentInputs[Key.w] === 1) {
                             playerToUpdate.anims.play('up', true);
+                            playerToUpdate.direction = Key.w;
                         }
                         if (playerData.currentInputs[Key.s] === 1) {
                             playerToUpdate.anims.play('down', true);
+                            playerToUpdate.direction = Key.s;
                         }
                         if (!playerData.currentInputs[Key.w] && !playerData.currentInputs[Key.a] && !playerData.currentInputs[Key.s] && !playerData.currentInputs[Key.d]) {
                             playerToUpdate.anims.pause();
