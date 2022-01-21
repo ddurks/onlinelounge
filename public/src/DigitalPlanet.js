@@ -1,7 +1,7 @@
 import { OL } from './utils';
 import { Player, Key } from './Player';
 import { Butterfly, OnlineBouncer } from './Guys';
-import { Coin, Heart, Bullet, GunFlash } from './Items';
+import { Bullet, GunFlash, MapItem, ITEMTYPE } from './Items';
 import { GameServerClient } from './GameServerClient';
 
 const INPUT_UPDATE_RATE = 1000/30;
@@ -17,6 +17,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.players = new Map();
         this.bullets = new Map();
         this.butterflies = new Array();
+        this.items = new Map();
         this.looks = new Array();
         this.lookIndex = OL.IS_MOBILE ? 1 : 0;
         this.MAX_BUTTERFLIES = 0;
@@ -168,6 +169,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.serverClient.socket.on('health update', (update) => {
             this.events.emit('healthUpdate', update);
         })
+        this.serverClient.socket.on('item', (update) => this.updateItems(update));
 
         setInterval(() => {
                 this.serverClient.socket.emit('player input', this.player.keysPressed);
@@ -432,6 +434,26 @@ export class DigitalPlanet extends Phaser.Scene {
                 }
             }
         });
+    }
+
+    updateItems(update) {
+        if (update.spawn) {
+            this.items.set(update.spawn.itemId, new MapItem(this, update.spawn.x, update.spawn.y, update.spawn.itemType));
+        }
+        if (update.remove) {
+            let itemToDelete = this.items.get(update.remove.itemId);
+            if (itemToDelete) {
+                itemToDelete.destroy();
+                this.matter.world.remove(itemToDelete);
+                this.items.delete(update.remove.itemId);
+            }
+        }
+        if (update.collected) {
+            if (update.collected.itemType === ITEMTYPE.bullet) {
+                console.log("collected bullet");
+            }
+        }
+        console.log(this.items)
     }
 
     playerHandler(delta) {

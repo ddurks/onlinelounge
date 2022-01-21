@@ -36,6 +36,44 @@ export class Heart extends Phaser.Physics.Matter.Sprite {
     }
 }
 
+export class BulletItem extends Phaser.Physics.Matter.Sprite {
+    constructor(scene, x, y) {
+        super(scene.matter.world, x, y, 'bullet');
+        
+        scene.add.existing(this).setStatic(true).setScale(2);
+
+        this.anims.create({
+            key: 'spin',
+            frameRate: 8,
+            frames: this.anims.generateFrameNumbers('bullet', { frames: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3]}),
+            repeat: -1
+        });
+
+        this.anims.play('spin');
+
+        return this;
+    }
+}
+
+export const ITEMTYPE = {
+    'heart': 0,
+    'coin': 1,
+    'bullet': 2
+}
+
+export class MapItem extends Phaser.Physics.Matter.Sprite {
+    constructor(scene, x, y, type) {
+        switch (type) {
+            case ITEMTYPE.heart:
+                return new Heart(scene, x, y);
+            case ITEMTYPE.coin:
+                return new Coin(scene, x, y);
+            case ITEMTYPE.bullet:
+                return new BulletItem(scene, x, y);
+        }
+    }
+}
+
 export class Bullet extends Phaser.Physics.Matter.Sprite {
     constructor(scene, bulletId, x, y, direction) {
         super(scene.matter.world, x, y, 'bullet');
