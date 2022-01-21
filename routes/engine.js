@@ -21,6 +21,20 @@ const AREAS = {
     'lounge':1
 }
 
+const ITEMTYPE = {
+    'heart': 0,
+    'coin': 1,
+    'bullet': 2
+}
+
+class Item {
+    constructor(world, x, y, itemType) {
+        let itemBody = Matter.Bodies.rectangle(x, y, 16, 16, {itemType: itemType});
+        Matter.Composite.add(world, itemBody);
+        return itemBody;
+    }
+}
+
 class GameEngine {
     constructor(io) {
         this.io = io;
@@ -38,6 +52,7 @@ class GameEngine {
 
         this.players = new Map();
         this.bullets = new Map();
+        this.items = new Map();
     
         this.curr_timestamp = Date.now();
         this.prev_timestamp, this.deltat = ENGINE_RATE, this.lastDeltat;
@@ -121,6 +136,14 @@ class GameEngine {
                     }
                 }
             }
+
+            if (event.pairs[0].bodyA.itemType || event.pairs[0].bodyB.itemType) {
+                console.log("bullet item")
+                if (event.pairs[0].bodyA.itemType && event.pairs[0].bodyA.itemType === ITEMTYPE.bullet) {
+                }
+                if (event.pairs[0].bodyB.itemType && event.pairs[0].bodyB.firedBy === ITEMTYPE.bullet) {
+                }
+            }
         })
     }
 
@@ -134,6 +157,7 @@ class GameEngine {
                 this.io.sockets.emit('player action', { socketId: player.socketId, actions: { flinch: true } });
             }
         }
+        this.spawnItem(this.engine.world, player.position.x, player.position.y, ITEMTYPE.bullet);
     }
 
     update() {
@@ -177,6 +201,25 @@ class GameEngine {
         }
     }
 
+    spawnItem(world, x, y, type) {
+        let newItem = new Item(world, x, y, type);
+        this.items.set(uuidv1(), newItem);
+        console.log(Array.from(this.items.values()).map( (item) => {
+            return {
+                position: item.position
+            }
+        }))
+        return newItem;
+    }
+
+    removeItem(world, id) {
+        let item = this.items.get(id);
+        if (item) {
+            this.Composite.remove(world, item);
+            this.items.delete(id);
+        }
+    }
+
     addBlock(world, x, y, width, height) {
         let newBlock = this.Bodies.rectangle(x + width/2, y + height/2, width, height, {});
         this.Body.setStatic(newBlock, true);
@@ -205,7 +248,7 @@ class GameEngine {
             return null;
         }
     }
-
+ 
     getBulletPos(position, direction) {
         let returnPos = position;
         switch(direction) {
