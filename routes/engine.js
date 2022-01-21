@@ -427,6 +427,19 @@ class GameEngine {
         }, new Array());
     }
 
+    getItems(area) {
+        if (area === AREAS.digitalplanet) {
+            return Array.from(this.items.values()).map((curr) => {
+                return {
+                    itemId: curr.itemId,
+                    x: curr.position.x,
+                    y: curr.position.y,
+                    itemType: curr.itemType
+                }
+            }, new Array()); 
+        }
+    }
+
     getRandomInt(min, max) {
         min = Math.ceil(min);
         max = Math.floor(max);

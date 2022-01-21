@@ -127,6 +127,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.sessionID = this.serverClient.sessionID ? this.serverClient.sessionID : undefined;
         if (this.sessionID) {
             this.players.set(this.sessionID, this.player);
+            this.serverClient.socket.emit('get items', this.getCurrentArea(this.startData.mapKey));
         }
 
         this.player.lookIndex = this.lookIndex;
@@ -138,6 +139,7 @@ export class DigitalPlanet extends Phaser.Scene {
             this.player.socketId = sessionID;
             this.players.set(sessionID, this.player);
             this.player = this.players.get(sessionID);
+            this.serverClient.socket.emit('get items', this.getCurrentArea(this.startData.mapKey));
             this.serverClient.socket.on('disconnect', () => {
                 this.events.emit('connectionStatus', false);
                 this.events.emit('populationUpdate', "-");
@@ -170,6 +172,7 @@ export class DigitalPlanet extends Phaser.Scene {
             this.events.emit('healthUpdate', update);
         })
         this.serverClient.socket.on('item', (update) => this.updateItems(update));
+        this.serverClient.socket.on('get items', (list) => this.getItems(list));
 
         setInterval(() => {
                 this.serverClient.socket.emit('player input', this.player.keysPressed);
@@ -232,6 +235,7 @@ export class DigitalPlanet extends Phaser.Scene {
     enterLounge() {
         this.player.currentArea = AREAS.lounge;
         this.serverClient.socket.emit('enter lounge');
+        this.camera.stopFollow();
         this.scene.restart({
             mapKey: "loungeMap",
             groundTileset: {
@@ -255,6 +259,7 @@ export class DigitalPlanet extends Phaser.Scene {
                 x: 525,
                 y: 325
             }
+            this.camera.stopFollow();
             this.scene.restart(this.exitTo);
         }
     }
@@ -436,9 +441,24 @@ export class DigitalPlanet extends Phaser.Scene {
         });
     }
 
+    getItems(itemList) {
+        if (itemList) {
+            itemList.forEach((item) => {
+                if (this.items.has(item.itemId)) {
+                    this.items.set(item.itemId, new MapItem(this, item.x, item.y, item.itemType));
+                }
+            });
+        }
+    }
+
     updateItems(update) {
         if (update.spawn) {
             this.items.set(update.spawn.itemId, new MapItem(this, update.spawn.x, update.spawn.y, update.spawn.itemType));
+        }
+        if (update.collected) {
+            if (update.collected.itemType === ITEMTYPE.bullet) {
+                console.log("collected bullet");
+            }
         }
         if (update.remove) {
             let itemToDelete = this.items.get(update.remove.itemId);
@@ -448,12 +468,6 @@ export class DigitalPlanet extends Phaser.Scene {
                 this.items.delete(update.remove.itemId);
             }
         }
-        if (update.collected) {
-            if (update.collected.itemType === ITEMTYPE.bullet) {
-                console.log("collected bullet");
-            }
-        }
-        console.log(this.items)
     }
 
     playerHandler(delta) {
