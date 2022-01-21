@@ -132,6 +132,12 @@ export class DigitalPlanet extends Phaser.Scene {
         this.scene.get('Controls').events.on('shootGun', () => this.shootGun());
         this.scene.get('Controls').events.on('closeEvent', () => this.windowClosed());
 
+        this.scene.get('Controls').gunButton.on('pointerdown', () => {
+            if (!this.player.keysPressed[Key.w] && !this.player.keysPressed[Key.a] && !this.player.keysPressed[Key.s] && !this.player.keysPressed[Key.d]) {
+                this.shootGun();
+            }
+        });
+
         this.sessionID = this.serverClient.sessionID ? this.serverClient.sessionID : undefined;
         if (this.sessionID) {
             this.players.set(this.sessionID, this.player);
@@ -143,6 +149,7 @@ export class DigitalPlanet extends Phaser.Scene {
             this.events.emit('connectionStatus', true);
             this.events.emit('populationUpdate', this.population);
             this.sessionID = sessionID;
+            this.player.socketId = sessionID;
             this.players.set(sessionID, this.player);
             this.player = this.players.get(sessionID);
             this.serverClient.socket.on('disconnect', () => {
@@ -468,40 +475,50 @@ export class DigitalPlanet extends Phaser.Scene {
             } else {
                 this.playerMovementHandler();
             }
-            this.updatePlayer1(delta);
+            //this.updatePlayer1(delta);
             this.players.forEach( (player) => {
-                if (player.body && player.socketId && player.socketId !== this.sessionID) {
+                if (player.body) {
                     player.msgDecayHandler(delta);
                     player.updatePlayerStuff();
+                } else {
+                    console.log(player.socketId);
                 }
             })
         }
     }
 
     playerMovementHandler() {
+        this.handleUserInput(this.controls);
+    }
+
+    playerMobileMovementHandler() {
+        this.handleUserInput(this.scene.get('Controls').joystick.createCursorKeys());
+    }
+
+    handleUserInput(controls) {
         if (this.player.anims) {
-            if (this.controls.left.isDown) {
+            if (controls.left.isDown) {
                 this.player.keysPressed[Key.a] = 1;
                 this.player.anims.play('left', true);
                 this.player.direction = Key.a;
             } else {
                 this.player.keysPressed[Key.a] = 0;
             }
-            if (this.controls.right.isDown) {
+            if (controls.right.isDown) {
                 this.player.keysPressed[Key.d] = 1;
                 this.player.direction = Key.d;
                 this.player.anims.play('right', true);
             } else {
                 this.player.keysPressed[Key.d] = 0;
             }
-            if (this.controls.up.isDown) {
+            if (controls.up.isDown) {
                 this.player.keysPressed[Key.w] = 1;
                 this.player.direction = Key.w;
                 this.player.anims.play('up', true);
             } else {
                 this.player.keysPressed[Key.w] = 0;
             }
-            if (this.controls.down.isDown) {
+            if (controls.down.isDown) {
                 this.player.keysPressed[Key.s] = 1;
                 this.player.direction = Key.s;
                 this.player.anims.play('down', true);
@@ -511,7 +528,7 @@ export class DigitalPlanet extends Phaser.Scene {
 
             this.updatePlayerFromInput(this.player);
 
-            if (this.player.anims && !this.player.keysPressed[Key.w] && !this.player.keysPressed[Key.a] && !this.player.keysPressed[Key.s] && !this.player.keysPressed[Key.d]) {
+            if (!this.player.keysPressed[Key.w] && !this.player.keysPressed[Key.a] && !this.player.keysPressed[Key.s] && !this.player.keysPressed[Key.d]) {
                 this.player.anims.pause();
             }
         }
@@ -534,42 +551,5 @@ export class DigitalPlanet extends Phaser.Scene {
             //this.player.setVelocity(this.player.body.velocity.x, OL.WALKING_SPEED);
             this.player.applyForce({x: 0, y: OL.WALKING_FORCE});
         }
-    }
-
-    playerMobileMovementHandler() {
-        if (!this.scene.get('Controls').joystick.nokey) {
-            if (this.scene.get('Controls').joystick.left) {
-                this.player.keysPressed[Key.a] = 1;
-                this.player.anims.play('left', true);
-                this.player.direction = Key.a;
-            } else {
-                this.player.keysPressed[Key.a] = 0;
-            }
-            if (this.scene.get('Controls').joystick.right) {
-                this.player.keysPressed[Key.d] = 1;
-                this.player.direction = Key.d;
-                this.player.anims.play('right', true);
-            } else {
-                this.player.keysPressed[Key.d] = 0;
-            }
-            if (this.scene.get('Controls').joystick.up) {
-                this.player.keysPressed[Key.w] = 1;
-                this.player.direction = Key.w;
-                this.player.anims.play('up', true);
-            } else {
-                this.player.keysPressed[Key.w] = 0;
-            }
-            if (this.scene.get('Controls').joystick.down) {
-                this.player.keysPressed[Key.s] = 1;
-                this.player.direction = Key.s;
-                this.player.anims.play('down', true);
-            } else {
-                this.player.keysPressed[Key.s] = 0;
-            }
-        } else {
-            this.player.anims.pause();
-        }
-
-        this.updatePlayerFromInput(this.player);
     }
 }
