@@ -17,8 +17,6 @@ export class DigitalPlanet extends Phaser.Scene {
         this.players = new Map();
         this.bullets = new Map();
         this.butterflies = new Array();
-        this.coins = new Array();
-        this.hearts = new Array();
         this.looks = new Array();
         this.lookIndex = OL.IS_MOBILE ? 1 : 0;
         this.MAX_BUTTERFLIES = 0;
@@ -70,17 +68,11 @@ export class DigitalPlanet extends Phaser.Scene {
 
         this.player, this.onlineBouncer;
         if (this.startData.spawn) {
-            this.player = this.generatePlayer(null, this.startData.spawn.x, this.startData.spawn.y, OL.username, this.lookIndex);
-            this.player.body.type = 'player1';
-            this.player.currentArea = this.getCurrentArea(this.startData.mapKey);
-            this.events.emit('playerLoaded', {texture: this.player.texture.key});
+            this.spawnPlayer1(this.startData.spawn.x, this.startData.spawn.y);
         }
         this.map.findObject('player', (object) => {
             if (object.name === 'spawn' && !this.startData.spawn) {
-                this.player = this.generatePlayer(null, object.x, object.y, OL.username, this.lookIndex);
-                this.player.body.type = 'player1';
-                this.player.currentArea = this.getCurrentArea(this.startData.mapKey);
-                this.events.emit('playerLoaded', {texture: this.player.texture.key});
+                this.spawnPlayer1(object.x, object.y);
             }
 
             if (object.name === 'bouncerSpawn') {
@@ -111,7 +103,6 @@ export class DigitalPlanet extends Phaser.Scene {
         };
 
         this.camera = this.cameras.main;
-
         this.camera.startFollow(this.player, true);
         this.camera.setBounds(0, -48, this.map.widthInPixels, this.map.heightInPixels);
 
@@ -215,6 +206,13 @@ export class DigitalPlanet extends Phaser.Scene {
         this.camera.startFollow(this.player, true);
     }
 
+    spawnPlayer1(x, y) {
+        this.player = this.generatePlayer(null, x, y, OL.username, this.lookIndex);
+        this.player.body.type = 'player1';
+        this.player.currentArea = this.getCurrentArea(this.startData.mapKey);
+        this.events.emit('playerLoaded', {texture: this.player.texture.key});
+    }
+
     changePlayerLook(player, index) {
         let socketId = player.socketId;
         let username = player.username;
@@ -266,7 +264,6 @@ export class DigitalPlanet extends Phaser.Scene {
                 this.updateAllButterflies();
             }
         }
-        // OL.getRandomInt(0,30) === 25 ? this.updateCoins() : this.updateHearts();
     }
 
     zoomIn() {
@@ -296,24 +293,6 @@ export class DigitalPlanet extends Phaser.Scene {
         var cuteGuy = this.matter.add.sprite(x, y, 'cute');
         cuteGuy.setScale(0.25);
         return cuteGuy;
-    }
-
-    updateCoins() {
-        if(this.coins.length < 25) {
-            let coin = new Coin(this, OL.getRandomInt(0, this.map.widthInPixels), OL.getRandomInt(0, this.map.heightInPixels));
-            console.log("new coin");
-            console.log(coin.x, coin.y);
-            this.coins.push(coin);
-        }
-    }
-
-    updateHearts() {
-        if(this.hearts.length < 50) {
-            let heart = new Heart(this, OL.getRandomInt(0, this.map.widthInPixels), OL.getRandomInt(0, this.map.heightInPixels));
-            console.log("new heart");
-            console.log(heart.x, heart.y);
-            this.hearts.push(heart);
-        }
     }
 
     generatePlayer(socketId, x, y, username, lookIndex) {
@@ -455,26 +434,16 @@ export class DigitalPlanet extends Phaser.Scene {
         });
     }
 
-    updatePlayer1(delta) {
-        if(this.player) {
-            this.player.msgDecayHandler(delta);
-            this.player.updatePlayerStuff();
-        }
-    }
-
     playerHandler(delta) {
         if (OL.IS_MOBILE) {
             this.playerMobileMovementHandler();
         } else {
             this.playerMovementHandler();
         }
-        //this.updatePlayer1(delta);
         this.players.forEach( (player) => {
             if (player.body) {
                 player.msgDecayHandler(delta);
                 player.updatePlayerStuff();
-            } else {
-                console.log(player.socketId);
             }
         });
     }
