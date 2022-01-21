@@ -463,22 +463,20 @@ export class DigitalPlanet extends Phaser.Scene {
     }
 
     playerHandler(delta) {
-        if (this.player.alive) {
-            if (OL.IS_MOBILE) {
-                this.playerMobileMovementHandler();
-            } else {
-                this.playerMovementHandler();
-            }
-            //this.updatePlayer1(delta);
-            this.players.forEach( (player) => {
-                if (player.body) {
-                    player.msgDecayHandler(delta);
-                    player.updatePlayerStuff();
-                } else {
-                    console.log(player.socketId);
-                }
-            })
+        if (OL.IS_MOBILE) {
+            this.playerMobileMovementHandler();
+        } else {
+            this.playerMovementHandler();
         }
+        //this.updatePlayer1(delta);
+        this.players.forEach( (player) => {
+            if (player.body) {
+                player.msgDecayHandler(delta);
+                player.updatePlayerStuff();
+            } else {
+                console.log(player.socketId);
+            }
+        });
     }
 
     playerMovementHandler() {

@@ -56,8 +56,6 @@ export class Player extends Phaser.Physics.Matter.Sprite {
             repeat: 0
         });
 
-        this.alive = true;
-
         this.fit = texture;
         this.username = username;
         this.size = 32;
@@ -148,29 +146,33 @@ export class Player extends Phaser.Physics.Matter.Sprite {
     }
 
     updateFromData(playerData) {
-        if (playerData.gun === true || playerData.gun === false) {
-            this.setHoldGun(playerData.gun);
-        }
-        this.setPosition(playerData.x, playerData.y);
-        if (playerData.currentInputs) {
-            if (playerData.currentInputs[Key.a] === 1) {
-                this.anims.play('left', true);
-                this.direction = Key.a;
+        if (playerData.health <= 0) {
+            this.faint();
+        } else {
+            if (playerData.gun === true || playerData.gun === false) {
+                this.setHoldGun(playerData.gun);
             }
-            if (playerData.currentInputs[Key.d] === 1) {
-                this.anims.play('right', true);
-                this.direction = Key.d;
-            }
-            if (playerData.currentInputs[Key.w] === 1) {
-                this.anims.play('up', true);
-                this.direction = Key.w;
-            }
-            if (playerData.currentInputs[Key.s] === 1) {
-                this.anims.play('down', true);
-                this.direction = Key.s;
-            }
-            if (!playerData.currentInputs[Key.w] && !playerData.currentInputs[Key.a] && !playerData.currentInputs[Key.s] && !playerData.currentInputs[Key.d]) {
-                this.anims.pause();
+            this.setPosition(playerData.x, playerData.y);
+            if (playerData.currentInputs) {
+                if (playerData.currentInputs[Key.a] === 1) {
+                    this.anims.play('left', true);
+                    this.direction = Key.a;
+                }
+                if (playerData.currentInputs[Key.d] === 1) {
+                    this.anims.play('right', true);
+                    this.direction = Key.d;
+                }
+                if (playerData.currentInputs[Key.w] === 1) {
+                    this.anims.play('up', true);
+                    this.direction = Key.w;
+                }
+                if (playerData.currentInputs[Key.s] === 1) {
+                    this.anims.play('down', true);
+                    this.direction = Key.s;
+                }
+                if (!playerData.currentInputs[Key.w] && !playerData.currentInputs[Key.a] && !playerData.currentInputs[Key.s] && !playerData.currentInputs[Key.d]) {
+                    this.anims.pause();
+                }
             }
         }
     }
