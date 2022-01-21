@@ -132,6 +132,12 @@ export class DigitalPlanet extends Phaser.Scene {
         this.scene.get('Controls').events.on('shootGun', () => this.shootGun());
         this.scene.get('Controls').events.on('closeEvent', () => this.windowClosed());
 
+        this.scene.get('Controls').gunButton.on('pointerdown', () => {
+            if (!this.player.keysPressed[Key.w] && !this.player.keysPressed[Key.a] && !this.player.keysPressed[Key.s] && !this.player.keysPressed[Key.d]) {
+                this.shootGun();
+            }
+        });
+
         this.sessionID = this.serverClient.sessionID ? this.serverClient.sessionID : undefined;
         if (this.sessionID) {
             this.players.set(this.sessionID, this.player);

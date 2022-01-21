@@ -100,9 +100,7 @@ export class Controls extends Phaser.Scene {
         this.zoomButton.setDepth(12);
         this.add.existing(this.zoomButton).setScrollFactor(0);
 
-        this.gunButton = this.add.image(OL.world.width - 40, OL.world.height - 108, 'gunButton').setVisible(false).setInteractive({ useHandCursor: true }).on('pointerdown', () => {
-            this.events.emit('shootGun');
-        });
+        this.gunButton = this.add.image(OL.world.width - 40, OL.world.height - 108, 'gunButton').setVisible(false).setInteractive({ useHandCursor: true });
 
         if (this.popup) {
             this.popup.destroy();
