@@ -154,7 +154,9 @@ export class DigitalPlanet extends Phaser.Scene {
                 this.events.emit('connectionStatus', false);
                 this.events.emit('populationUpdate', "-");
                 this.players.forEach((player) => {
-                    this.removePlayer(player.socketId);
+                    if (player.socketId !== this.sessionID) {
+                        this.removePlayer(player.socketId);
+                    }
                 });
                 this.events.emit('holdingGun', false);
                 console.log("disconnected from server");
@@ -188,7 +190,7 @@ export class DigitalPlanet extends Phaser.Scene {
         });
         this.serverClient.socket.on('health update', (update) => this.events.emit('healthUpdate', update));
         this.serverClient.socket.on('item', (update) => this.updateItems(update));
-        this.serverClient.socket.on('get items', (list) => this.getItems(list));
+        this.serverClient.socket.on('get items', (list) => this.setItems(list));
 
         setInterval(() => {
                 this.serverClient.socket.emit('player input', this.player.keysPressed);
@@ -459,7 +461,7 @@ export class DigitalPlanet extends Phaser.Scene {
         }  
     }
 
-    getItems(itemList) {
+    setItems(itemList) {
         if (itemList) {
             itemList.forEach((item) => {
                 if (!this.items.has(item.itemId)) {
