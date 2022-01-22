@@ -187,7 +187,7 @@ class GameEngine {
             this.lastDeltat = this.deltat;
             this.deltat = this.curr_timestamp - this.prev_timestamp;
 
-            if (this.getRandomInt(0, 100) === 25) {
+            if (this.items.size < MAX_ITEMS) {
                 this.spawnRandomItem();
             }
         

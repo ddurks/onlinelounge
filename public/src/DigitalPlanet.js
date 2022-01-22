@@ -151,11 +151,19 @@ export class DigitalPlanet extends Phaser.Scene {
             })
         });
 
+        // turn off events so they don't duplicate upon restart
+        this.serverClient.socket.off('state');
+        this.serverClient.socket.off('player action');
+        this.serverClient.socket.off('player left');
+        this.serverClient.socket.off('enter lounge');
+        this.serverClient.socket.off('exit lounge');
+        this.serverClient.socket.off('health update');
+        this.serverClient.socket.off('item');
+        this.serverClient.socket.off('get items');
+
         this.serverClient.socket.on('state', (state) => this.updateGameState(state));
         this.serverClient.socket.on('player action', (playerAction) => this.updatePlayerAction(playerAction));
-        this.serverClient.socket.on('player left', (socketId) => {
-            this.removePlayer(socketId);
-        });
+        this.serverClient.socket.on('player left', (socketId) => this.removePlayer(socketId));
         this.serverClient.socket.on('enter lounge', (socketId) => {
             let playerWhoEnteredLounge = this.players.get(socketId);
             if (playerWhoEnteredLounge) {
@@ -168,9 +176,7 @@ export class DigitalPlanet extends Phaser.Scene {
                 playerWhoExitedLounge.currentArea = AREAS.digitalplanet;
             }
         });
-        this.serverClient.socket.on('health update', (update) => {
-            this.events.emit('healthUpdate', update);
-        })
+        this.serverClient.socket.on('health update', (update) => this.events.emit('healthUpdate', update));
         this.serverClient.socket.on('item', (update) => this.updateItems(update));
         this.serverClient.socket.on('get items', (list) => this.getItems(list));
 
