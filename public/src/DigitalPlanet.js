@@ -48,6 +48,15 @@ export class DigitalPlanet extends Phaser.Scene {
         }
     }
 
+    clearMaps() {
+        if (this.items.size > 0) {
+            Array.from(this.items.values()).forEach(item => {
+                this.removeItem(item.itemId);
+            });
+            this.items = new Map();
+        }
+    }
+
     create() { 
         this.looks = ['computer_guy', 'phone_guy', 'cute_guy'];
         this.map = this.make.tilemap({ key: this.startData.mapKey });
@@ -130,6 +139,7 @@ export class DigitalPlanet extends Phaser.Scene {
             this.serverClient.socket.emit('get items', this.getCurrentArea(this.startData.mapKey));
         }
 
+        this.clearMaps();
         this.player.lookIndex = this.lookIndex;
         this.serverClient.connect(this.player, (sessionID) => {
             console.log("connected: " + sessionID);
@@ -429,28 +439,30 @@ export class DigitalPlanet extends Phaser.Scene {
                 } else if (bulletToUpdate && bulletToUpdate.body) {
                     bulletToUpdate.setPosition(bullet.x, bullet.y);
                 } else {
-                    this.matter.world.remove(bulletToUpdate);
-                    bulletToUpdate.destroy();
-                    this.bullets.delete(bulletToUpdate.bulletId);
+                    this.removeBullet(bulletToUpdate.bulletId);
                 }
             });
         }
         Array.from(this.bullets.values()).forEach((bullet) => {
             if (!idSet.has(bullet.bulletId)) {
-                let destroyedBullet = this.bullets.get(bullet.bulletId);
-                if (destroyedBullet) {
-                    this.matter.world.remove(destroyedBullet);
-                    destroyedBullet.destroy();
-                    this.bullets.delete(bullet.bulletId);
-                }
+                this.removeBullet(bullet.bulletId);
             }
         });
+    }
+
+    removeBullet(id) {
+        let bulletToRemove = this.bullets.get(id);
+        if (bulletToRemove) {
+            this.matter.world.remove(bulletToRemove);
+            bulletToRemove.destroy();
+            this.bullets.delete(bulletToRemove.bulletId);    
+        }  
     }
 
     getItems(itemList) {
         if (itemList) {
             itemList.forEach((item) => {
-                if (this.items.has(item.itemId)) {
+                if (!this.items.has(item.itemId)) {
                     this.items.set(item.itemId, new MapItem(this, item.x, item.y, item.itemType));
                 }
             });
@@ -467,12 +479,16 @@ export class DigitalPlanet extends Phaser.Scene {
             }
         }
         if (update.remove) {
-            let itemToDelete = this.items.get(update.remove.itemId);
-            if (itemToDelete) {
-                itemToDelete.destroy();
-                this.matter.world.remove(itemToDelete);
-                this.items.delete(update.remove.itemId);
-            }
+            this.removeItem(update.remove.itemId);
+        }
+    }
+
+    removeItem(id) {
+        let itemToDelete = this.items.get(id);
+        if (itemToDelete) {
+            itemToDelete.destroy();
+            this.matter.world.remove(itemToDelete);
+            this.items.delete(itemToDelete.itemId);
         }
     }
 
