@@ -67,6 +67,10 @@ io.on('connection', (socket) => {
     engine.shootBullet(socket.id, direction);
   })
 
+  socket.on('get items', (area) => {
+    io.sockets.emit('get items', engine.getItems(area));
+  });
+
   socket.on('disconnect', () => {
     if (engine.removePlayer(socket.id)) {
       io.sockets.emit('player left', socket.id);

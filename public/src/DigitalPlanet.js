@@ -1,7 +1,7 @@
 import { OL } from './utils';
 import { Player, Key } from './Player';
 import { Butterfly, OnlineBouncer } from './Guys';
-import { Coin, Heart, Bullet, GunFlash } from './Items';
+import { Bullet, GunFlash, MapItem, ITEMTYPE } from './Items';
 import { GameServerClient } from './GameServerClient';
 
 const INPUT_UPDATE_RATE = 1000/30;
@@ -17,6 +17,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.players = new Map();
         this.bullets = new Map();
         this.butterflies = new Array();
+        this.items = new Map();
         this.looks = new Array();
         this.lookIndex = OL.IS_MOBILE ? 1 : 0;
         this.MAX_BUTTERFLIES = 0;
@@ -44,6 +45,15 @@ export class DigitalPlanet extends Phaser.Scene {
             return AREAS.digitalplanet;
         } else {
             return AREAS.lounge;
+        }
+    }
+
+    clearMaps() {
+        if (this.items.size > 0) {
+            Array.from(this.items.values()).forEach(item => {
+                this.removeItem(item.itemId);
+            });
+            this.items = new Map();
         }
     }
 
@@ -126,8 +136,10 @@ export class DigitalPlanet extends Phaser.Scene {
         this.sessionID = this.serverClient.sessionID ? this.serverClient.sessionID : undefined;
         if (this.sessionID) {
             this.players.set(this.sessionID, this.player);
+            this.serverClient.socket.emit('get items', this.getCurrentArea(this.startData.mapKey));
         }
 
+        this.clearMaps();
         this.player.lookIndex = this.lookIndex;
         this.serverClient.connect(this.player, (sessionID) => {
             console.log("connected: " + sessionID);
@@ -137,6 +149,7 @@ export class DigitalPlanet extends Phaser.Scene {
             this.player.socketId = sessionID;
             this.players.set(sessionID, this.player);
             this.player = this.players.get(sessionID);
+            this.serverClient.socket.emit('get items', this.getCurrentArea(this.startData.mapKey));
             this.serverClient.socket.on('disconnect', () => {
                 this.events.emit('connectionStatus', false);
                 this.events.emit('populationUpdate', "-");
@@ -148,11 +161,19 @@ export class DigitalPlanet extends Phaser.Scene {
             })
         });
 
+        // turn off events so they don't duplicate upon restart
+        this.serverClient.socket.off('state');
+        this.serverClient.socket.off('player action');
+        this.serverClient.socket.off('player left');
+        this.serverClient.socket.off('enter lounge');
+        this.serverClient.socket.off('exit lounge');
+        this.serverClient.socket.off('health update');
+        this.serverClient.socket.off('item');
+        this.serverClient.socket.off('get items');
+
         this.serverClient.socket.on('state', (state) => this.updateGameState(state));
         this.serverClient.socket.on('player action', (playerAction) => this.updatePlayerAction(playerAction));
-        this.serverClient.socket.on('player left', (socketId) => {
-            this.removePlayer(socketId);
-        });
+        this.serverClient.socket.on('player left', (socketId) => this.removePlayer(socketId));
         this.serverClient.socket.on('enter lounge', (socketId) => {
             let playerWhoEnteredLounge = this.players.get(socketId);
             if (playerWhoEnteredLounge) {
@@ -165,9 +186,9 @@ export class DigitalPlanet extends Phaser.Scene {
                 playerWhoExitedLounge.currentArea = AREAS.digitalplanet;
             }
         });
-        this.serverClient.socket.on('health update', (update) => {
-            this.events.emit('healthUpdate', update);
-        })
+        this.serverClient.socket.on('health update', (update) => this.events.emit('healthUpdate', update));
+        this.serverClient.socket.on('item', (update) => this.updateItems(update));
+        this.serverClient.socket.on('get items', (list) => this.getItems(list));
 
         setInterval(() => {
                 this.serverClient.socket.emit('player input', this.player.keysPressed);
@@ -230,6 +251,7 @@ export class DigitalPlanet extends Phaser.Scene {
     enterLounge() {
         this.player.currentArea = AREAS.lounge;
         this.serverClient.socket.emit('enter lounge');
+        this.camera.stopFollow();
         this.scene.restart({
             mapKey: "loungeMap",
             groundTileset: {
@@ -253,6 +275,7 @@ export class DigitalPlanet extends Phaser.Scene {
                 x: 525,
                 y: 325
             }
+            this.camera.stopFollow();
             this.scene.restart(this.exitTo);
         }
     }
@@ -416,22 +439,57 @@ export class DigitalPlanet extends Phaser.Scene {
                 } else if (bulletToUpdate && bulletToUpdate.body) {
                     bulletToUpdate.setPosition(bullet.x, bullet.y);
                 } else {
-                    this.matter.world.remove(bulletToUpdate);
-                    bulletToUpdate.destroy();
-                    this.bullets.delete(bulletToUpdate.bulletId);
+                    this.removeBullet(bulletToUpdate.bulletId);
                 }
             });
         }
         Array.from(this.bullets.values()).forEach((bullet) => {
             if (!idSet.has(bullet.bulletId)) {
-                let destroyedBullet = this.bullets.get(bullet.bulletId);
-                if (destroyedBullet) {
-                    this.matter.world.remove(destroyedBullet);
-                    destroyedBullet.destroy();
-                    this.bullets.delete(bullet.bulletId);
-                }
+                this.removeBullet(bullet.bulletId);
             }
         });
+    }
+
+    removeBullet(id) {
+        let bulletToRemove = this.bullets.get(id);
+        if (bulletToRemove) {
+            this.matter.world.remove(bulletToRemove);
+            bulletToRemove.destroy();
+            this.bullets.delete(bulletToRemove.bulletId);    
+        }  
+    }
+
+    getItems(itemList) {
+        if (itemList) {
+            itemList.forEach((item) => {
+                if (!this.items.has(item.itemId)) {
+                    this.items.set(item.itemId, new MapItem(this, item.x, item.y, item.itemType));
+                }
+            });
+        }
+    }
+
+    updateItems(update) {
+        if (update.spawn) {
+            this.items.set(update.spawn.itemId, new MapItem(this, update.spawn.x, update.spawn.y, update.spawn.itemType));
+        }
+        if (update.collected) {
+            if (update.collected.itemType === ITEMTYPE.bullet) {
+                console.log("collected bullet");
+            }
+        }
+        if (update.remove) {
+            this.removeItem(update.remove.itemId);
+        }
+    }
+
+    removeItem(id) {
+        let itemToDelete = this.items.get(id);
+        if (itemToDelete) {
+            itemToDelete.destroy();
+            this.matter.world.remove(itemToDelete);
+            this.items.delete(itemToDelete.itemId);
+        }
     }
 
     playerHandler(delta) {
