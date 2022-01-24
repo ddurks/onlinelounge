@@ -53,7 +53,7 @@ export class Heart extends Phaser.Physics.Matter.Sprite {
 
         this.anims.create({
             key: 'spin',
-            frameRate: 4,
+            frameRate: 6,
             frames: this.anims.generateFrameNumbers('heart', { frames: [0, 0, 0, 0, 1, 2, 3]}),
             repeat: -1
         });
@@ -71,13 +71,13 @@ export class BulletItem extends Phaser.Physics.Matter.Sprite {
         scene.add.existing(this).setStatic(true).setScale(1);
 
         this.anims.create({
-            key: 'spin',
+            key: 'float',
             frameRate: 8,
-            frames: this.anims.generateFrameNumbers('bullet', { frames: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3]}),
+            frames: this.anims.generateFrameNumbers('bullet', { frames: [1, 4, 5, 4, 1, 6, 7, 6]}),
             repeat: -1
         });
 
-        this.anims.play('spin');
+        this.anims.play('float');
 
         return this;
     }

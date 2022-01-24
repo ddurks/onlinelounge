@@ -8,15 +8,6 @@ socketApi.io = io;
 const TICK_RATE = 1000/10, ENGINE_RATE = 1000/60;
 const CAPACITY = 10;
 let engine = new GameEngine(io);
-
-const Key = {
-  'w':0,
-  'a':1,
-  's':2,
-  'd':3
-}
-
-const WALKING_FORCE = 0.002;
  
 io.on('connection', (socket) => {
   if (engine.players.size > CAPACITY) {

@@ -125,6 +125,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.scene.get('Controls').events.off('zoomOut');
         this.scene.get('Controls').events.off('lookChange');
         this.scene.get('Controls').events.off('shootGun');
+        this.scene.get('Controls').events.off('holdingGun');
         this.scene.get('Controls').events.off('closeEvent');
 
         this.scene.get('Controls').events.on('openChat', () => this.openChatBox());
@@ -133,6 +134,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.scene.get('Controls').events.on('zoomOut', () => this.zoomOut());
         this.scene.get('Controls').events.on('lookChange', () => this.changeLook());
         this.scene.get('Controls').events.on('shootGun', () => this.shootGun());
+        this.scene.get('Controls').events.on('holdingGun', () => this.serverClient.socket.emit('player action', { message: "/gun", typing: false }));
         this.scene.get('Controls').events.on('closeEvent', () => this.windowClosed());
 
         this.sessionID = this.serverClient.sessionID ? this.serverClient.sessionID : undefined;
@@ -160,7 +162,6 @@ export class DigitalPlanet extends Phaser.Scene {
                         this.removePlayer(player.socketId);
                     }
                 });
-                this.events.emit('holdingGun', false);
                 this.clearMaps();
                 console.log("disconnected from server");
             })
@@ -486,7 +487,6 @@ export class DigitalPlanet extends Phaser.Scene {
     updateCoinsState(coinsList) {
         let idSet = new Set();
         if (coinsList) {
-            console.log("updating coins", coinsList.length);
             coinsList.forEach((coin) => {
                 idSet.add(coin.itemId);
                 var coinToUpdate = this.looseCoins.get(coin.itemId);
@@ -509,7 +509,6 @@ export class DigitalPlanet extends Phaser.Scene {
     removeCoin(id) {
         let coinToRemove = this.looseCoins.get(id);
         if (coinToRemove) {
-            console.log("remove coin");
             this.matter.world.remove(coinToRemove);
             coinToRemove.destroy();
             this.looseCoins.delete(coinToRemove.itemId);    

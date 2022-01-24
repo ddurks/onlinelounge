@@ -154,7 +154,10 @@ export class Controls extends Phaser.Scene {
         }
         this.popup = new PopUp(this);
         this.healthBar = new HealthBar(this, 3);
-        this.bulletIcon = this.add.image(OL.world.width - 30, 120, 'bullet', 2).setScrollFactor(0).setScale(2);
+        this.bulletIcon = this.add.image(OL.world.width - 30, 120, 'bullet', 2)
+            .setScrollFactor(0)
+            .setScale(2)
+            .setInteractive({ useHandCursor: true }).on('pointerdown', () => this.events.emit('holdingGun'));
         this.bulletNumText = this.add.text(OL.world.width - 30, 120, 0, {
             fontFamily: 'Arial',
             fontSize: '10px',

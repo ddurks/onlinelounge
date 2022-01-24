@@ -8,7 +8,7 @@ const ENGINE_RATE = 1000/60;
 const WALKING_SPEED = 2.5;
 const WALKING_FORCE = 0.002;
 const BULLET_VELO = 5;
-const MAX_ITEMS = 5;
+const MAX_ITEMS = 12;
 const COIN_SPEED = 3;
 
 const Key = {
@@ -131,26 +131,26 @@ class GameEngine {
                     this.bullets.delete(event.pairs[0].bodyA.bulletId);
                     this.Composite.remove(this.engine.world, event.pairs[0].bodyA);
                     if (event.pairs[0].bodyB.socketId) {
-                        this.hitByBullet(event.pairs[0].bodyB);
+                        this.hitByBullet(event.pairs[0].bodyB, event.pairs[0].bodyA.firedBy);
                     }
                 }
                 if (event.pairs[0].bodyB.isBullet && event.pairs[0].bodyB.firedBy !== event.pairs[0].bodyA.socketId) {
                     this.bullets.delete(event.pairs[0].bodyB.bulletId);
                     this.Composite.remove(this.engine.world, event.pairs[0].bodyB);
                     if (event.pairs[0].bodyA.socketId) {
-                        this.hitByBullet(event.pairs[0].bodyA);
+                        this.hitByBullet(event.pairs[0].bodyA, event.pairs[0].bodyB.firedBy);
                     }
                 }
             }
 
-            if (event.pairs[0].bodyA.itemType || event.pairs[0].bodyB.itemType) {
-                if (event.pairs[0].bodyA.itemType) {
+            if (event.pairs[0].bodyA.itemType !== undefined || event.pairs[0].bodyB.itemType !== undefined) {
+                if (event.pairs[0].bodyA.itemType !== undefined) {
                     this.removeItem(this.engine.world, event.pairs[0].bodyA.itemId);
                     if (event.pairs[0].bodyB.socketId) {
                         this.collectedItem(event.pairs[0].bodyB, event.pairs[0].bodyA.itemType);
                     }
                 }
-                if (event.pairs[0].bodyB.itemType) {
+                if (event.pairs[0].bodyB.itemType !== undefined) {
                     this.removeItem(this.engine.world, event.pairs[0].bodyB.itemId);
                     if (event.pairs[0].bodyA.socketId) {
                         this.collectedItem(event.pairs[0].bodyA, event.pairs[0].bodyB.itemType);
@@ -185,17 +185,29 @@ class GameEngine {
                 player.coins++;
                 this.io.to(player.socketId).emit('coin update', player.coins);
                 break;
+            case ITEMTYPE.heart:
+                if (player.health < 3) {
+                    player.health++;
+                    this.io.to(player.socketId).emit('health update', player.health);
+                }
+                break;
         }
     }
 
-    hitByBullet(player) {
+    hitByBullet(player, firedBy) {
         if (player.health > 0) {
             player.health -= 1;
             this.io.to(player.socketId).emit('health update', player.health);
             if (player.health === 0) {
                 this.dropCoins(player.socketId, player.coins);
+                let slayer, firedByPlayer = this.players.get(firedBy);
+                if (firedByPlayer) {
+                    slayer = firedByPlayer.username ? firedByPlayer.username : "[anonymous]";
+                } else {
+                    slayer = "[unknown]";
+                }
                 this.io.sockets.emit('player action', { socketId: player.socketId, actions: { faint: true } });
-                this.io.sockets.emit('feed', "💀 " + (player.username ? player.username : "[anonymous]") + " has fainted");
+                this.io.sockets.emit('feed', "💀 " + (player.username ? player.username : "[anonymous]") + " was slain by " + slayer);
             } else {
                 this.io.sockets.emit('player action', { socketId: player.socketId, actions: { flinch: true } });
             }
@@ -226,6 +238,7 @@ class GameEngine {
         if (this.items.size < MAX_ITEMS) {
             this.spawnItem(this.engine.world, this.getRandomNum(50, this.planetWidth - 50), this.getRandomNum(50, this.planetHeight - 50), ITEMTYPE.bullet);
             this.spawnItem(this.engine.world, this.getRandomNum(50, this.planetWidth - 50), this.getRandomNum(50, this.planetHeight - 50), ITEMTYPE.coin);
+            this.spawnItem(this.engine.world, this.getRandomNum(50, this.planetWidth - 50), this.getRandomNum(50, this.planetHeight - 50), ITEMTYPE.heart);
         }
     }
 
@@ -263,7 +276,7 @@ class GameEngine {
 
     spawnItem(world, x, y, type) {
         let newItem = new Item(world, x, y, type);
-        newItem.itemId = uuidv1();
+        newItem.itemId = uuidv4();
         this.io.sockets.emit('item', { spawn: { itemId: newItem.itemId, x: x, y: y, itemType: type } });
         this.items.set(newItem.itemId, newItem);
         return newItem;
