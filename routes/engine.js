@@ -250,7 +250,6 @@ class GameEngine {
     removeItem(world, id) {
         let item = this.items.get(id);
         if (item) {
-            console.log("removing, ", item.itemType)
             this.io.sockets.emit('item', { remove: { itemId: item.itemId, x: item.x, y: item.y, itemType: item.itemType } });
             this.Composite.remove(world, item);
             this.items.delete(id);
@@ -401,7 +400,7 @@ class GameEngine {
     removePlayer(socketId) {
         if (this.players.has(socketId)) {
             let playerToRemove = this.players.get(socketId);
-            let username = playerToRemove.username;
+            let username = playerToRemove.username ? playerToRemove.username : "[anonymous]";
             this.Composite.remove(this.engine.world, playerToRemove);
             this.players.delete(socketId);
             console.log("player left: " + socketId + " players: " + this.players.size);
