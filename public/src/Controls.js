@@ -32,6 +32,51 @@ export class HealthBar extends Phaser.GameObjects.Group {
     }
 }
 
+export class Feed extends Phaser.GameObjects.Group {
+    constructor(scene, x, y) {
+        super(scene);
+        this.scene = scene;
+        this.x = x;
+        this.y = y;
+        this.items = new Array();
+        this.maxLength = 4;
+        this.spacing = 11;
+    }
+
+    addLine(text) {
+        if (this.items.length === 0) {
+            this.addTextItemToTop(text);
+        } else if (this.items.length < this.maxLength) {
+            this.shiftItems();
+            this.addTextItemToTop(text);
+        } else {
+            let deleteItem = this.items.shift();
+            deleteItem.destroy();
+            this.shiftItems();
+            this.addTextItemToTop(text);
+        }
+    }
+
+    addTextItemToTop(text) {
+        let newText = this.scene.add.text(this.x, this.y, text, {
+            fontFamily: 'Arial',
+            fontSize: '10px',
+            color:  '#000000',
+            align: 'center'
+        }).setOrigin(0.5, 0.5).setDepth(11);
+        setTimeout(() => {
+            newText.destroy();
+        },  10000)
+        this.items.push(newText);
+    }
+
+    shiftItems() {
+        this.items.forEach((item) => {
+            item.setPosition(item.x, item.y + this.spacing);
+        });
+    }
+}
+
 export class Controls extends Phaser.Scene {
     constructor() {
         super('Controls');
@@ -56,7 +101,7 @@ export class Controls extends Phaser.Scene {
                 width: 320,
                 useAdvancedWrap: true
             },
-            align: 'center'
+            align: 'left'
         }).setDepth(11);
         this.add.text(95, 7, "online:", {
             fontFamily: 'Arial',
@@ -141,6 +186,8 @@ export class Controls extends Phaser.Scene {
             }).setScrollFactor(0);
         }
 
+        this.feed = new Feed(this, OL.world.width/2, 6);
+
         this.scene.get('DigitalPlanet').events.on('displayPopup', (info) => this.displayPopup(info));
         this.scene.get('DigitalPlanet').events.on('populationUpdate', (pop) => this.populationUpdate(pop));
         this.scene.get('DigitalPlanet').events.on('connectionStatus', (status) => this.setConnected(status));
@@ -148,6 +195,7 @@ export class Controls extends Phaser.Scene {
         this.scene.get('DigitalPlanet').events.on('healthUpdate', (healthNum) => this.healthUpdate(healthNum));
         this.scene.get('DigitalPlanet').events.on('bulletUpdate', (bulletNum) => this.bulletUpdate(bulletNum));
         this.scene.get('DigitalPlanet').events.on('coinUpdate', (coins) => this.coinUpdate(coins));
+        this.scene.get('DigitalPlanet').events.on('feedUpdate', (update) => this.feedUpdate(update));
     }
 
     setConnected(status) {
@@ -156,6 +204,10 @@ export class Controls extends Phaser.Scene {
         } else {
             this.connectionIcon.setFrame(1);
         }
+    }
+
+    feedUpdate(update) {
+        this.feed.addLine(update);
     }
 
     coinUpdate(coins) {

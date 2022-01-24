@@ -177,6 +177,7 @@ class GameEngine {
             this.io.to(player.socketId).emit('health update', player.health);
             if (player.health === 0) {
                 this.io.sockets.emit('player action', { socketId: player.socketId, actions: { faint: true } });
+                this.io.sockets.emit('feed', "💀 " + (player.username ? player.username : "[anonymous]") + " has fainted");
             } else {
                 this.io.sockets.emit('player action', { socketId: player.socketId, actions: { flinch: true } });
             }
@@ -226,7 +227,7 @@ class GameEngine {
                         lookIndex:player.lookIndex,
                         health: 3,
                         gun: false,
-                        bullets: 0,
+                        bullets: 3,
                         coins: 0
                     }
                 ));
@@ -234,6 +235,7 @@ class GameEngine {
             newPlayer.frictionAir = (0.2);
             this.Body.setMass(newPlayer, 1);
             this.Composite.add(this.engine.world, newPlayer);
+            this.io.sockets.emit('feed', (player.username ? player.username : "[anonymous]") + " has joined the lounge 🕺");
         }
     }
 
@@ -398,10 +400,12 @@ class GameEngine {
 
     removePlayer(socketId) {
         if (this.players.has(socketId)) {
-            this.Composite.remove(this.engine.world, this.players.get(socketId));
+            let playerToRemove = this.players.get(socketId);
+            let username = playerToRemove.username;
+            this.Composite.remove(this.engine.world, playerToRemove);
             this.players.delete(socketId);
             console.log("player left: " + socketId + " players: " + this.players.size);
-            return true;      
+            return username;      
         } else {
             return false;
         }

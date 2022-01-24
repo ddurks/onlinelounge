@@ -176,6 +176,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.serverClient.socket.off('coin update');
         this.serverClient.socket.off('item');
         this.serverClient.socket.off('get items');
+        this.serverClient.socket.off('feed');
 
         this.serverClient.socket.on('state', (state) => this.updateGameState(state));
         this.serverClient.socket.on('player action', (playerAction) => this.updatePlayerAction(playerAction));
@@ -200,6 +201,7 @@ export class DigitalPlanet extends Phaser.Scene {
         });
         this.serverClient.socket.on('item', (update) => this.updateItems(update));
         this.serverClient.socket.on('get items', (list) => this.setItems(list));
+        this.serverClient.socket.on('feed', (update) => this.events.emit('feedUpdate', update));
 
         setInterval(() => {
                 this.serverClient.socket.emit('player input', this.player.keysPressed);
@@ -319,6 +321,7 @@ export class DigitalPlanet extends Phaser.Scene {
     sendChat() {
         let message = document.getElementById("chat-entry").value;
         this.player.setMsg(message);
+        this.events.emit('feedUpdate', message)
         this.serverClient.socket.emit('player action', { message: message ? message : "NULL", typing: false });
         this.input.keyboard.enabled = true;
     }

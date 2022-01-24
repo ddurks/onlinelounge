@@ -72,9 +72,11 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    if (engine.removePlayer(socket.id)) {
+    let username = engine.removePlayer(socket.id);
+    if (username) {
       io.sockets.emit('player left', socket.id);
       io.sockets.emit('state', engine.getPlayers());
+      io.sockets.emit('feed', username + " has left 😔");
     }
   });
 });
