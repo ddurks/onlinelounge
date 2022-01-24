@@ -24,6 +24,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.serverClient = new GameServerClient();
         this.population = 0;
         this.paused = false;
+        this.stateQueue = new Array();
     }
 
     init(data) {
@@ -159,6 +160,7 @@ export class DigitalPlanet extends Phaser.Scene {
                     }
                 });
                 this.events.emit('holdingGun', false);
+                this.clearMaps();
                 console.log("disconnected from server");
             })
         });
@@ -401,6 +403,15 @@ export class DigitalPlanet extends Phaser.Scene {
         }
     }
 
+    updateGameStateFromQueue(state) {
+        this.stateQueue.push(state);
+        if (this.stateQueue.length > 2) {
+            this.updateGameState(this.stateQueue.shift());
+        } else {
+            console.log("paused");
+        }
+    }
+
     updateGameState(state) {
         if (state.players) {
             if (state.players.length > this.population || state.players.length < this.population) {
@@ -416,7 +427,9 @@ export class DigitalPlanet extends Phaser.Scene {
                         }
                         this.generatePlayer(playerData.socketId, playerData.x, playerData.y, playerData.username, playerData.lookIndex);
                     } else if (playerToUpdate && playerToUpdate.body) {
-                        playerToUpdate.updateFromData(playerData);
+                        // if (playerToUpdate.socketId !== this.sessionID) {
+                            playerToUpdate.updateFromData(playerData);
+                        // }
                     } else {
                         console.log(playerToUpdate, "no body");
                         this.removePlayer(playerData.socketId);
@@ -465,7 +478,7 @@ export class DigitalPlanet extends Phaser.Scene {
         if (itemList) {
             itemList.forEach((item) => {
                 if (!this.items.has(item.itemId)) {
-                    this.items.set(item.itemId, new MapItem(this, item.x, item.y, item.itemType));
+                    this.items.set(item.itemId, new MapItem(this, item.itemId, item.x, item.y, item.itemType));
                 }
             });
         }
@@ -473,7 +486,7 @@ export class DigitalPlanet extends Phaser.Scene {
 
     updateItems(update) {
         if (update.spawn) {
-            this.items.set(update.spawn.itemId, new MapItem(this, update.spawn.x, update.spawn.y, update.spawn.itemType));
+            this.items.set(update.spawn.itemId, new MapItem(this, update.spawn.itemId, update.spawn.x, update.spawn.y, update.spawn.itemType));
         }
         if (update.collected) {
             if (update.collected.itemType === ITEMTYPE.bullet) {
@@ -547,7 +560,9 @@ export class DigitalPlanet extends Phaser.Scene {
                 this.player.keysPressed[Key.s] = 0;
             }
 
-            this.updatePlayerFromInput(this.player);
+            if (this.sessionID) {
+                this.updatePlayerFromInput(this.player);
+            }
 
             if (!this.player.keysPressed[Key.w] && !this.player.keysPressed[Key.a] && !this.player.keysPressed[Key.s] && !this.player.keysPressed[Key.d]) {
                 this.player.anims.pause();

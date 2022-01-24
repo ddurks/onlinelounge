@@ -62,15 +62,18 @@ export const ITEMTYPE = {
 }
 
 export class MapItem extends Phaser.Physics.Matter.Sprite {
-    constructor(scene, x, y, type) {
+    constructor(scene, itemId, x, y, type) {
+        let result;
         switch (type) {
             case ITEMTYPE.heart:
-                return new Heart(scene, x, y);
+                result = new Heart(scene, x, y);
             case ITEMTYPE.coin:
-                return new Coin(scene, x, y);
+                result = new Coin(scene, x, y);
             case ITEMTYPE.bullet:
-                return new BulletItem(scene, x, y);
+                result = new BulletItem(scene, x, y);
         }
+        result.itemId = itemId;
+        return result;
     }
 }
 
