@@ -1,7 +1,7 @@
 import { OL } from './utils';
 import { Player, Key } from './Player';
 import { Butterfly, OnlineBouncer } from './Guys';
-import { Bullet, GunFlash, MapItem, ITEMTYPE } from './Items';
+import { Bullet, GunFlash, MapItem, ITEMTYPE, Sparkle } from './Items';
 import { GameServerClient } from './GameServerClient';
 
 const INPUT_UPDATE_RATE = 1000/30;
@@ -172,6 +172,8 @@ export class DigitalPlanet extends Phaser.Scene {
         this.serverClient.socket.off('enter lounge');
         this.serverClient.socket.off('exit lounge');
         this.serverClient.socket.off('health update');
+        this.serverClient.socket.off('bullet update');
+        this.serverClient.socket.off('coin update');
         this.serverClient.socket.off('item');
         this.serverClient.socket.off('get items');
 
@@ -191,6 +193,11 @@ export class DigitalPlanet extends Phaser.Scene {
             }
         });
         this.serverClient.socket.on('health update', (update) => this.events.emit('healthUpdate', update));
+        this.serverClient.socket.on('bullet update', (update) => this.events.emit('bulletUpdate', update));
+        this.serverClient.socket.on('coin update', (update) => {
+            new Sparkle(this, this.player.x, this.player.y);
+            this.events.emit('coinUpdate', update);
+        });
         this.serverClient.socket.on('item', (update) => this.updateItems(update));
         this.serverClient.socket.on('get items', (list) => this.setItems(list));
 
@@ -406,9 +413,8 @@ export class DigitalPlanet extends Phaser.Scene {
     updateGameStateFromQueue(state) {
         this.stateQueue.push(state);
         if (this.stateQueue.length > 2) {
-            this.updateGameState(this.stateQueue.shift());
-        } else {
-            console.log("paused");
+            let stateUpdate = this.stateQueue.shift();
+            this.updateGameState(stateUpdate);
         }
     }
 
@@ -427,9 +433,7 @@ export class DigitalPlanet extends Phaser.Scene {
                         }
                         this.generatePlayer(playerData.socketId, playerData.x, playerData.y, playerData.username, playerData.lookIndex);
                     } else if (playerToUpdate && playerToUpdate.body) {
-                        // if (playerToUpdate.socketId !== this.sessionID) {
-                            playerToUpdate.updateFromData(playerData);
-                        // }
+                        playerToUpdate.updateFromData(playerData);
                     } else {
                         console.log(playerToUpdate, "no body");
                         this.removePlayer(playerData.socketId);
@@ -487,11 +491,6 @@ export class DigitalPlanet extends Phaser.Scene {
     updateItems(update) {
         if (update.spawn) {
             this.items.set(update.spawn.itemId, new MapItem(this, update.spawn.itemId, update.spawn.x, update.spawn.y, update.spawn.itemType));
-        }
-        if (update.collected) {
-            if (update.collected.itemType === ITEMTYPE.bullet) {
-                console.log("collected bullet");
-            }
         }
         if (update.remove) {
             this.removeItem(update.remove.itemId);
@@ -560,9 +559,7 @@ export class DigitalPlanet extends Phaser.Scene {
                 this.player.keysPressed[Key.s] = 0;
             }
 
-            if (this.sessionID) {
-                this.updatePlayerFromInput(this.player);
-            }
+            this.updatePlayerFromInput(this.player);
 
             if (!this.player.keysPressed[Key.w] && !this.player.keysPressed[Key.a] && !this.player.keysPressed[Key.s] && !this.player.keysPressed[Key.d]) {
                 this.player.anims.pause();

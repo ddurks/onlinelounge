@@ -27,6 +27,7 @@ export class Preloader extends Phaser.Scene {
 		this.load.spritesheet('gun', 'assets/sprites/gun-extruded.png', { frameWidth: 16, frameHeight: 16, margin: 1, spacing: 2 });
 		this.load.spritesheet('bullet', 'assets/bulletguy.png', { frameWidth: 16, frameHeight: 16, margin: 0, spacing: 0 });
 		this.load.spritesheet('gunflash', 'assets/gun_flash_spritesheet.png', { frameWidth: 16, frameHeight: 16, margin: 0, spacing: 0 });
+		this.load.spritesheet('sparkle', 'assets/sparkle.png', { frameWidth: 16, frameHeight: 16, margin: 0, spacing: 0 });
 		this.load.image('cute', 'assets/pleading_eyes_emoji.png');
 		this.load.image('menuBar', 'assets/menu-bar.png');
 		this.load.image('popup', 'assets/popup.png');

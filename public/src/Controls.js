@@ -109,6 +109,30 @@ export class Controls extends Phaser.Scene {
         }
         this.popup = new PopUp(this);
         this.healthBar = new HealthBar(this, 3);
+        this.bulletIcon = this.add.image(OL.world.width - 30, 120, 'bullet', 2).setScrollFactor(0).setScale(2);
+        this.bulletNumText = this.add.text(OL.world.width - 30, 120, 0, {
+            fontFamily: 'Arial',
+            fontSize: '10px',
+            fontStyle: 'bold',
+            color:  '#ffffff',
+            wordWrap: {
+                width: 320,
+                useAdvancedWrap: true
+            },
+            align: 'center'
+        }).setOrigin(0.5, 0.5).setDepth(11);
+        this.coinIcon = this.add.image(OL.world.width - 75, 120, 'coin', 4).setScrollFactor(0).setScale(2);
+        this.coinsText = this.add.text(OL.world.width - 75, 120, 0, {
+            fontFamily: 'Arial',
+            fontSize: '12px',
+            fontStyle: 'bold',
+            color:  '#000000',
+            wordWrap: {
+                width: 320,
+                useAdvancedWrap: true
+            },
+            align: 'center'
+        }).setOrigin(0.5, 0.5).setDepth(11);
         if (OL.IS_MOBILE) {
             this.joystick = new VirtualJoystick(this, {
                 x: 125,
@@ -122,6 +146,8 @@ export class Controls extends Phaser.Scene {
         this.scene.get('DigitalPlanet').events.on('connectionStatus', (status) => this.setConnected(status));
         this.scene.get('DigitalPlanet').events.on('holdingGun', (status) => this.holdingGun(status));
         this.scene.get('DigitalPlanet').events.on('healthUpdate', (healthNum) => this.healthUpdate(healthNum));
+        this.scene.get('DigitalPlanet').events.on('bulletUpdate', (bulletNum) => this.bulletUpdate(bulletNum));
+        this.scene.get('DigitalPlanet').events.on('coinUpdate', (coins) => this.coinUpdate(coins));
     }
 
     setConnected(status) {
@@ -130,6 +156,14 @@ export class Controls extends Phaser.Scene {
         } else {
             this.connectionIcon.setFrame(1);
         }
+    }
+
+    coinUpdate(coins) {
+        this.coinsText.setText(coins);
+    }
+
+    bulletUpdate(bulletNum) {
+        this.bulletNumText.setText(bulletNum);
     }
 
     healthUpdate(healthNum) {

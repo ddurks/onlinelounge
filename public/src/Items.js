@@ -18,6 +18,30 @@ export class Coin extends Phaser.Physics.Matter.Sprite {
     }
 }
 
+export class Sparkle extends Phaser.Physics.Matter.Sprite {
+    constructor(scene, x, y) {
+        super(scene.matter.world, x, y, 'sparkle');
+
+        this.setCollisionCategory(null);
+        scene.add.existing(this);
+
+        this.anims.create({
+            key: 'sparkle',
+            frameRate: 12,
+            frames: this.anims.generateFrameNumbers('sparkle', { frames: [0, 1, 2, 3, 4, 5]}),
+            repeat: 0
+        });
+
+        this.anims.play('sparkle');
+
+        this.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+            this.destroy();
+            scene.matter.world.remove(this);
+        });
+        return this;
+    }
+}
+
 export class Heart extends Phaser.Physics.Matter.Sprite {
     constructor(scene, x, y) {
         super(scene.matter.world, x, y, 'heart');
@@ -40,7 +64,7 @@ export class BulletItem extends Phaser.Physics.Matter.Sprite {
     constructor(scene, x, y) {
         super(scene.matter.world, x, y, 'bullet');
         
-        scene.add.existing(this).setStatic(true).setScale(2);
+        scene.add.existing(this).setStatic(true).setScale(1);
 
         this.anims.create({
             key: 'spin',
@@ -67,10 +91,13 @@ export class MapItem extends Phaser.Physics.Matter.Sprite {
         switch (type) {
             case ITEMTYPE.heart:
                 result = new Heart(scene, x, y);
+                break;
             case ITEMTYPE.coin:
                 result = new Coin(scene, x, y);
+                break;
             case ITEMTYPE.bullet:
                 result = new BulletItem(scene, x, y);
+                break;
         }
         result.itemId = itemId;
         return result;

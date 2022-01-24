@@ -142,13 +142,13 @@ class GameEngine {
             }
 
             if (event.pairs[0].bodyA.itemType || event.pairs[0].bodyB.itemType) {
-                if (event.pairs[0].bodyA.itemType && event.pairs[0].bodyA.itemType === ITEMTYPE.bullet) {
+                if (event.pairs[0].bodyA.itemType) {
                     this.removeItem(this.engine.world, event.pairs[0].bodyA.itemId);
                     if (event.pairs[0].bodyB.socketId) {
                         this.collectedItem(event.pairs[0].bodyB, event.pairs[0].bodyA.itemType);
                     }
                 }
-                if (event.pairs[0].bodyB.itemType && event.pairs[0].bodyB.itemType === ITEMTYPE.bullet) {
+                if (event.pairs[0].bodyB.itemType) {
                     this.removeItem(this.engine.world, event.pairs[0].bodyB.itemId);
                     if (event.pairs[0].bodyA.socketId) {
                         this.collectedItem(event.pairs[0].bodyA, event.pairs[0].bodyB.itemType);
@@ -162,9 +162,13 @@ class GameEngine {
         switch (itemType) {
             case ITEMTYPE.bullet:
                 player.bullets++;
+                this.io.to(player.socketId).emit('bullet update', player.bullets);
+                break;
+            case ITEMTYPE.coin:
+                player.coins++;
+                this.io.to(player.socketId).emit('coin update', player.coins);
                 break;
         }
-        this.io.to(player.socketId).emit('item', { collected: { itemType: itemType } });
     }
 
     hitByBullet(player) {
@@ -202,6 +206,7 @@ class GameEngine {
     spawnRandomItem() {
         if (this.items.size < MAX_ITEMS) {
             this.spawnItem(this.engine.world, this.getRandomNum(50, this.planetWidth - 50), this.getRandomNum(50, this.planetHeight - 50), ITEMTYPE.bullet);
+            this.spawnItem(this.engine.world, this.getRandomNum(50, this.planetWidth - 50), this.getRandomNum(50, this.planetHeight - 50), ITEMTYPE.coin);
         }
     }
 
@@ -221,7 +226,8 @@ class GameEngine {
                         lookIndex:player.lookIndex,
                         health: 3,
                         gun: false,
-                        bullets: 0
+                        bullets: 0,
+                        coins: 0
                     }
                 ));
             let newPlayer = this.players.get(player.id);
@@ -242,6 +248,7 @@ class GameEngine {
     removeItem(world, id) {
         let item = this.items.get(id);
         if (item) {
+            console.log("removing, ", item.itemType)
             this.io.sockets.emit('item', { remove: { itemId: item.itemId, x: item.x, y: item.y, itemType: item.itemType } });
             this.Composite.remove(world, item);
             this.items.delete(id);
@@ -265,6 +272,7 @@ class GameEngine {
         let player = this.players.get(socketId);
         if (player && player.currentArea === AREAS.digitalplanet && player.bullets > 0) {
             player.bullets--;
+            this.io.to(player.socketId).emit('bullet update', player.bullets);
             let pos = this.getBulletPos(player.position, direction);
             let newBullet = this.Bodies.rectangle(pos.x, pos.y, 16, 16, {isBullet: true, direction: direction});
             newBullet.firedBy = player.socketId;
