@@ -85,6 +85,7 @@ setInterval(() => {
   if (engine.players.size > 0) {
     let state = { players: engine.getPlayers() };
     engine.bullets.size > 0 ? state.bullets = engine.getBullets() : null;
+    engine.looseCoins.size > 0 ? state.coins = engine.getLooseCoins() : null;
     io.sockets.emit('state', state);
   }
 }, TICK_RATE);

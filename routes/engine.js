@@ -9,6 +9,7 @@ const WALKING_SPEED = 2.5;
 const WALKING_FORCE = 0.002;
 const BULLET_VELO = 5;
 const MAX_ITEMS = 5;
+const COIN_SPEED = 3;
 
 const Key = {
     'w':0,
@@ -54,6 +55,7 @@ class GameEngine {
 
         this.players = new Map();
         this.bullets = new Map();
+        this.looseCoins = new Map();
         this.items = new Map();
     
         this.curr_timestamp = Date.now();
@@ -155,6 +157,21 @@ class GameEngine {
                     }
                 }
             }
+
+            if (event.pairs[0].bodyA.isCoin || event.pairs[0].bodyB.isCoin) {
+                if (event.pairs[0].bodyA.isCoin && event.pairs[0].bodyB.socketId && event.pairs[0].bodyA.droppedBy !== event.pairs[0].bodyB.socketId) {
+                    this.removeLooseCoin(this.engine.world, event.pairs[0].bodyA.itemId);
+                    if (event.pairs[0].bodyB.socketId) {
+                        this.collectedItem(event.pairs[0].bodyB, ITEMTYPE.coin);
+                    }
+                }
+                if (event.pairs[0].bodyB.isCoin && event.pairs[0].bodyA.socketId && event.pairs[0].bodyB.droppedBy !== event.pairs[0].bodyA.socketId) {
+                    this.removeLooseCoin(this.engine.world, event.pairs[0].bodyB.itemId);
+                    if (event.pairs[0].bodyA.socketId) {
+                        this.collectedItem(event.pairs[0].bodyA, ITEMTYPE.coin);
+                    }
+                }
+            }
         })
     }
 
@@ -176,6 +193,7 @@ class GameEngine {
             player.health -= 1;
             this.io.to(player.socketId).emit('health update', player.health);
             if (player.health === 0) {
+                this.dropCoins(player.socketId, player.coins);
                 this.io.sockets.emit('player action', { socketId: player.socketId, actions: { faint: true } });
                 this.io.sockets.emit('feed', "💀 " + (player.username ? player.username : "[anonymous]") + " has fainted");
             } else {
@@ -212,6 +230,7 @@ class GameEngine {
     }
 
     addPlayer(player) {
+        const HEALTH = 3, COINS = 3, BULLETS = 3, GUN = false;
         if (!this.players.has(player.id)) {
             this.players.set(player.id, 
                 this.Bodies.rectangle(
@@ -225,10 +244,10 @@ class GameEngine {
                         socketId:player.id, 
                         currentArea:player.currentArea, 
                         lookIndex:player.lookIndex,
-                        health: 3,
-                        gun: false,
-                        bullets: 3,
-                        coins: 0
+                        health: HEALTH,
+                        gun: GUN,
+                        bullets: BULLETS,
+                        coins: COINS
                     }
                 ));
             let newPlayer = this.players.get(player.id);
@@ -236,6 +255,9 @@ class GameEngine {
             this.Body.setMass(newPlayer, 1);
             this.Composite.add(this.engine.world, newPlayer);
             this.io.sockets.emit('feed', (player.username ? player.username : "[anonymous]") + " has joined the lounge 🕺");
+            this.io.to(player.id).emit('bullet update', BULLETS);
+            this.io.to(player.id).emit('health update', HEALTH);
+            this.io.to(player.id).emit('coin update', COINS);
         }
     }
 
@@ -253,6 +275,14 @@ class GameEngine {
             this.io.sockets.emit('item', { remove: { itemId: item.itemId, x: item.x, y: item.y, itemType: item.itemType } });
             this.Composite.remove(world, item);
             this.items.delete(id);
+        }
+    }
+
+    removeLooseCoin(world, id) {
+        let coin = this.looseCoins.get(id);
+        if (coin) {
+            this.Composite.remove(world, coin);
+            this.looseCoins.delete(id);
         }
     }
 
@@ -282,6 +312,29 @@ class GameEngine {
             this.setBulletVelocity(newBullet, direction);
             this.bullets.set(newBullet.bulletId, newBullet);
             return newBullet;
+        } else {
+            return null;
+        }
+    }
+
+    dropCoins(socketId, amount) {
+        let player = this.players.get(socketId);
+        if (player && player.currentArea === AREAS.digitalplanet && player.coins > 0) {
+            if (amount > player.coins) {
+                amount = player.coins;
+            }
+            player.coins-=amount;
+            for (let i = 0; i < amount; i++) {
+                let newCoin = this.Bodies.rectangle(player.position.x, player.position.y, 16, 16, {isCoin: true, droppedBy: player.socketId});
+                newCoin.itemId = uuidv4();
+                newCoin.frictionAir = (0.4);
+                this.Composite.add(this.engine.world, newCoin);
+                this.Body.setVelocity(newCoin, {x: this.getRandomNum(-COIN_SPEED, COIN_SPEED), y: this.getRandomNum(-COIN_SPEED, COIN_SPEED)});
+                this.looseCoins.set(newCoin.itemId, newCoin);
+                setTimeout(() => {
+                    this.removeLooseCoin(this.engine.world, newCoin.itemId)
+                }, this.getRandomInt(5000, 10000));
+            }
         } else {
             return null;
         }
@@ -434,6 +487,16 @@ class GameEngine {
                 x: curr.position.x,
                 y: curr.position.y,
                 direction: curr.direction
+            }
+        }, new Array());
+    }
+
+    getLooseCoins() {
+        return Array.from(this.looseCoins.values()).map((curr) => {
+            return {
+                itemId: curr.itemId,
+                x: curr.position.x,
+                y: curr.position.y
             }
         }, new Array());
     }

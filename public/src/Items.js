@@ -1,9 +1,11 @@
 import { Key } from './Player';
 
 export class Coin extends Phaser.Physics.Matter.Sprite {
-    constructor(scene, x, y) {
+    constructor(scene, itemId, x, y) {
         super(scene.matter.world, x, y, 'coin');
 
+        this.itemId = itemId;
+        this.setCollisionCategory(null);
         scene.add.existing(this);
 
         this.anims.create({
@@ -46,6 +48,7 @@ export class Heart extends Phaser.Physics.Matter.Sprite {
     constructor(scene, x, y) {
         super(scene.matter.world, x, y, 'heart');
 
+        this.setCollisionCategory(null);
         scene.add.existing(this);
 
         this.anims.create({
@@ -64,6 +67,7 @@ export class BulletItem extends Phaser.Physics.Matter.Sprite {
     constructor(scene, x, y) {
         super(scene.matter.world, x, y, 'bullet');
         
+        this.setCollisionCategory(null);
         scene.add.existing(this).setStatic(true).setScale(1);
 
         this.anims.create({
@@ -93,7 +97,7 @@ export class MapItem extends Phaser.Physics.Matter.Sprite {
                 result = new Heart(scene, x, y);
                 break;
             case ITEMTYPE.coin:
-                result = new Coin(scene, x, y);
+                result = new Coin(scene, itemId, x, y);
                 break;
             case ITEMTYPE.bullet:
                 result = new BulletItem(scene, x, y);

@@ -1,7 +1,7 @@
 import { OL } from './utils';
 import { Player, Key } from './Player';
 import { Butterfly, OnlineBouncer } from './Guys';
-import { Bullet, GunFlash, MapItem, ITEMTYPE, Sparkle } from './Items';
+import { Bullet, GunFlash, MapItem, ITEMTYPE, Sparkle, Coin } from './Items';
 import { GameServerClient } from './GameServerClient';
 
 const INPUT_UPDATE_RATE = 1000/30;
@@ -16,6 +16,7 @@ export class DigitalPlanet extends Phaser.Scene {
         super('DigitalPlanet');
         this.players = new Map();
         this.bullets = new Map();
+        this.looseCoins = new Map();
         this.butterflies = new Array();
         this.items = new Map();
         this.looks = new Array();
@@ -321,7 +322,6 @@ export class DigitalPlanet extends Phaser.Scene {
     sendChat() {
         let message = document.getElementById("chat-entry").value;
         this.player.setMsg(message);
-        this.events.emit('feedUpdate', message)
         this.serverClient.socket.emit('player action', { message: message ? message : "NULL", typing: false });
         this.input.keyboard.enabled = true;
     }
@@ -385,6 +385,7 @@ export class DigitalPlanet extends Phaser.Scene {
             if (playerAction.actions.faint) {
                 playerToUpdate.faint();
                 if (playerAction.socketId === this.sessionID) {
+                    this.events.emit('coinUpdate', 0);
                     this.events.emit('displayPopup', {title: "💀", text: "close this window to continue"});
                     this.paused = true;
                 }
@@ -447,6 +448,7 @@ export class DigitalPlanet extends Phaser.Scene {
             });
         }
         this.updateBulletState(state.bullets);
+        this.updateCoinsState(state.coins);
     }
 
     updateBulletState(bulletsList) {
@@ -478,6 +480,39 @@ export class DigitalPlanet extends Phaser.Scene {
             this.matter.world.remove(bulletToRemove);
             bulletToRemove.destroy();
             this.bullets.delete(bulletToRemove.bulletId);    
+        }  
+    }
+
+    updateCoinsState(coinsList) {
+        let idSet = new Set();
+        if (coinsList) {
+            console.log("updating coins", coinsList.length);
+            coinsList.forEach((coin) => {
+                idSet.add(coin.itemId);
+                var coinToUpdate = this.looseCoins.get(coin.itemId);
+                if (!coinToUpdate) {
+                    this.looseCoins.set(coin.itemId, new Coin(this, coin.itemId, coin.x, coin.y));
+                } else if (coinToUpdate && coinToUpdate.body) {
+                    coinToUpdate.setPosition(coin.x, coin.y);
+                } else {
+                    this.removeCoin(coinToUpdate.itemId);
+                }
+            });
+        }
+        Array.from(this.looseCoins.values()).forEach((coin) => {
+            if (!idSet.has(coin.itemId)) {
+                this.removeCoin(coin.itemId);
+            }
+        });
+    }
+
+    removeCoin(id) {
+        let coinToRemove = this.looseCoins.get(id);
+        if (coinToRemove) {
+            console.log("remove coin");
+            this.matter.world.remove(coinToRemove);
+            coinToRemove.destroy();
+            this.looseCoins.delete(coinToRemove.itemId);    
         }  
     }
 
