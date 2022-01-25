@@ -1,5 +1,6 @@
 var GameEngine = require('./engine');
 var socket_io = require('socket.io');
+var mojiTranslate = require('moji-translate');
 var io = socket_io();
 var socketApi = {};
 
@@ -37,7 +38,9 @@ io.on('connection', (socket) => {
       let result = engine.executeCommand(socket.id, actionArray.message);
       console.log("result", result);
       io.sockets.emit('player action', { socketId: socket.id, actions: { message: "NULL", commandResult: result } });
-    } else {
+    } else if (actionArray.message) {
+      actionArray.message = mojiTranslate.translate(actionArray.message);
+      console.log(actionArray.message);
       io.sockets.emit('player action', { socketId: socket.id, actions: actionArray });
     }
   });

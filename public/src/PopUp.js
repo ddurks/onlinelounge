@@ -26,7 +26,8 @@ export class PopUp extends Phaser.GameObjects.Group {
         this.title.setScrollFactor(0);
 
         this.textBody = scene.add.text(this.popup.x, this.popup.y, "", {
-            fontFamily: 'gaming1',
+            fontFamily: 'Arial',
+            fontStyle: 'bold',
             fontSize: '32px',
             color:  '#000000',
             wordWrap: {

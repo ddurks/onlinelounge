@@ -141,9 +141,13 @@ export class Controls extends Phaser.Scene {
             document.getElementById('char-count').innerHTML = (this.value.length) + "/" + MAX_LENGTH;
         };
 
-        this.zoomButton = new TextButton(this, OL.world.width - 135, 15, "zoom", { fontFamily: 'gaming2',color:  '#000000' ,fontSize: '16px'}, () => this.zoom());
+        this.zoomButton = new TextButton(this, OL.world.width - 105, 12, "(+)/", { fontFamily: 'Arial', fontStyle: 'bold', color:  '#000000' ,fontSize: '16px'}, () => this.zoomIn());
         this.zoomButton.setDepth(12);
         this.add.existing(this.zoomButton).setScrollFactor(0);
+
+        this.zoomOutButton = new TextButton(this, OL.world.width - 85, 12, "/(-)", { fontFamily: 'Arial', fontStyle: 'bold', color:  '#000000' ,fontSize: '16px'}, () => this.zoomOut());
+        this.zoomOutButton.setDepth(12);
+        this.add.existing(this.zoomOutButton).setScrollFactor(0);
 
         this.gunButton = this.add.image(OL.world.width - 40, OL.world.height - 108, 'gunButton').setVisible(false).setInteractive({ useHandCursor: true }).on('pointerdown', () => {
             this.events.emit('shootGun');

@@ -26,6 +26,8 @@ export class DigitalPlanet extends Phaser.Scene {
         this.population = 0;
         this.paused = false;
         this.stateQueue = new Array();
+        this.zoomLevel = 1;
+        this.zoomMax = 3;
     }
 
     init(data) {
@@ -162,6 +164,7 @@ export class DigitalPlanet extends Phaser.Scene {
                         this.removePlayer(player.socketId);
                     }
                 });
+                this.player.setHoldGun(false); 
                 this.clearMaps();
                 console.log("disconnected from server");
             })
@@ -208,6 +211,10 @@ export class DigitalPlanet extends Phaser.Scene {
         setInterval(() => {
                 this.serverClient.socket.emit('player input', this.player.keysPressed);
         }, INPUT_UPDATE_RATE);
+
+        if (!OL.IS_MOBILE) {
+            this.zoomIn();
+        }
     }
 
     windowClosed() {
@@ -246,6 +253,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.player = this.generatePlayer(null, x, y, OL.username, this.lookIndex);
         this.player.body.type = 'player1';
         this.player.currentArea = this.getCurrentArea(this.startData.mapKey);
+        this.player.createPlayerMarker();
         this.events.emit('playerLoaded', {texture: this.player.texture.key});
     }
 
@@ -305,13 +313,22 @@ export class DigitalPlanet extends Phaser.Scene {
     }
 
     zoomIn() {
-        this.camera.pan(this.player.x, this.player.y, 100, 'Power2');
-        this.camera.zoomTo(2, 1000);
+        if (this.zoomLevel < this.zoomMax) {
+            this.zoomLevel++;
+            this.zoom(this.zoomLevel);
+        }
     }
 
     zoomOut() {
+        if (this.zoomLevel > 1) {
+            this.zoomLevel--;
+            this.zoom(this.zoomLevel);
+        }
+    }
+
+    zoom(level) {
         this.camera.pan(this.player.x, this.player.y, 100, 'Power2');
-        this.camera.zoomTo(1, 1000);    
+        this.camera.zoomTo(level, 500); 
     }
 
     openChatBox() {
@@ -322,7 +339,6 @@ export class DigitalPlanet extends Phaser.Scene {
 
     sendChat() {
         let message = document.getElementById("chat-entry").value;
-        this.player.setMsg(message);
         this.serverClient.socket.emit('player action', { message: message ? message : "NULL", typing: false });
         this.input.keyboard.enabled = true;
     }
@@ -392,7 +408,7 @@ export class DigitalPlanet extends Phaser.Scene {
                 }
             }
         }
-        if (playerToUpdate && playerAction.socketId !== this.sessionID) {
+        if (playerToUpdate) {
             if (playerAction.actions.message) {
                 if (playerAction.actions.message === "NULL") {
                     playerToUpdate.setMsg("");
@@ -406,7 +422,8 @@ export class DigitalPlanet extends Phaser.Scene {
             if ( (playerAction.actions.lookIndex || playerAction.actions.lookIndex === 0) && playerAction.actions.lookIndex >= 0) {
                 this.changePlayerLook(playerToUpdate, playerAction.actions.lookIndex);
             }
-        } else if(playerAction.actions.commandResult !== null && playerAction.actions.commandResult !== undefined) {
+        }
+        if(playerAction.actions.commandResult !== null && playerAction.actions.commandResult !== undefined) {
             if (playerAction.actions.commandResult.gun === true || playerAction.actions.commandResult.gun === false) {
                 this.player.setMsg("*holding gun: " + playerAction.actions.commandResult.gun + "*");
                 this.player.setHoldGun(playerAction.actions.commandResult.gun);

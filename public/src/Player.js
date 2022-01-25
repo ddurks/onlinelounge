@@ -70,11 +70,25 @@ export class Player extends Phaser.Physics.Matter.Sprite {
 
         this.generateItems(scene, this);
 
+        this.scene = scene;
         return this;
     }
 
     generateItems(scene, player) {
         this.gun = scene.add.sprite(player.x - 12, player.y + 8, 'gun', 0).setVisible(false);
+    }
+
+    createPlayerMarker() {
+        this.playermarker = this.scene.add.sprite(this.x, this.y - this.size*2/3, 'playermarker');
+
+        this.playermarker.anims.create({
+            key: 'float',
+            frameRate: 8,
+            frames: this.anims.generateFrameNumbers('playermarker', { frames: [0, 0, 0, 0, 1, 2, 3] }),
+            repeat: -1
+        });
+
+        this.playermarker.play('float');
     }
 
     generateSpeakText(scene, player) {
@@ -86,9 +100,7 @@ export class Player extends Phaser.Physics.Matter.Sprite {
                 useAdvancedWrap: true
             },
             align: 'center'
-        });
-        speakText.setStroke('#000000', 3);
-        speakText.setOrigin(0.5, 0);
+        }).setStroke('#000000', 3).setOrigin(0.5, 0);
         return speakText;
     }
 
@@ -110,20 +122,12 @@ export class Player extends Phaser.Physics.Matter.Sprite {
 
     generateUsernameText(scene, player) {
         var usernameText = scene.add.text(player.x + 2,player.y, player.username, {
-            fontFamily: 'gaming1',
-            color:  '#ffffff' ,
-            fontSize: '32px',
-            shadow: {
-                offsetX: -2,
-                offsetY: 2,
-                color: '#000',
-                blur: 0,
-                stroke: true,
-                fill: true,
-            },
-        });
-        usernameText.setOrigin(0.5, 0);
-        usernameText.setAlign('center');
+            fontFamily: 'Arial',
+            fontStyle: 'bold',
+            color:  '#A9A9A9' ,
+            fontSize: '20px',
+
+        }).setStroke('#000000', 3).setOrigin(0.5, 0).setAlign('center');
         return usernameText;
     }
 
@@ -207,6 +211,11 @@ export class Player extends Phaser.Physics.Matter.Sprite {
                     this.gun.setFrame(3);
                 }
             }
+
+            if (this.playermarker) {
+                this.playermarker.x = this.x;
+                this.playermarker.y = this.y - this.size*2/3;
+            }
         }
     }
 
@@ -253,5 +262,8 @@ export class Player extends Phaser.Physics.Matter.Sprite {
         this.usernameText.destroy();
         this.typingIcon.destroy();
         this.gun.destroy();
+        if (this.playermarker) {
+            this.playerMarker.destroy();
+        }
     }
 }
