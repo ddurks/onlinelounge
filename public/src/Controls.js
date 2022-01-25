@@ -1,6 +1,7 @@
 import { PopUp } from "./PopUp";
 import { TextButton, OL } from "./utils";
 import VirtualJoystick from 'phaser3-rex-plugins/plugins/virtualjoystick.js';
+import { PLAYERITEM } from './Items';
 
 export class HealthBar extends Phaser.GameObjects.Group {
     constructor(scene, heartsNum) {
@@ -132,17 +133,39 @@ export class Controls extends Phaser.Scene {
         this.gunButton = this.add.image(OL.world.width - 40, OL.world.height - 108, 'gunButton').setVisible(false).setInteractive({ useHandCursor: true }).on('pointerdown', () => {
             this.events.emit('shootGun');
         });
+        this.shovelButton = this.add.sprite(OL.world.width - 40, OL.world.height - 108, 'shovelButton', 7).setVisible(false);
+        this.shovelButton.anims.create({
+            key: 'reload', 
+            frameRate: 2,
+            frames: this.anims.generateFrameNumbers('shovelButton', { frames: [0, 1, 2, 3, 4, 5, 6, 7] }),
+            repeat: 0
+        });
+        this.shovelButton.enabled = true;
+        this.shovelButton.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+            this.shovelButton.enabled = true;
+        });
+        this.shovelButton.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
+            if (this.shovelButton.enabled) {
+                this.shovelButton.enabled = false;
+                this.shovelButton.anims.play('reload');
+            }
+        });
+        this.buryButton = this.add.image(OL.world.width - 40, OL.world.height - 108, 'buryButton').setVisible(false).setInteractive({ useHandCursor: true }).on('pointerdown', () => {
+            console.log("bury");
+        });
+
+        this.itemButton = this.gunButton;
 
         if (this.popup) {
             this.popup.destroy();
         }
         this.popup = new PopUp(this);
         this.healthBar = new HealthBar(this, 3);
-        this.bulletIcon = this.add.image(OL.world.width - 30, 120, 'bullet', 2)
+        this.bulletIcon = this.add.image(OL.world.width - 30, 130, 'bullet', 2)
             .setScrollFactor(0)
             .setScale(2)
-            .setInteractive({ useHandCursor: true }).on('pointerdown', () => this.events.emit('holdingGun'));
-        this.bulletNumText = this.add.text(OL.world.width - 30, 120, 0, {
+            .setInteractive({ useHandCursor: true }).on('pointerdown', () => this.events.emit('holdingItem', PLAYERITEM.gun));
+        this.bulletNumText = this.add.text(OL.world.width - 30, 130, 0, {
             fontFamily: 'Arial',
             fontSize: '10px',
             fontStyle: 'bold',
@@ -153,8 +176,8 @@ export class Controls extends Phaser.Scene {
             },
             align: 'center'
         }).setOrigin(0.5, 0.5).setDepth(11);
-        this.coinIcon = this.add.image(OL.world.width - 75, 120, 'coin', 4).setScrollFactor(0).setScale(2);
-        this.coinsText = this.add.text(OL.world.width - 75, 120, 0, {
+        this.coinIcon = this.add.image(OL.world.width - 30, 170, 'coin', 4).setScrollFactor(0).setScale(2).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.events.emit('holdingItem', PLAYERITEM.bury));
+        this.coinsText = this.add.text(OL.world.width - 30, 170, 0, {
             fontFamily: 'Arial',
             fontSize: '12px',
             fontStyle: 'bold',
@@ -165,6 +188,7 @@ export class Controls extends Phaser.Scene {
             },
             align: 'center'
         }).setOrigin(0.5, 0.5).setDepth(11);
+        this.shovelIcon = this.add.image(OL.world.width - 30, 210, 'shovel', 1).setScrollFactor(0).setScale(2).setInteractive({ useHandCursor: true }).on('pointerdown', () => this.events.emit('holdingItem', PLAYERITEM.shovel));
         if (OL.IS_MOBILE) {
             this.joystick = new VirtualJoystick(this, {
                 x: 125,
@@ -180,7 +204,7 @@ export class Controls extends Phaser.Scene {
         this.scene.get('DigitalPlanet').events.on('displayPopup', (info) => this.displayPopup(info));
         this.scene.get('DigitalPlanet').events.on('populationUpdate', (pop) => this.populationUpdate(pop));
         this.scene.get('DigitalPlanet').events.on('connectionStatus', (status) => this.setConnected(status));
-        this.scene.get('DigitalPlanet').events.on('holdingGun', (status) => this.holdingGun(status));
+        this.scene.get('DigitalPlanet').events.on('holdingItem', (status) => this.holdingItem(status));
         this.scene.get('DigitalPlanet').events.on('healthUpdate', (healthNum) => this.healthUpdate(healthNum));
         this.scene.get('DigitalPlanet').events.on('bulletUpdate', (bulletNum) => this.bulletUpdate(bulletNum));
         this.scene.get('DigitalPlanet').events.on('coinUpdate', (coins) => this.coinUpdate(coins));
@@ -215,8 +239,19 @@ export class Controls extends Phaser.Scene {
         this.populationText.setText(pop);
     }
 
-    holdingGun(status) {
-        this.gunButton.setVisible(status);
+    holdingItem(heldItem) {
+        this.itemButton.setVisible(false);
+        switch (heldItem) {
+            case PLAYERITEM.gun:
+                this.itemButton = this.gunButton.setVisible(true);
+                return;
+            case PLAYERITEM.shovel:
+                this.itemButton = this.shovelButton.setVisible(true);
+                return;
+            case PLAYERITEM.bury:
+                this.itemButton = this.buryButton.setVisible(true);
+                return;
+        }
     }
 
     createMenuBar() {

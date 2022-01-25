@@ -1,5 +1,11 @@
 import { Key } from './Player';
 
+export const PLAYERITEM = {
+    'gun': 1,
+    'shovel': 2,
+    'bury': 3
+}
+
 export class Coin extends Phaser.Physics.Matter.Sprite {
     constructor(scene, itemId, x, y) {
         super(scene.matter.world, x, y, 'coin');

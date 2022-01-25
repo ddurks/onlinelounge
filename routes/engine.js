@@ -29,6 +29,12 @@ const ITEMTYPE = {
     'bullet': 2
 }
 
+const PLAYERITEM = {
+    'gun': 1,
+    'shovel': 2,
+    'bury': 3
+}
+
 class Item {
     constructor(world, x, y, itemType) {
         let itemBody = Matter.Bodies.rectangle(x, y, 32, 32, {itemType: itemType});
@@ -258,7 +264,7 @@ class GameEngine {
                         currentArea:player.currentArea, 
                         lookIndex:player.lookIndex,
                         health: HEALTH,
-                        gun: GUN,
+                        item: GUN,
                         bullets: BULLETS,
                         coins: COINS
                     }
@@ -394,10 +400,28 @@ class GameEngine {
         let commandPlayer = this.players.get(socketId);
         if (commandPlayer) {
             if (command === "/gun") {
-                commandPlayer.gun = !commandPlayer.gun;
-                return {
-                    gun: commandPlayer.gun
+                if (commandPlayer.item === PLAYERITEM.gun) {
+                    commandPlayer.item = false;
+                } else {
+                    commandPlayer.item = PLAYERITEM.gun;
                 }
+                return { item: commandPlayer.item }
+            }
+            if (command === "/shovel") {
+                if (commandPlayer.item === PLAYERITEM.shovel) {
+                    commandPlayer.item = false;
+                } else {
+                    commandPlayer.item = PLAYERITEM.shovel;
+                }
+                return { item: commandPlayer.item }
+            }
+            if (command === "/bury") {
+                if (commandPlayer.item === PLAYERITEM.bury) {
+                    commandPlayer.item = false;
+                } else {
+                    commandPlayer.item = PLAYERITEM.bury;
+                }
+                return { item: commandPlayer.item }
             }
         }
         return null;
@@ -487,7 +511,7 @@ class GameEngine {
               currentArea: curr.currentArea,
               lookIndex: curr.lookIndex,
               health: curr.health,
-              gun: curr.gun
+              item: curr.item,
             });
             return acc;
           }, new Array())

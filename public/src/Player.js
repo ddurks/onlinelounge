@@ -1,4 +1,5 @@
 import { OL } from './utils';
+import { PLAYERITEM } from './Items';
 
 export const Key = {
     'w':0,
@@ -76,6 +77,8 @@ export class Player extends Phaser.Physics.Matter.Sprite {
 
     generateItems(scene, player) {
         this.gun = scene.add.sprite(player.x - 12, player.y + 8, 'gun', 0).setVisible(false);
+        this.shovel = scene.add.sprite(player.x - 12, player.y + 8, 'shovel', 0).setVisible(false);
+        this.item = this.gun;
     }
 
     createPlayerMarker() {
@@ -154,7 +157,7 @@ export class Player extends Phaser.Physics.Matter.Sprite {
             this.faint();
         } else {
             if (playerData.gun === true || playerData.gun === false) {
-                this.setHoldGun(playerData.gun);
+                this.setHoldItem(playerData.gun);
             }
             this.setPosition(playerData.x, playerData.y);
             if (playerData.currentInputs) {
@@ -192,29 +195,42 @@ export class Player extends Phaser.Physics.Matter.Sprite {
             this.usernameText.x = this.x;
             this.usernameText.y = this.y + this.size/2;
 
-            if (this.gun.visible) {
-                if (this.direction === Key.s) {
-                    this.gun.x = this.x - 12;
-                    this.gun.y = this.y + 8;
-                    this.gun.setFrame(0);
-                } else if (this.direction === Key.d) {
-                    this.gun.x = this.x + 14;
-                    this.gun.y = this.y + 8;
-                    this.gun.setFrame(1);
-                } else if (this.direction === Key.w) {
-                    this.gun.x = this.x - 12;
-                    this.gun.y = this.y + 8;
-                    this.gun.setFrame(2);
-                } else if (this.direction === Key.a) {
-                    this.gun.x = this.x - 14;
-                    this.gun.y = this.y + 8;
-                    this.gun.setFrame(3);
-                }
-            }
+            this.updateHeldItemPosition(this.item, true);
 
             if (this.playermarker) {
                 this.playermarker.x = this.x;
                 this.playermarker.y = this.y - this.size*2/3;
+            }
+        }
+    }
+
+    updateHeldItemPosition(item, dynamic) {
+        if (item.visible) {
+            if (this.direction === Key.s) {
+                item.x = this.x - 12;
+                item.y = this.y + 8;
+                if (dynamic) {
+                    item.setFrame(0);
+                }
+            } else if (this.direction === Key.d) {
+                item.x = this.x + 14;
+                item.y = this.y + 8;
+                if (dynamic) {
+                    item.setFrame(1);
+
+                }
+            } else if (this.direction === Key.w) {
+                item.x = this.x - 12;
+                item.y = this.y + 8;
+                if (dynamic) {
+                    item.setFrame(2);
+                }
+            } else if (this.direction === Key.a) {
+                item.x = this.x - 14;
+                item.y = this.y + 8;
+                if (dynamic) {
+                    item.setFrame(3);
+                }
             }
         }
     }
@@ -232,8 +248,16 @@ export class Player extends Phaser.Physics.Matter.Sprite {
         this.typing = true;
     }
 
-    setHoldGun(isHolding) {
-        this.gun.setVisible(isHolding);
+    setHoldItem(playerItem) {
+        this.item.setVisible(false);
+        switch (playerItem) {
+            case PLAYERITEM.gun:
+                this.item = this.gun.setVisible(true);
+                break;
+            case PLAYERITEM.shovel:
+                this.item = this.shovel.setVisible(true);
+                break;     
+        }
         this.updatePlayerStuff();
     }
 

@@ -1,7 +1,7 @@
 import { OL } from './utils';
 import { Player, Key } from './Player';
 import { Butterfly, OnlineBouncer } from './Guys';
-import { Bullet, GunFlash, MapItem, ITEMTYPE, Sparkle, Coin } from './Items';
+import { Bullet, GunFlash, MapItem, ITEMTYPE, Sparkle, Coin, PLAYERITEM } from './Items';
 import { GameServerClient } from './GameServerClient';
 
 const INPUT_UPDATE_RATE = 1000/30;
@@ -127,7 +127,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.scene.get('Controls').events.off('zoomOut');
         this.scene.get('Controls').events.off('lookChange');
         this.scene.get('Controls').events.off('shootGun');
-        this.scene.get('Controls').events.off('holdingGun');
+        this.scene.get('Controls').events.off('holdingItem');
         this.scene.get('Controls').events.off('closeEvent');
 
         this.scene.get('Controls').events.on('openChat', () => this.openChatBox());
@@ -136,7 +136,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.scene.get('Controls').events.on('zoomOut', () => this.zoomOut());
         this.scene.get('Controls').events.on('lookChange', () => this.changeLook());
         this.scene.get('Controls').events.on('shootGun', () => this.shootGun());
-        this.scene.get('Controls').events.on('holdingGun', () => this.serverClient.socket.emit('player action', { message: "/gun", typing: false }));
+        this.scene.get('Controls').events.on('holdingItem', (item) => this.nowHoldingItem(item));
         this.scene.get('Controls').events.on('closeEvent', () => this.windowClosed());
 
         this.sessionID = this.serverClient.sessionID ? this.serverClient.sessionID : undefined;
@@ -164,7 +164,7 @@ export class DigitalPlanet extends Phaser.Scene {
                         this.removePlayer(player.socketId);
                     }
                 });
-                this.player.setHoldGun(false); 
+                this.player.setHoldItem(false); 
                 this.clearMaps();
                 console.log("disconnected from server");
             })
@@ -211,6 +211,20 @@ export class DigitalPlanet extends Phaser.Scene {
         setInterval(() => {
                 this.serverClient.socket.emit('player input', this.player.keysPressed);
         }, INPUT_UPDATE_RATE);
+    }
+
+    nowHoldingItem(playerItem) {
+        switch (playerItem) {
+            case PLAYERITEM.gun:
+                this.serverClient.socket.emit('player action', { message: "/gun", typing: false });
+                break;
+            case PLAYERITEM.bury:
+                this.serverClient.socket.emit('player action', { message: "/bury", typing: false });
+                break;
+            case PLAYERITEM.shovel:
+                this.serverClient.socket.emit('player action', { message: "/shovel", typing: false });
+                break;
+        }
     }
 
     windowClosed() {
@@ -339,11 +353,14 @@ export class DigitalPlanet extends Phaser.Scene {
         this.input.keyboard.enabled = true;
     }
 
-    generatePlayer(socketId, x, y, username, lookIndex) {
+    generatePlayer(socketId, x, y, username, lookIndex, heldItem) {
         let player = new Player(this, x, y, this.looks[lookIndex], username);
         player.socketId = socketId;
         if (socketId) {
             this.players.set(socketId, player);
+        }
+        if (heldItem) {
+            player.setHoldItem(heldItem)
         }
         return player;
     }
@@ -414,10 +431,16 @@ export class DigitalPlanet extends Phaser.Scene {
             }
         }
         if(playerAction.actions.commandResult !== null && playerAction.actions.commandResult !== undefined) {
-            if (playerAction.actions.commandResult.gun === true || playerAction.actions.commandResult.gun === false) {
-                this.player.setMsg("*holding gun: " + playerAction.actions.commandResult.gun + "*");
-                this.player.setHoldGun(playerAction.actions.commandResult.gun);
-                this.events.emit('holdingGun', playerAction.actions.commandResult.gun);
+            if (playerAction.actions.commandResult.item || playerAction.actions.commandResult.item === false) {
+                if (playerAction.socketId === this.sessionID) {
+                    this.player.setMsg("*holding item: " + playerAction.actions.commandResult.item + "*");
+                    this.player.setHoldItem(playerAction.actions.commandResult.item);
+                    this.events.emit('holdingItem', playerAction.actions.commandResult.item);
+                } else {
+                    if (playerToUpdate) {
+                        playerToUpdate.setHoldItem(playerAction.actions.commandResult.item);
+                    }
+                }
             }
         }
     }
@@ -443,7 +466,7 @@ export class DigitalPlanet extends Phaser.Scene {
                         if (playerData.socketId === this.sessionID) {
                             this.events.emit('playerLoaded', {texture: this.player.texture.key});
                         }
-                        this.generatePlayer(playerData.socketId, playerData.x, playerData.y, playerData.username, playerData.lookIndex);
+                        this.generatePlayer(playerData.socketId, playerData.x, playerData.y, playerData.username, playerData.lookIndex, playerData.item);
                     } else if (playerToUpdate && playerToUpdate.body) {
                         playerToUpdate.updateFromData(playerData);
                     } else {

@@ -27,6 +27,8 @@ export class Preloader extends Phaser.Scene {
 		this.load.spritesheet('gunflash', 'assets/sprites/gun_flash_spritesheet.png', { frameWidth: 16, frameHeight: 16, margin: 0, spacing: 0 });
 		this.load.spritesheet('sparkle', 'assets/sprites/sparkle.png', { frameWidth: 16, frameHeight: 16, margin: 0, spacing: 0 });
 		this.load.spritesheet('playermarker', 'assets/sprites/playermarker.png', { frameWidth: 16, frameHeight: 16, margin: 0, spacing: 0 });
+		this.load.spritesheet('shovel', 'assets/sprites/shovel-spritesheet.png', { frameWidth: 16, frameHeight: 16, margin: 0, spacing: 0 });
+		this.load.spritesheet('shovelButton', 'assets/sprites/shovel-button-spritesheet.png', { frameWidth: 64, frameHeight: 64, margin: 0, spacing: 0 });
 		this.load.image('menuBar', 'assets/hud/menu-bar.png');
 		this.load.image('popup', 'assets/hud/popup.png');
 		this.load.image('olLogo', 'assets/hud/logo.png');
@@ -34,6 +36,7 @@ export class Preloader extends Phaser.Scene {
 		this.load.image('greenButton', "assets/hud/green-button.png");
 		this.load.image('chatIcon', 'assets/hud/chat-button.png', {frameWidth: 24, frameHeight: 16});
 		this.load.image('gunButton', 'assets/hud/gun-button.png', {frameWidth: 64, frameHeight: 64});
+		this.load.image('buryButton', 'assets/hud/bury-button.png', {frameWidth: 64, frameHeight: 64});
 		this.load.image('x', "assets/hud/x.png");
 		this.load.image('joystick', "assets/hud/joystick.png");
 		this.load.image('joystickBg', "assets/hud/joystick_bg.png");
