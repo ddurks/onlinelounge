@@ -5,7 +5,7 @@ export class Boot extends Phaser.Scene {
         super('Boot');
     }
     preload() {
-        this.load.image('logo', 'assets/online_lounge_login.png');
+        this.load.image('logo', 'assets/hud/online_lounge_login.png');
     }
     create() {
         OL.world = {

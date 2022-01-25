@@ -39,8 +39,11 @@ io.on('connection', (socket) => {
       console.log("result", result);
       io.sockets.emit('player action', { socketId: socket.id, actions: { message: "NULL", commandResult: result } });
     } else if (actionArray.message) {
-      actionArray.message = mojiTranslate.translate(actionArray.message);
-      console.log(actionArray.message);
+      if (actionArray.message !== "NULL") {
+        console.log(actionArray.message);
+        actionArray.message = mojiTranslate.translate(actionArray.message);
+        console.log(actionArray.message);
+      }
       io.sockets.emit('player action', { socketId: socket.id, actions: actionArray });
     }
   });

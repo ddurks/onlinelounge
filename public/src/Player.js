@@ -263,7 +263,7 @@ export class Player extends Phaser.Physics.Matter.Sprite {
         this.typingIcon.destroy();
         this.gun.destroy();
         if (this.playermarker) {
-            this.playerMarker.destroy();
+            this.playermarker.destroy();
         }
     }
 }

@@ -110,7 +110,7 @@ export class Controls extends Phaser.Scene {
         chatIcon.setScale(4);
         chatIcon.setDepth(11);
         this.add.existing(chatIcon).setScrollFactor(0);
-        this.chatButton = new TextButton(this, OL.world.width - 87, OL.world.height - 52, OL.CHAT_TEXT, { fontFamily: 'gaming2',color:  '#000000' ,fontSize: '16px'}, () => this.chat());
+        this.chatButton = new TextButton(this, OL.world.width - 90, OL.world.height - 60, OL.CHAT_TEXT, { fontFamily: 'Arial', fontStyle: 'bold', color:  '#000000' ,fontSize: '32px'}, () => this.chat());
         this.chatButton.setDepth(11);
         this.add.existing(this.chatButton).setScrollFactor(0);
 
@@ -121,12 +121,10 @@ export class Controls extends Phaser.Scene {
             document.getElementById('char-count').innerHTML = (this.value.length) + "/" + MAX_LENGTH;
         };
 
-        //this.zoomButton = new TextButton(this, OL.world.width - 105, 12, "(+)/", { fontFamily: 'Arial', fontStyle: 'bold', color:  '#000000' ,fontSize: '16px'}, () => this.zoomIn());
         this.zoomButton = this.add.image(OL.world.width - 75, 12, 'zoomIn').setInteractive({ useHandCursor: true }).setScale(2).on('pointerdown', () => this.zoomIn());
         this.zoomButton.setDepth(12);
         this.add.existing(this.zoomButton).setScrollFactor(0);
 
-        //this.zoomOutButton = new TextButton(this, OL.world.width - 85, 12, "/(-)", { fontFamily: 'Arial', fontStyle: 'bold', color:  '#000000' ,fontSize: '16px'}, () => this.zoomOut());
         this.zoomOutButton = this.add.image(OL.world.width - 75, 34, 'zoomOut').setInteractive({ useHandCursor: true }).setScale(2).on('pointerdown', () => this.zoomOut());
         this.zoomOutButton.setDepth(12);
         this.add.existing(this.zoomOutButton).setScrollFactor(0);

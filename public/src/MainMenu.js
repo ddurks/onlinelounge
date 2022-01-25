@@ -8,7 +8,7 @@ export class MainMenu extends Phaser.Scene {
     create() {
         this.input.keyboard.on('keydown', this.handleKey, this);
 
-        this.text = this.add.text(10, 10, 'Please login to play', { color: '#fbf236', fontFamily: 'gaming2', fontSize: '16px '});
+        this.text = this.add.text(10, 10, 'Please login to play', { color: '#fbf236', fontFamily: 'Arial', fontSize: '16px '});
 
         var element = this.add.dom(OL.world.width/2, OL.world.height/2).createFromCache('nameform');
 

@@ -211,10 +211,6 @@ export class DigitalPlanet extends Phaser.Scene {
         setInterval(() => {
                 this.serverClient.socket.emit('player input', this.player.keysPressed);
         }, INPUT_UPDATE_RATE);
-
-        if (!OL.IS_MOBILE) {
-            this.zoomIn();
-        }
     }
 
     windowClosed() {
@@ -341,12 +337,6 @@ export class DigitalPlanet extends Phaser.Scene {
         let message = document.getElementById("chat-entry").value;
         this.serverClient.socket.emit('player action', { message: message ? message : "NULL", typing: false });
         this.input.keyboard.enabled = true;
-    }
-
-    generateCuteGuy(x, y) {
-        var cuteGuy = this.matter.add.sprite(x, y, 'cute');
-        cuteGuy.setScale(0.25);
-        return cuteGuy;
     }
 
     generatePlayer(socketId, x, y, username, lookIndex) {

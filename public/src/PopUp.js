@@ -19,7 +19,7 @@ export class PopUp extends Phaser.GameObjects.Group {
         this.x.setVisible(false);
         this.x.setScrollFactor(0);
 
-        this.title = scene.add.text(this.popup.x, this.popup.y - 190, "lounge", { fontFamily: 'gaming2',color:  '#000000' ,fontSize: '16px'} );
+        this.title = scene.add.text(this.popup.x, this.popup.y - 190, "lounge", { fontFamily: 'Arial', fontStyle: 'bold', color:  '#000000' ,fontSize: '16px'} );
         this.title.setOrigin(0.5, 0);
         this.title.setDepth(12);
         this.title.setVisible(false);
