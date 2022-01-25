@@ -36,6 +36,10 @@ export class Preloader extends Phaser.Scene {
 		this.load.image('redButton', "assets/red-button.png");
 		this.load.image('greenButton', "assets/green-button.png");
 		this.load.image('x', "assets/x.png");
+		this.load.image('joystick', "assets/joystick.png");
+		this.load.image('joystickBg', "assets/joystick_bg.png");
+		this.load.image('zoomIn', "assets/zoomIn.png");
+		this.load.image('zoomOut', "assets/zoomOut.png");
 		this.load.image('groundTiles', "assets/tiles/online-pluto-tileset-extruded.png");
 		this.load.image('objectTiles', "assets/tiles/online-tileset-extruded.png");
 		this.load.image('loungeTiles', "assets/tiles/online-lounge-objects-extruded.png");

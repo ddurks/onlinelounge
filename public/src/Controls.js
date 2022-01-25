@@ -121,11 +121,13 @@ export class Controls extends Phaser.Scene {
             document.getElementById('char-count').innerHTML = (this.value.length) + "/" + MAX_LENGTH;
         };
 
-        this.zoomButton = new TextButton(this, OL.world.width - 105, 12, "(+)/", { fontFamily: 'Arial', fontStyle: 'bold', color:  '#000000' ,fontSize: '16px'}, () => this.zoomIn());
+        //this.zoomButton = new TextButton(this, OL.world.width - 105, 12, "(+)/", { fontFamily: 'Arial', fontStyle: 'bold', color:  '#000000' ,fontSize: '16px'}, () => this.zoomIn());
+        this.zoomButton = this.add.image(OL.world.width - 75, 12, 'zoomIn').setInteractive({ useHandCursor: true }).setScale(2).on('pointerdown', () => this.zoomIn());
         this.zoomButton.setDepth(12);
         this.add.existing(this.zoomButton).setScrollFactor(0);
 
-        this.zoomOutButton = new TextButton(this, OL.world.width - 85, 12, "/(-)", { fontFamily: 'Arial', fontStyle: 'bold', color:  '#000000' ,fontSize: '16px'}, () => this.zoomOut());
+        //this.zoomOutButton = new TextButton(this, OL.world.width - 85, 12, "/(-)", { fontFamily: 'Arial', fontStyle: 'bold', color:  '#000000' ,fontSize: '16px'}, () => this.zoomOut());
+        this.zoomOutButton = this.add.image(OL.world.width - 75, 34, 'zoomOut').setInteractive({ useHandCursor: true }).setScale(2).on('pointerdown', () => this.zoomOut());
         this.zoomOutButton.setDepth(12);
         this.add.existing(this.zoomOutButton).setScrollFactor(0);
 
@@ -170,6 +172,8 @@ export class Controls extends Phaser.Scene {
                 x: 125,
                 y: OL.world.height - 125,
                 radius: 100,
+                base: this.add.image(125, OL.world.height - 125, 'joystickBg').setScale(2),
+                thumb: this.add.image(125, OL.world.height - 125, 'joystick').setScale(2)
             }).setScrollFactor(0);
         }
 
