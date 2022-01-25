@@ -107,11 +107,11 @@ export class Controls extends Phaser.Scene {
         }).setDepth(11);
         this.connectionIcon = this.add.image(30, -6, 'connection', 1).setScale(0.75).setOrigin(0, 0).setDepth(11);
 
-        var chatIcon = this.add.image(OL.world.width - 52, OL.world.height - 37, 'chatIcon', 0);
+        var chatIcon = this.add.image(OL.world.width - 50, OL.world.height - 45, 'chatIcon', 0);
         chatIcon.setScale(4);
         chatIcon.setDepth(11);
         this.add.existing(chatIcon).setScrollFactor(0);
-        this.chatButton = new TextButton(this, OL.world.width - 90, OL.world.height - 60, OL.CHAT_TEXT, { fontFamily: 'Arial', fontStyle: 'bold', color:  '#000000' ,fontSize: '32px'}, () => this.chat());
+        this.chatButton = new TextButton(this, OL.world.width - 65, OL.world.height - 67, OL.CHAT_TEXT, { fontFamily: 'Arial', fontStyle: 'bold', color:  '#000000' ,fontSize: '32px'}, () => this.chat());
         this.chatButton.setDepth(11);
         this.add.existing(this.chatButton).setScrollFactor(0);
 
@@ -121,6 +121,7 @@ export class Controls extends Phaser.Scene {
         document.getElementById('chat-entry').onkeyup = function () {
             document.getElementById('char-count').innerHTML = (this.value.length) + "/" + MAX_LENGTH;
         };
+        document.getElementById('chat-entry').onchange = () => this.sendChat();
 
         this.zoomButton = this.add.image(OL.world.width - 75, 12, 'zoomIn').setInteractive({ useHandCursor: true }).setScale(2).on('pointerdown', () => this.zoomIn());
         this.zoomButton.setDepth(12);
@@ -130,10 +131,10 @@ export class Controls extends Phaser.Scene {
         this.zoomOutButton.setDepth(12);
         this.add.existing(this.zoomOutButton).setScrollFactor(0);
 
-        this.gunButton = this.add.image(OL.world.width - 40, OL.world.height - 108, 'gunButton').setVisible(false).setInteractive({ useHandCursor: true }).on('pointerdown', () => {
+        this.gunButton = this.add.image(OL.world.width - 50, OL.world.height - 116, 'gunButton').setVisible(false).setInteractive({ useHandCursor: true }).on('pointerdown', () => {
             this.events.emit('shootGun');
         });
-        this.shovelButton = this.add.sprite(OL.world.width - 40, OL.world.height - 108, 'shovelButton', 7).setVisible(false);
+        this.shovelButton = this.add.sprite(OL.world.width - 50, OL.world.height - 116, 'shovelButton', 7).setVisible(false);
         this.shovelButton.anims.create({
             key: 'reload', 
             frameRate: 2,
@@ -150,7 +151,7 @@ export class Controls extends Phaser.Scene {
                 this.shovelButton.anims.play('reload');
             }
         });
-        this.buryButton = this.add.image(OL.world.width - 40, OL.world.height - 108, 'buryButton').setVisible(false).setInteractive({ useHandCursor: true }).on('pointerdown', () => {
+        this.buryButton = this.add.image(OL.world.width - 50, OL.world.height - 116, 'buryButton').setVisible(false).setInteractive({ useHandCursor: true }).on('pointerdown', () => {
             console.log("bury");
         });
 
@@ -276,8 +277,10 @@ export class Controls extends Phaser.Scene {
         this.events.emit('openChat');
         this.chatButton.setText(OL.SEND_TEXT);
         document.getElementById("chat-box").style.display = "block";
-        var chatBox = document.getElementById("chat-entry");
-        chatBox.focus();
+        if (!OL.IS_MOBILE) {
+            var chatBox = document.getElementById("chat-entry");
+            chatBox.focus();
+        }
     }
 
     sendChat() {

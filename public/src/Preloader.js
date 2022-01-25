@@ -34,7 +34,7 @@ export class Preloader extends Phaser.Scene {
 		this.load.image('olLogo', 'assets/hud/logo.png');
 		this.load.image('redButton', "assets/hud/red-button.png");
 		this.load.image('greenButton', "assets/hud/green-button.png");
-		this.load.image('chatIcon', 'assets/hud/chat-button.png', {frameWidth: 24, frameHeight: 16});
+		this.load.image('chatIcon', 'assets/hud/square-talk.png', {frameWidth: 16, frameHeight: 16});
 		this.load.image('gunButton', 'assets/hud/gun-button.png', {frameWidth: 64, frameHeight: 64});
 		this.load.image('buryButton', 'assets/hud/bury-button.png', {frameWidth: 64, frameHeight: 64});
 		this.load.image('x', "assets/hud/x.png");
