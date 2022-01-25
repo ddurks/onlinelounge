@@ -93,29 +93,9 @@ export class Controls extends Phaser.Scene {
         logo.setOrigin(0, 0);
         logo.setDepth(11);
 
-        this.add.text(95, -1, "users", {
+        this.populationText = this.add.text(40, 22, "-", {
             fontFamily: 'Arial',
-            fontSize: '10px',
-            color:  '#000000',
-            wordWrap: {
-                width: 320,
-                useAdvancedWrap: true
-            },
-            align: 'left'
-        }).setDepth(11);
-        this.add.text(95, 7, "online:", {
-            fontFamily: 'Arial',
-            fontSize: '10px',
-            color:  '#000000',
-            wordWrap: {
-                width: 320,
-                useAdvancedWrap: true
-            },
-            align: 'center'
-        }).setDepth(11);
-        this.populationText = this.add.text(95, 14, "-", {
-            fontFamily: 'Arial',
-            fontSize: '25px',
+            fontSize: '20px',
             fontStyle: 'bold',
             color:  '#000000',
             wordWrap: {
@@ -124,7 +104,7 @@ export class Controls extends Phaser.Scene {
             },
             align: 'center'
         }).setDepth(11);
-        this.connectionIcon = this.add.image(45, -2, 'connection', 1).setOrigin(0, 0).setDepth(11);
+        this.connectionIcon = this.add.image(30, -6, 'connection', 1).setScale(0.75).setOrigin(0, 0).setDepth(11);
 
         var chatIcon = this.add.image(OL.world.width - 52, OL.world.height - 37, 'chatIcon', 0);
         chatIcon.setScale(4);
