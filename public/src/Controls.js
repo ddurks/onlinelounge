@@ -132,7 +132,7 @@ export class Controls extends Phaser.Scene {
         this.add.existing(this.zoomOutButton).setScrollFactor(0);
 
         this.gunButton = this.add.image(OL.world.width - 50, OL.world.height - 116, 'gunButton').setVisible(false).setInteractive({ useHandCursor: true }).on('pointerdown', () => {
-            this.events.emit('shootGun');
+            this.events.emit('useItem', PLAYERITEM.gun);
         });
         this.shovelButton = this.add.sprite(OL.world.width - 50, OL.world.height - 116, 'shovelButton', 7).setVisible(false);
         this.shovelButton.anims.create({
@@ -147,12 +147,13 @@ export class Controls extends Phaser.Scene {
         });
         this.shovelButton.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
             if (this.shovelButton.enabled) {
+                this.events.emit('useItem', PLAYERITEM.shovel);
                 this.shovelButton.enabled = false;
                 this.shovelButton.anims.play('reload');
             }
         });
         this.buryButton = this.add.image(OL.world.width - 50, OL.world.height - 116, 'buryButton').setVisible(false).setInteractive({ useHandCursor: true }).on('pointerdown', () => {
-            console.log("bury");
+            this.events.emit('useItem', PLAYERITEM.bury);
         });
 
         this.itemButton = this.gunButton;

@@ -126,7 +126,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.scene.get('Controls').events.off('zoomIn');
         this.scene.get('Controls').events.off('zoomOut');
         this.scene.get('Controls').events.off('lookChange');
-        this.scene.get('Controls').events.off('shootGun');
+        this.scene.get('Controls').events.off('useItem');
         this.scene.get('Controls').events.off('holdingItem');
         this.scene.get('Controls').events.off('closeEvent');
 
@@ -135,7 +135,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.scene.get('Controls').events.on('zoomIn', () => this.zoomIn());
         this.scene.get('Controls').events.on('zoomOut', () => this.zoomOut());
         this.scene.get('Controls').events.on('lookChange', () => this.changeLook());
-        this.scene.get('Controls').events.on('shootGun', () => this.shootGun());
+        this.scene.get('Controls').events.on('useItem', (playerItem) => this.useItem(playerItem));
         this.scene.get('Controls').events.on('holdingItem', (item) => this.nowHoldingItem(item));
         this.scene.get('Controls').events.on('closeEvent', () => this.windowClosed());
 
@@ -231,8 +231,18 @@ export class DigitalPlanet extends Phaser.Scene {
         this.paused = false;
     }
 
-    shootGun() {
-        this.serverClient.socket.emit('shoot bullet', this.player.direction);
+    useItem(playerItem) {
+        switch (playerItem) {
+            case PLAYERITEM.gun:
+                this.serverClient.socket.emit('shoot bullet', this.player.direction);
+                break;
+            case PLAYERITEM.shovel:
+                this.serverClient.socket.emit('player action', { treasure: { dig: true } });
+                break;
+            case PLAYERITEM.bury:
+                this.serverClient.socket.emit('player action', { treasure: { bury: true } });
+                break;
+        }
     }
 
     changeLook() {

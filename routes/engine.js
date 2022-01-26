@@ -63,6 +63,7 @@ class GameEngine {
         this.bullets = new Map();
         this.looseCoins = new Map();
         this.items = new Map();
+        this.treasures = new Array();
     
         this.curr_timestamp = Date.now();
         this.prev_timestamp, this.deltat = ENGINE_RATE, this.lastDeltat;
@@ -278,6 +279,43 @@ class GameEngine {
             this.io.to(player.id).emit('health update', HEALTH);
             this.io.to(player.id).emit('coin update', COINS);
         }
+    }
+
+    buryTreasure(socketId) {
+        let player = this.players.get(socketId);
+        if (player) {
+            let newTreasure = {
+                x: player.position.x,
+                y: player.position.y,
+                coins: player.coins
+            }
+            player.coins -= newTreasure.coins;
+            this.io.to(socketId).emit('coin update', player.coins);
+            this.treasures.push(newTreasure);
+        }
+    }
+
+    digForTreasure(socketId) {
+        let player = this.players.get(socketId), result = null;
+        if (player && player.currentArea === AREAS.digitalplanet) {
+            let radius = 16;
+            this.treasures.forEach( (treasure, index) => {
+                if ((player.position.x >= treasure.x - radius && player.position.x <= treasure.x + radius) && (player.position.y >= treasure.y - radius && player.position.y <= treasure.y + radius)) {
+                    result = treasure;
+                    this.treasures.splice(index, 1);
+                    return;
+                }
+            })
+        }
+        return result;
+    }
+
+    giveCoins(socketId, coins) {
+        let player = this.players.get(socketId)
+        if (player) {
+            player.coins += coins;
+            this.io.to(socketId).emit('coin update', player.coins);
+        }     
     }
 
     spawnItem(world, x, y, type) {

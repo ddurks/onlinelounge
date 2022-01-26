@@ -34,6 +34,17 @@ io.on('connection', (socket) => {
     if (actionArray.lookIndex) {
       engine.setPlayerLook(socket.id, actionArray.lookIndex);
     }
+    if (actionArray.treasure) {
+      if (actionArray.treasure.bury) {
+        engine.buryTreasure(socket.id);
+      }
+      if (actionArray.treasure.dig) {
+        let treasureFound = engine.digForTreasure(socket.id);
+        if (treasureFound) {
+          engine.giveCoins(socket.id, treasureFound.coins);
+        }
+      }
+    }
     if (actionArray.message && actionArray.message.startsWith("/")) {
       let result = engine.executeCommand(socket.id, actionArray.message);
       console.log("result", result);
