@@ -203,7 +203,6 @@ export class DigitalPlanet extends Phaser.Scene {
         this.serverClient.socket.on('health update', (update) => this.events.emit('healthUpdate', update));
         this.serverClient.socket.on('bullet update', (update) => this.events.emit('bulletUpdate', update));
         this.serverClient.socket.on('coin update', (update) => {
-            console.log("coin update", update);
             new Sparkle(this, this.player.x, this.player.y);
             this.events.emit('coinUpdate', update);
         });
@@ -282,7 +281,6 @@ export class DigitalPlanet extends Phaser.Scene {
     }
 
     changePlayerLook(player, index) {
-        console.log("Change player look");
         let socketId = player.socketId;
         let username = player.username;
         let pos = {

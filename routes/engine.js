@@ -313,7 +313,6 @@ class GameEngine {
         let player = this.players.get(socketId)
         if (player) {
             player.coins += treasure.coins;
-            console.log(socketId, player.coins);
             this.io.to(socketId).emit('coin update', player.coins);
             this.io.to(socketId).emit('treasure found', treasure);
             this.treasures.splice(index, 1);
