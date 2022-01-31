@@ -285,6 +285,7 @@ class GameEngine {
         let player = this.players.get(socketId);
         if (player) {
             let newTreasure = {
+                buriedBy: player.username,
                 x: player.position.x,
                 y: player.position.y,
                 coins: player.coins
@@ -296,25 +297,26 @@ class GameEngine {
     }
 
     digForTreasure(socketId) {
-        let player = this.players.get(socketId), result = null;
+        let player = this.players.get(socketId)
         if (player && player.currentArea === AREAS.digitalplanet) {
             let radius = 16;
             this.treasures.forEach( (treasure, index) => {
                 if ((player.position.x >= treasure.x - radius && player.position.x <= treasure.x + radius) && (player.position.y >= treasure.y - radius && player.position.y <= treasure.y + radius)) {
-                    result = treasure;
-                    this.treasures.splice(index, 1);
+                    this.foundTreasure(socketId, treasure, index);
                     return;
                 }
             })
         }
-        return result;
     }
 
-    giveCoins(socketId, coins) {
+    foundTreasure(socketId, treasure, index) {
         let player = this.players.get(socketId)
         if (player) {
-            player.coins += coins;
+            player.coins += treasure.coins;
+            console.log(socketId, player.coins);
             this.io.to(socketId).emit('coin update', player.coins);
+            this.io.to(socketId).emit('treasure found', treasure);
+            this.treasures.splice(index, 1);
         }     
     }
 
@@ -522,6 +524,7 @@ class GameEngine {
         let playerToChange = this.players.get(socketId);
         if (playerToChange) {
           playerToChange.lookIndex = lookIndex;
+          this.io.sockets.emit('player action', { socketId: socketId, actions: { lookIndex: playerToChange.lookIndex } });
         }
     }
 

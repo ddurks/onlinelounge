@@ -126,6 +126,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.scene.get('Controls').events.off('zoomIn');
         this.scene.get('Controls').events.off('zoomOut');
         this.scene.get('Controls').events.off('lookChange');
+        this.scene.get('Controls').events.off('buryConfirmed');
         this.scene.get('Controls').events.off('useItem');
         this.scene.get('Controls').events.off('holdingItem');
         this.scene.get('Controls').events.off('closeEvent');
@@ -138,7 +139,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.scene.get('Controls').events.on('useItem', (playerItem) => this.useItem(playerItem));
         this.scene.get('Controls').events.on('holdingItem', (item) => this.nowHoldingItem(item));
         this.scene.get('Controls').events.on('closeEvent', () => this.windowClosed());
-
+        this.scene.get('Controls').events.on('buryConfirmed', () => this.serverClient.socket.emit('player action', { treasure: { bury: true } }));
         this.sessionID = this.serverClient.sessionID ? this.serverClient.sessionID : undefined;
         if (this.sessionID) {
             this.players.set(this.sessionID, this.player);
@@ -179,6 +180,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.serverClient.socket.off('health update');
         this.serverClient.socket.off('bullet update');
         this.serverClient.socket.off('coin update');
+        this.serverClient.socket.off('treasure found');
         this.serverClient.socket.off('item');
         this.serverClient.socket.off('get items');
         this.serverClient.socket.off('feed');
@@ -201,12 +203,14 @@ export class DigitalPlanet extends Phaser.Scene {
         this.serverClient.socket.on('health update', (update) => this.events.emit('healthUpdate', update));
         this.serverClient.socket.on('bullet update', (update) => this.events.emit('bulletUpdate', update));
         this.serverClient.socket.on('coin update', (update) => {
+            console.log("coin update", update);
             new Sparkle(this, this.player.x, this.player.y);
             this.events.emit('coinUpdate', update);
         });
         this.serverClient.socket.on('item', (update) => this.updateItems(update));
         this.serverClient.socket.on('get items', (list) => this.setItems(list));
         this.serverClient.socket.on('feed', (update) => this.events.emit('feedUpdate', update));
+        this.serverClient.socket.on('treasure found', (treasure) => this.events.emit('displayPopup', {title: "Treasure 💰", text: "You unearthed the treasure of " + (treasure.buriedBy ? treasure.buriedBy : "[anonymous]") + "! (" + treasure.coins + ")"}));
 
         setInterval(() => {
                 this.serverClient.socket.emit('player input', this.player.keysPressed);
@@ -240,7 +244,7 @@ export class DigitalPlanet extends Phaser.Scene {
                 this.serverClient.socket.emit('player action', { treasure: { dig: true } });
                 break;
             case PLAYERITEM.bury:
-                this.serverClient.socket.emit('player action', { treasure: { bury: true } });
+                this.events.emit('buryHere');
                 break;
         }
     }
@@ -278,6 +282,7 @@ export class DigitalPlanet extends Phaser.Scene {
     }
 
     changePlayerLook(player, index) {
+        console.log("Change player look");
         let socketId = player.socketId;
         let username = player.username;
         let pos = {
@@ -436,7 +441,7 @@ export class DigitalPlanet extends Phaser.Scene {
             if (playerAction.actions.typing) {
                 playerToUpdate.startTyping();
             }
-            if ( (playerAction.actions.lookIndex || playerAction.actions.lookIndex === 0) && playerAction.actions.lookIndex >= 0) {
+            if (playerToUpdate.socketId !== this.sessionID && playerAction.actions.lookIndex >= 0) {
                 this.changePlayerLook(playerToUpdate, playerAction.actions.lookIndex);
             }
         }
@@ -464,6 +469,12 @@ export class DigitalPlanet extends Phaser.Scene {
     }
 
     updateGameState(state) {
+        this.updatePlayers(state);
+        this.updateBulletState(state.bullets);
+        this.updateCoinsState(state.coins);
+    }
+
+    updatePlayers(state) {
         if (state.players) {
             if (state.players.length > this.population || state.players.length < this.population) {
                 this.population = state.players.length;
@@ -488,8 +499,6 @@ export class DigitalPlanet extends Phaser.Scene {
                 }
             });
         }
-        this.updateBulletState(state.bullets);
-        this.updateCoinsState(state.coins);
     }
 
     updateBulletState(bulletsList) {

@@ -42,7 +42,7 @@ export class PopUp extends Phaser.GameObjects.Group {
         this.textBody.setScrollFactor(0);
 
         this.button = scene.add.image(this.popup.x - 10, this.popup.y + 100, 'greenButton').setInteractive({ useHandCursor: true });
-        this.button.on('pointerdown', () => this.changeLook(scene));
+        this.button.on('pointerdown', () => this.buttonClicked(scene));
         this.button.setOrigin(0.5, 0.5);
         this.button.setDepth(11);
         this.button.setVisible(false);
@@ -84,15 +84,31 @@ export class PopUp extends Phaser.GameObjects.Group {
     }
 
 
-    changeLook(scene) {
-        scene.events.emit('lookChange');
+    buttonClicked(scene) {
+        switch (this.buttonText.text) {
+            case "bury":
+                scene.events.emit('buryConfirmed');
+                break;
+            default:
+                scene.events.emit('lookChange');
+        }
         this.close();
+    }
+
+    displayBuryPopup() {
+        this.display("bury", "bury your coins here?");
+        this.displayButton("bury");
     }
 
     displayLookPopup(title, text) {
         this.sprite.setVisible(true);
         this.display(title, text);
         this.displayButton("change");
+    }
+
+    buryClicked(scene) {
+        scene.events.emit('buryConfirmed');
+        this.close();
     }
 
     display(title, text) {

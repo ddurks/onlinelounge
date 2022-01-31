@@ -285,7 +285,7 @@ export class Player extends Phaser.Physics.Matter.Sprite {
         this.speakText.destroy();
         this.usernameText.destroy();
         this.typingIcon.destroy();
-        this.gun.destroy();
+        this.item.destroy();
         if (this.playermarker) {
             this.playermarker.destroy();
         }

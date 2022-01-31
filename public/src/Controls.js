@@ -211,6 +211,7 @@ export class Controls extends Phaser.Scene {
         this.scene.get('DigitalPlanet').events.on('bulletUpdate', (bulletNum) => this.bulletUpdate(bulletNum));
         this.scene.get('DigitalPlanet').events.on('coinUpdate', (coins) => this.coinUpdate(coins));
         this.scene.get('DigitalPlanet').events.on('feedUpdate', (update) => this.feedUpdate(update));
+        this.scene.get('DigitalPlanet').events.on('buryHere', () => this.popup.displayBuryPopup());
     }
 
     setConnected(status) {
