@@ -90,7 +90,7 @@ export class Controls extends Phaser.Scene {
     create() {
         this.camera = this.cameras.main;
         this.createMenuBar();
-        var logo = this.add.image(-1, -2, 'olLogo');
+        var logo = this.add.image(-1, -2, 'olLogo').setInteractive({ useHandCursor: true }).on('pointerdown', () => this.events.emit('serverStats'));
         logo.setOrigin(0, 0);
         logo.setDepth(11);
 

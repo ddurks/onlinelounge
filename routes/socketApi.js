@@ -15,6 +15,8 @@ io.on('connection', (socket) => {
     console.log("lounge full. closing connection");
     socket.emit('lounge full');
     socket.disconnect(true);
+  } else {
+    console.log("new IP address connected: " + socket.handshake.address);
   }
 
   socket.on('new player', (newPlayer) => {
@@ -42,6 +44,9 @@ io.on('connection', (socket) => {
         engine.digForTreasure(socket.id);
       }
     }
+    if (actionArray.typing) {
+      io.sockets.emit('player action', { socketId: socket.id, actions: { typing: actionArray.typing } });
+    }
     if (actionArray.message && actionArray.message.startsWith("/")) {
       let result = engine.executeCommand(socket.id, actionArray.message);
       console.log("result", result);
@@ -54,6 +59,10 @@ io.on('connection', (socket) => {
       }
       io.sockets.emit('player action', { socketId: socket.id, actions: actionArray });
     }
+  });
+
+  socket.on('server stats', () => {
+    io.to(socket.id).emit('server stats', engine.getStats());
   });
 
   socket.on('enter lounge', () => {

@@ -1,5 +1,7 @@
 var Matter = require('matter-js');
 var tmx = require('tmx-parser');
+var app = require('../app');
+
 const {
     v1: uuidv1,
     v4: uuidv4
@@ -283,7 +285,7 @@ class GameEngine {
 
     buryTreasure(socketId) {
         let player = this.players.get(socketId);
-        if (player) {
+        if (player && player.currentArea === AREAS.digitalplanet) {
             let newTreasure = {
                 buriedBy: player.username,
                 x: player.position.x,
@@ -599,6 +601,12 @@ class GameEngine {
     
     getRandomNum(min, max) {
       return Math.random() * (max - min) + min;
+    }
+
+    getStats() {
+        return {
+            uptime: (Date.now() - app.START_TIME)/1000
+        }
     }
 }
 

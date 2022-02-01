@@ -62,6 +62,7 @@ export class DigitalPlanet extends Phaser.Scene {
     }
 
     create() { 
+        this.startTime = Date.now();
         this.looks = ['computer_guy', 'phone_guy', 'cute_guy'];
         this.map = this.make.tilemap({ key: this.startData.mapKey });
         this.groundTileset = this.map.addTilesetImage(this.startData.groundTileset.name, this.startData.groundTileset.ref);
@@ -130,6 +131,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.scene.get('Controls').events.off('useItem');
         this.scene.get('Controls').events.off('holdingItem');
         this.scene.get('Controls').events.off('closeEvent');
+        this.scene.get('Controls').events.off('serverStats');
 
         this.scene.get('Controls').events.on('openChat', () => this.openChatBox());
         this.scene.get('Controls').events.on('sendChat', () => this.sendChat());
@@ -139,6 +141,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.scene.get('Controls').events.on('useItem', (playerItem) => this.useItem(playerItem));
         this.scene.get('Controls').events.on('holdingItem', (item) => this.nowHoldingItem(item));
         this.scene.get('Controls').events.on('closeEvent', () => this.windowClosed());
+        this.scene.get('Controls').events.on('serverStats', () => this.serverClient.socket.emit('server stats'));
         this.scene.get('Controls').events.on('buryConfirmed', () => this.serverClient.socket.emit('player action', { treasure: { bury: true } }));
         this.sessionID = this.serverClient.sessionID ? this.serverClient.sessionID : undefined;
         if (this.sessionID) {
@@ -184,6 +187,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.serverClient.socket.off('item');
         this.serverClient.socket.off('get items');
         this.serverClient.socket.off('feed');
+        this.serverClient.socket.off('server stats');
 
         this.serverClient.socket.on('state', (state) => this.updateGameState(state));
         this.serverClient.socket.on('player action', (playerAction) => this.updatePlayerAction(playerAction));
@@ -210,7 +214,10 @@ export class DigitalPlanet extends Phaser.Scene {
         this.serverClient.socket.on('get items', (list) => this.setItems(list));
         this.serverClient.socket.on('feed', (update) => this.events.emit('feedUpdate', update));
         this.serverClient.socket.on('treasure found', (treasure) => this.events.emit('displayPopup', {title: "Treasure 💰", text: "You unearthed the treasure of " + (treasure.buriedBy ? treasure.buriedBy : "[anonymous]") + "! (" + treasure.coins + ")"}));
-
+        this.serverClient.socket.on('server stats', (stats) => {
+            this.events.emit('displayPopup', {title: "lounge stats", text: "uptime: " + stats.uptime});
+        })
+        
         setInterval(() => {
                 this.serverClient.socket.emit('player input', this.player.keysPressed);
         }, INPUT_UPDATE_RATE);
@@ -235,16 +242,18 @@ export class DigitalPlanet extends Phaser.Scene {
     }
 
     useItem(playerItem) {
-        switch (playerItem) {
-            case PLAYERITEM.gun:
-                this.serverClient.socket.emit('shoot bullet', this.player.direction);
-                break;
-            case PLAYERITEM.shovel:
-                this.serverClient.socket.emit('player action', { treasure: { dig: true } });
-                break;
-            case PLAYERITEM.bury:
-                this.events.emit('buryHere');
-                break;
+        if (this.player.currentArea === AREAS.digitalplanet) {
+            switch (playerItem) {
+                case PLAYERITEM.gun:
+                    this.serverClient.socket.emit('shoot bullet', this.player.direction);
+                    break;
+                case PLAYERITEM.shovel:
+                    this.serverClient.socket.emit('player action', { treasure: { dig: true } });
+                    break;
+                case PLAYERITEM.bury:
+                    this.events.emit('buryHere');
+                    break;
+            }
         }
     }
 
@@ -446,7 +455,6 @@ export class DigitalPlanet extends Phaser.Scene {
         if(playerAction.actions.commandResult !== null && playerAction.actions.commandResult !== undefined) {
             if (playerAction.actions.commandResult.item || playerAction.actions.commandResult.item === false) {
                 if (playerAction.socketId === this.sessionID) {
-                    this.player.setMsg("*holding item: " + playerAction.actions.commandResult.item + "*");
                     this.player.setHoldItem(playerAction.actions.commandResult.item);
                     this.events.emit('holdingItem', playerAction.actions.commandResult.item);
                 } else {
