@@ -168,6 +168,7 @@ export class DigitalPlanet extends Phaser.Scene {
                         this.removePlayer(player.socketId);
                     }
                 });
+                this.sessionID = false;
                 this.player.setHoldItem(false); 
                 this.clearMaps();
                 console.log("disconnected from server");
@@ -464,11 +465,11 @@ export class DigitalPlanet extends Phaser.Scene {
                 }
             }
         }
-    }
+    }       
 
     updateGameStateFromQueue(state) {
         this.stateQueue.push(state);
-        if (this.stateQueue.length > 2) {
+        if (this.stateQueue.length > 1) {
             let stateUpdate = this.stateQueue.shift();
             this.updateGameState(stateUpdate);
         }
@@ -495,7 +496,9 @@ export class DigitalPlanet extends Phaser.Scene {
                         }
                         this.generatePlayer(playerData.socketId, playerData.x, playerData.y, playerData.username, playerData.lookIndex, playerData.item);
                     } else if (playerToUpdate && playerToUpdate.body) {
-                        playerToUpdate.updateFromData(playerData);
+                        if (playerToUpdate.socketId !== this.sessionID || this.getDistanceBetween({x1: this.player.x, y1: this.player.y}, {x2: playerData.x, y2: playerData.y}) > 5) {
+                            playerToUpdate.updateFromData(playerData);
+                        }
                     } else {
                         console.log(playerToUpdate, "no body");
                         this.removePlayer(playerData.socketId);
@@ -505,6 +508,11 @@ export class DigitalPlanet extends Phaser.Scene {
                 }
             });
         }
+    }
+
+    getDistanceBetween({x1, y1}, {x2, y2}) {
+        return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+        //return Math.abs(x1 - x2) + Math.abs(y1 - y2);
     }
 
     updateBulletState(bulletsList) {
@@ -624,7 +632,6 @@ export class DigitalPlanet extends Phaser.Scene {
         if (this.player.anims) {
             if (controls.left.isDown) {
                 this.player.keysPressed[Key.a] = 1;
-                this.player.anims.play('left', true);
                 this.player.direction = Key.a;
             } else {
                 this.player.keysPressed[Key.a] = 0;
@@ -632,30 +639,23 @@ export class DigitalPlanet extends Phaser.Scene {
             if (controls.right.isDown) {
                 this.player.keysPressed[Key.d] = 1;
                 this.player.direction = Key.d;
-                this.player.anims.play('right', true);
             } else {
                 this.player.keysPressed[Key.d] = 0;
             }
             if (controls.up.isDown) {
                 this.player.keysPressed[Key.w] = 1;
                 this.player.direction = Key.w;
-                this.player.anims.play('up', true);
             } else {
                 this.player.keysPressed[Key.w] = 0;
             }
             if (controls.down.isDown) {
                 this.player.keysPressed[Key.s] = 1;
                 this.player.direction = Key.s;
-                this.player.anims.play('down', true);
             } else {
                 this.player.keysPressed[Key.s] = 0;
             }
 
             this.updatePlayerFromInput(this.player);
-
-            if (!this.player.keysPressed[Key.w] && !this.player.keysPressed[Key.a] && !this.player.keysPressed[Key.s] && !this.player.keysPressed[Key.d]) {
-                this.player.anims.pause();
-            }
         }
     }
 
@@ -663,18 +663,26 @@ export class DigitalPlanet extends Phaser.Scene {
         if (player.keysPressed[Key.a] === 1) {
             //this.player.setVelocity(-OL.WALKING_SPEED, this.player.body.velocity.y);
             this.player.applyForce({x: -OL.WALKING_FORCE, y: 0});
+            this.player.anims.play('left', true);
         }
         if (player.keysPressed[Key.d] === 1) {
             //this.player.setVelocity(OL.WALKING_SPEED, this.player.body.velocity.y);
             this.player.applyForce({x: OL.WALKING_FORCE, y: 0});
+            this.player.anims.play('right', true);
         }
         if (player.keysPressed[Key.w] === 1) {
             //this.player.setVelocity(this.player.body.velocity.x, -OL.WALKING_SPEED);
             this.player.applyForce({x: 0, y: -OL.WALKING_FORCE});
+            this.player.anims.play('up', true);
         }
         if (player.keysPressed[Key.s] === 1) {
             //this.player.setVelocity(this.player.body.velocity.x, OL.WALKING_SPEED);
             this.player.applyForce({x: 0, y: OL.WALKING_FORCE});
+            this.player.anims.play('down', true);
+        }
+
+        if (!this.player.keysPressed[Key.w] && !this.player.keysPressed[Key.a] && !this.player.keysPressed[Key.s] && !this.player.keysPressed[Key.d]) {
+            this.player.anims.pause();
         }
     }
 }
