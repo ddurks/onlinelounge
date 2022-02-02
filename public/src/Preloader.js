@@ -10,6 +10,7 @@ export class Preloader extends Phaser.Scene {
 
 		this.load.html('nameform', 'loginform.html');
 		this.load.html('chatBox', 'chatbox.html');
+		this.load.html('gifViewer', 'gif-viewer.html');
 		this.load.spritesheet('computer_guy', 'assets/sprites/computerguy-spritesheet-extruded.png', { frameWidth: 32, frameHeight: 32, margin: 1, spacing: 2 });
 		this.load.spritesheet('cute_guy', 'assets/sprites/cuteguy-spritesheet-extruded.png', { frameWidth: 32, frameHeight: 32, margin: 1, spacing: 2 });
 		this.load.spritesheet('phone_guy', 'assets/sprites/phoneguy-spritesheet-extruded.png', { frameWidth: 32, frameHeight: 32, margin: 1, spacing: 2 });

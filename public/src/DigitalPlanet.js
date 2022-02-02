@@ -28,6 +28,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.stateQueue = new Array();
         this.zoomLevel = 1;
         this.zoomMax = 3;
+        this.entityInterpolationEnabled = true;
     }
 
     init(data) {
@@ -190,7 +191,13 @@ export class DigitalPlanet extends Phaser.Scene {
         this.serverClient.socket.off('feed');
         this.serverClient.socket.off('server stats');
 
-        this.serverClient.socket.on('state', (state) => this.updateGameState(state));
+        this.serverClient.socket.on('state', (state) => {
+            if (this.entityInterpolationEnabled) {
+                this.updateGameStateWithInterpolation(state);
+            } else {
+                this.updateGameState(state);
+            }
+        });
         this.serverClient.socket.on('player action', (playerAction) => this.updatePlayerAction(playerAction));
         this.serverClient.socket.on('player left', (socketId) => this.removePlayer(socketId));
         this.serverClient.socket.on('enter lounge', (socketId) => {
@@ -374,6 +381,7 @@ export class DigitalPlanet extends Phaser.Scene {
         let message = document.getElementById("chat-entry").value;
         this.serverClient.socket.emit('player action', { message: message ? message : "NULL", typing: false });
         this.input.keyboard.enabled = true;
+        this.player.setMsg("");
     }
 
     generatePlayer(socketId, x, y, username, lookIndex, heldItem) {
@@ -433,7 +441,7 @@ export class DigitalPlanet extends Phaser.Scene {
                 playerToUpdate.faint();
                 if (playerAction.socketId === this.sessionID) {
                     this.events.emit('coinUpdate', 0);
-                    this.events.emit('displayPopup', {title: "💀", text: "close this window to continue"});
+                    this.events.emit('displayPopup', {title: "💀", text: "close this window to continue", gif: true});
                     this.paused = true;
                 }
             }
@@ -467,11 +475,13 @@ export class DigitalPlanet extends Phaser.Scene {
         }
     }       
 
-    updateGameStateFromQueue(state) {
+    updateGameStateWithInterpolation(state) {
+        this.lastTickAt = Date.now();
+        state.timestamp = Date.now();
         this.stateQueue.push(state);
-        if (this.stateQueue.length > 1) {
-            let stateUpdate = this.stateQueue.shift();
-            this.updateGameState(stateUpdate);
+        if (this.stateQueue.length > 0) {
+            this.lastStateUpdate = this.stateQueue.shift();
+            this.updateGameState(this.lastStateUpdate);
         }
     }
 
@@ -607,12 +617,33 @@ export class DigitalPlanet extends Phaser.Scene {
         } else {
             this.playerMovementHandler();
         }
+        this.entityInterpolation();
         this.players.forEach( (player) => {
             if (player.body) {
                 player.msgDecayHandler(delta);
                 player.updatePlayerStuff();
             }
         });
+    }
+
+    entityInterpolation() {
+        if (this.entityInterpolationEnabled && this.lastStateUpdate && this.stateQueue[0]) {
+            let targetTick = this.stateQueue[0].timestamp - this.lastStateUpdate.timestamp;
+            let portion = Date.now() - this.lastTickAt;
+            let ratio = portion/targetTick < 1 ? portion/targetTick : 1;
+            for (let i = 0; i < this.lastStateUpdate.players.length; i++) {
+                let player = this.players.get(this.lastStateUpdate.players[i].socketId);
+                if (player && this.lastStateUpdate.players[i] && this.stateQueue[0].players[i]) {
+                    let interpX = this.lerp(this.lastStateUpdate.players[i].x, this.stateQueue[0].players[i].x, ratio);
+                    let interpY = this.lerp(this.lastStateUpdate.players[i].y, this.stateQueue[0].players[i].y, ratio);
+                    player.setPosition(interpX, interpY);
+                }
+            }
+        }
+    }
+
+    lerp(a, b, n) {
+        return (1 - n) * a + n * b;
     }
 
     playerMovementHandler() {

@@ -313,7 +313,7 @@ export class Controls extends Phaser.Scene {
 
     displayPopup(info) {
         if (info.text !== this.prevPopupText || info.title !== "info") {
-            this.popup.display(info.title, info.text);
+            this.popup.display(info.title, info.text, info.gif);
             this.prevPopupText = info.text;
         }
     }

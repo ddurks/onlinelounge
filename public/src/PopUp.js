@@ -3,6 +3,7 @@ import { OL } from './utils';
 export class PopUp extends Phaser.GameObjects.Group {
     constructor(scene) {
         super(scene);
+        this.GIF_OFFSET = 100;
         this.popup = scene.add.image(OL.world.width/2, OL.world.height/2, 'popup');
         this.popup.setOrigin(0.5, 0.5);
         this.popup.setDepth(11);
@@ -61,6 +62,9 @@ export class PopUp extends Phaser.GameObjects.Group {
         this.buttonText.setDepth(13);
         this.buttonText.setVisible(false);
         this.buttonText.setScrollFactor(0);
+
+        scene.add.dom(OL.world.width/2, OL.world.height/2 - 30).createFromCache('gifViewer').setScrollFactor(0).setOrigin(0.5, 0.5);
+        document.getElementById("gif-viewer").style.display = "none";
     
         scene.scene.get('DigitalPlanet').events.off('playerLoaded');
         scene.scene.get('DigitalPlanet').events.on('playerLoaded', (playerSprite) => {
@@ -111,7 +115,7 @@ export class PopUp extends Phaser.GameObjects.Group {
         this.close();
     }
 
-    display(title, text) {
+    display(title, text, gif) {
         this.title.setText(title);
         this.textBody.setText(text);
         this.popup.setVisible(true);
@@ -120,6 +124,12 @@ export class PopUp extends Phaser.GameObjects.Group {
         this.textBody.setVisible(true);
         if (this.sprite.anims) {
             this.sprite.anims.play('down');
+        }
+        if (gif) {
+            this.textlowered = true;
+            this.textBody.setPosition(this.textBody.x, this.textBody.y + this.GIF_OFFSET);
+            document.getElementById("shownGif").src = "assets/death-gifs/" + OL.getRandomInt(1, 79) + ".gif";
+            document.getElementById("gif-viewer").style.display = "block";
         }
     }
 
@@ -139,6 +149,11 @@ export class PopUp extends Phaser.GameObjects.Group {
         this.sprite.setVisible(false);
         if (this.sprite.anims) {
             this.sprite.anims.stop();
+        }
+        let gifViewer = document.getElementById("gif-viewer");
+        if (gifViewer.style.display === "block") {
+            gifViewer.style.display = "none";
+            this.textBody.setPosition(this.textBody.x, this.textBody.y - this.GIF_OFFSET);
         }
     }
 
