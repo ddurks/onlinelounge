@@ -128,7 +128,7 @@ export class PopUp extends Phaser.GameObjects.Group {
         if (gif) {
             this.textlowered = true;
             this.textBody.setPosition(this.textBody.x, this.textBody.y + this.GIF_OFFSET);
-            document.getElementById("shownGif").src = "assets/death-gifs/" + OL.getRandomInt(1, 79) + ".gif";
+            document.getElementById("shownGif").src = "assets/death-gifs/" + OL.getRandomInt(0, 79) + ".gif";
             document.getElementById("gif-viewer").style.display = "block";
         }
     }
