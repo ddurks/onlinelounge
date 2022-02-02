@@ -496,7 +496,7 @@ export class DigitalPlanet extends Phaser.Scene {
                         }
                         this.generatePlayer(playerData.socketId, playerData.x, playerData.y, playerData.username, playerData.lookIndex, playerData.item);
                     } else if (playerToUpdate && playerToUpdate.body) {
-                        if (playerToUpdate.socketId !== this.sessionID || this.getDistanceBetween({x1: this.player.x, y1: this.player.y}, {x2: playerData.x, y2: playerData.y}) > 5) {
+                        if (playerToUpdate.socketId !== this.sessionID || OL.getDistance(this.player.x, this.player.y, playerData.x, playerData.y) > 5) {
                             playerToUpdate.updateFromData(playerData);
                         }
                     } else {
@@ -508,11 +508,6 @@ export class DigitalPlanet extends Phaser.Scene {
                 }
             });
         }
-    }
-
-    getDistanceBetween({x1, y1}, {x2, y2}) {
-        return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
-        //return Math.abs(x1 - x2) + Math.abs(y1 - y2);
     }
 
     updateBulletState(bulletsList) {
