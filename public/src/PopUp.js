@@ -128,7 +128,11 @@ export class PopUp extends Phaser.GameObjects.Group {
         if (gif) {
             this.textlowered = true;
             this.textBody.setPosition(this.textBody.x, this.textBody.y + this.GIF_OFFSET);
-            document.getElementById("shownGif").src = "assets/death-gifs/" + OL.getRandomInt(0, 79) + ".gif";
+            if (gif === 'dead') {
+                document.getElementById("shownGif").src = "assets/gifs/death-gifs/" + OL.getRandomInt(0, 79) + ".gif";
+            } else if (gif === 'treasure') {
+                document.getElementById("shownGif").src = "assets/gifs/treasure-gifs/" + OL.getRandomInt(0, 46) + ".gif";
+            }
             document.getElementById("gif-viewer").style.display = "block";
         }
     }

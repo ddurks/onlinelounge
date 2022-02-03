@@ -219,7 +219,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.serverClient.socket.on('item', (update) => this.updateItems(update));
         this.serverClient.socket.on('get items', (list) => this.setItems(list));
         this.serverClient.socket.on('feed', (update) => this.events.emit('feedUpdate', update));
-        this.serverClient.socket.on('treasure found', (treasure) => this.events.emit('displayPopup', {title: "Treasure 💰", text: "You unearthed the treasure of " + (treasure.buriedBy ? treasure.buriedBy : "[anonymous]") + "! (" + treasure.coins + ")"}));
+        this.serverClient.socket.on('treasure found', (treasure) => this.events.emit('displayPopup', {title: "Treasure 💰", text: "You unearthed the treasure of " + (treasure.buriedBy ? treasure.buriedBy : "[anonymous]") + "! (" + treasure.coins + ")", gif: 'treasure'}));
         this.serverClient.socket.on('server stats', (stats) => {
             this.events.emit('displayPopup', {title: "lounge stats", text: "uptime: " + stats.uptime});
         })
@@ -440,7 +440,7 @@ export class DigitalPlanet extends Phaser.Scene {
                 playerToUpdate.faint();
                 if (playerAction.socketId === this.sessionID) {
                     this.events.emit('coinUpdate', 0);
-                    this.events.emit('displayPopup', {title: "💀", text: "close this window to continue", gif: true});
+                    this.events.emit('displayPopup', {title: "💀", text: "close this window to continue", gif: 'dead'});
                     this.paused = true;
                 }
             }

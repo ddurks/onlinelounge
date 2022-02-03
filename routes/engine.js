@@ -135,49 +135,51 @@ class GameEngine {
         });
 
         Matter.Events.on(this.engine, 'collisionStart', (event) => {
-            if (event.pairs[0].bodyA.isBullet || event.pairs[0].bodyB.isBullet) {
-                if (event.pairs[0].bodyA.isBullet && event.pairs[0].bodyA.firedBy !== event.pairs[0].bodyB.socketId) {
-                    this.bullets.delete(event.pairs[0].bodyA.bulletId);
-                    this.Composite.remove(this.engine.world, event.pairs[0].bodyA);
-                    if (event.pairs[0].bodyB.socketId) {
-                        this.hitByBullet(event.pairs[0].bodyB, event.pairs[0].bodyA.firedBy);
+            let bodyA = event.pairs[0].bodyA;
+            let bodyB = event.pairs[0].bodyB;
+            if (bodyA.isBullet || bodyB.isBullet) {
+                if (bodyA.isBullet && bodyA.firedBy !== bodyB.socketId) {
+                    this.bullets.delete(bodyA.bulletId);
+                    this.Composite.remove(this.engine.world, bodyA);
+                    if (bodyB.socketId) {
+                        this.hitByBullet(bodyB, bodyA.firedBy);
                     }
                 }
-                if (event.pairs[0].bodyB.isBullet && event.pairs[0].bodyB.firedBy !== event.pairs[0].bodyA.socketId) {
-                    this.bullets.delete(event.pairs[0].bodyB.bulletId);
-                    this.Composite.remove(this.engine.world, event.pairs[0].bodyB);
-                    if (event.pairs[0].bodyA.socketId) {
-                        this.hitByBullet(event.pairs[0].bodyA, event.pairs[0].bodyB.firedBy);
-                    }
-                }
-            }
-
-            if (event.pairs[0].bodyA.itemType !== undefined || event.pairs[0].bodyB.itemType !== undefined) {
-                if (event.pairs[0].bodyA.itemType !== undefined) {
-                    this.removeItem(this.engine.world, event.pairs[0].bodyA.itemId);
-                    if (event.pairs[0].bodyB.socketId) {
-                        this.collectedItem(event.pairs[0].bodyB, event.pairs[0].bodyA.itemType);
-                    }
-                }
-                if (event.pairs[0].bodyB.itemType !== undefined) {
-                    this.removeItem(this.engine.world, event.pairs[0].bodyB.itemId);
-                    if (event.pairs[0].bodyA.socketId) {
-                        this.collectedItem(event.pairs[0].bodyA, event.pairs[0].bodyB.itemType);
+                if (bodyB.isBullet && bodyB.firedBy !== bodyA.socketId) {
+                    this.bullets.delete(bodyB.bulletId);
+                    this.Composite.remove(this.engine.world, bodyB);
+                    if (bodyA.socketId) {
+                        this.hitByBullet(bodyA, bodyB.firedBy);
                     }
                 }
             }
 
-            if (event.pairs[0].bodyA.isCoin || event.pairs[0].bodyB.isCoin) {
-                if (event.pairs[0].bodyA.isCoin && event.pairs[0].bodyB.socketId && event.pairs[0].bodyA.droppedBy !== event.pairs[0].bodyB.socketId) {
-                    this.removeLooseCoin(this.engine.world, event.pairs[0].bodyA.itemId);
-                    if (event.pairs[0].bodyB.socketId) {
-                        this.collectedItem(event.pairs[0].bodyB, ITEMTYPE.coin);
+            if (bodyA.itemType !== undefined || bodyB.itemType !== undefined) {
+                if (bodyA.itemType !== undefined) {
+                    this.removeItem(this.engine.world, bodyA.itemId);
+                    if (bodyB.socketId) {
+                        this.collectedItem(bodyB, bodyA.itemType);
                     }
                 }
-                if (event.pairs[0].bodyB.isCoin && event.pairs[0].bodyA.socketId && event.pairs[0].bodyB.droppedBy !== event.pairs[0].bodyA.socketId) {
-                    this.removeLooseCoin(this.engine.world, event.pairs[0].bodyB.itemId);
-                    if (event.pairs[0].bodyA.socketId) {
-                        this.collectedItem(event.pairs[0].bodyA, ITEMTYPE.coin);
+                if (bodyB.itemType !== undefined) {
+                    this.removeItem(this.engine.world, bodyB.itemId);
+                    if (bodyA.socketId) {
+                        this.collectedItem(bodyA, bodyB.itemType);
+                    }
+                }
+            }
+
+            if (bodyA.isCoin || bodyB.isCoin) {
+                if (bodyA.isCoin && bodyB.socketId && bodyA.droppedBy !== bodyB.socketId) {
+                    this.removeLooseCoin(this.engine.world, bodyA.itemId);
+                    if (bodyB.socketId) {
+                        this.collectedItem(bodyB, ITEMTYPE.coin);
+                    }
+                }
+                if (bodyB.isCoin && bodyA.socketId && bodyB.droppedBy !== bodyA.socketId) {
+                    this.removeLooseCoin(this.engine.world, bodyB.itemId);
+                    if (bodyA.socketId) {
+                        this.collectedItem(bodyA, ITEMTYPE.coin);
                     }
                 }
             }
