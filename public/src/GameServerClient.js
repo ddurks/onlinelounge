@@ -23,7 +23,6 @@ export class GameServerClient {
             this.connected = true;
         });
         this.socket.on('cached user', (userInfo) => {
-            console.log("cached user!", userInfo)
             this.cachedUsername = userInfo.username;
         });
     }

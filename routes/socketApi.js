@@ -19,9 +19,7 @@ io.on('connection', (socket) => {
     socket.disconnect(true);
   } else {
     let cachedUser = userCache.users.get(socket.handshake.address)
-    console.log("user", cachedUser)
     if (cachedUser && cachedUser.username) {
-      console.log("CACHED USER");
       io.to(socket.id).emit('cached user', cachedUser);
     }
   }
