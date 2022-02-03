@@ -2,7 +2,6 @@ import { OL } from './utils';
 import { Player, Key } from './Player';
 import { Butterfly, OnlineBouncer } from './Guys';
 import { Bullet, GunFlash, MapItem, ITEMTYPE, Sparkle, Coin, PLAYERITEM } from './Items';
-import { GameServerClient } from './GameServerClient';
 
 const INPUT_UPDATE_RATE = 1000/30;
 
@@ -22,7 +21,6 @@ export class DigitalPlanet extends Phaser.Scene {
         this.looks = new Array();
         this.lookIndex = OL.IS_MOBILE ? 1 : 0;
         this.MAX_BUTTERFLIES = 0;
-        this.serverClient = new GameServerClient();
         this.population = 0;
         this.paused = false;
         this.stateQueue = new Array();
@@ -63,6 +61,7 @@ export class DigitalPlanet extends Phaser.Scene {
     }
 
     create() { 
+        this.serverClient = this.startData.serverClient;
         this.startTime = Date.now();
         this.looks = ['computer_guy', 'phone_guy', 'cute_guy'];
         this.map = this.make.tilemap({ key: this.startData.mapKey });
@@ -152,8 +151,7 @@ export class DigitalPlanet extends Phaser.Scene {
 
         this.clearMaps();
         this.player.lookIndex = this.lookIndex;
-        this.serverClient.connect(this.player, (sessionID) => {
-            console.log("connected: " + sessionID);
+        this.serverClient.join(this.player, (sessionID) => {
             this.events.emit('connectionStatus', true);
             this.events.emit('populationUpdate', this.population);
             this.sessionID = sessionID;
@@ -284,6 +282,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.player = this.generatePlayer(this.sessionID, pos.x, pos.y, OL.username, this.lookIndex);
         this.player.body.type = 'player1';
         this.player.currentArea = this.getCurrentArea(this.startData.mapKey);
+        this.player.createPlayerMarker();
         this.players.set(this.sessionID, this.player);
         this.events.emit('playerLoaded', {texture: this.looks[this.lookIndex]});
         this.camera.startFollow(this.player, true);
@@ -506,7 +505,7 @@ export class DigitalPlanet extends Phaser.Scene {
                         }
                         this.generatePlayer(playerData.socketId, playerData.x, playerData.y, playerData.username, playerData.lookIndex, playerData.item);
                     } else if (playerToUpdate && playerToUpdate.body) {
-                        if (playerToUpdate.socketId !== this.sessionID || OL.getDistance(this.player.x, this.player.y, playerData.x, playerData.y) > 5) {
+                        if (playerToUpdate.socketId !== this.sessionID || OL.getDistance(this.player.x, this.player.y, playerData.x, playerData.y) > 3) {
                             playerToUpdate.updateFromData(playerData);
                         }
                     } else {

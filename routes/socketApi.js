@@ -1,4 +1,5 @@
 var GameEngine = require('./engine');
+var UserCache = require('./usercache');
 var socket_io = require('socket.io');
 var mojiTranslate = require('moji-translate');
 var io = socket_io();
@@ -8,7 +9,8 @@ socketApi.io = io;
 
 const TICK_RATE = 1000/10, ENGINE_RATE = 1000/60;
 const CAPACITY = 10;
-let engine = new GameEngine(io);
+var userCache = new UserCache();
+var engine = new GameEngine(io);
  
 io.on('connection', (socket) => {
   if (engine.players.size > CAPACITY) {
@@ -16,12 +18,18 @@ io.on('connection', (socket) => {
     socket.emit('lounge full');
     socket.disconnect(true);
   } else {
-    console.log("new IP address connected: " + socket.handshake.address);
+    let cachedUser = userCache.users.get(socket.handshake.address)
+    console.log("user", cachedUser)
+    if (cachedUser && cachedUser.username) {
+      console.log("CACHED USER");
+      io.to(socket.id).emit('cached user', cachedUser);
+    }
   }
 
   socket.on('new player', (newPlayer) => {
     newPlayer.id = socket.id;
     engine.addPlayer(newPlayer);
+    userCache.saveUser(socket.handshake.address, newPlayer.username);
     console.log("adding " + socket.id + " players connected: " + engine.players.size, newPlayer.currentArea);
   });
 

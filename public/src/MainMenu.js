@@ -1,8 +1,10 @@
 import { OL } from './utils';
+import { GameServerClient } from './GameServerClient';
 
 export class MainMenu extends Phaser.Scene {
     constructor() {
         super('MainMenu');
+        this.serverClient = new GameServerClient();
     }
 
     create() {
@@ -14,6 +16,10 @@ export class MainMenu extends Phaser.Scene {
 
         element.setPerspective(800)
         element.addListener('click');
+
+        if (this.serverClient.cachedUsername) {
+            document.getElementById('username').value = this.serverClient.cachedUsername;
+        }
     
         element.on('click', (event) => {
             if (event.target.name === 'loginButton') {
@@ -62,7 +68,8 @@ export class MainMenu extends Phaser.Scene {
             objectTileset: {
                 name: "online-tileset-extruded",
                 ref: "objectTiles"
-            }
+            },
+            serverClient: this.serverClient
         });
     }
 }
