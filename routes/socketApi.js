@@ -11,6 +11,7 @@ const TICK_RATE = 1000/10, ENGINE_RATE = 1000/60;
 const CAPACITY = 10;
 var userCache = new UserCache();
 var engine = new GameEngine(io);
+var lastUpdateTimestamp, currUpdateTimestamp = Date.now(), tickRateAvg = TICK_RATE;
  
 io.on('connection', (socket) => {
   if (engine.players.size > CAPACITY) {
@@ -68,7 +69,10 @@ io.on('connection', (socket) => {
   });
 
   socket.on('server stats', () => {
-    io.to(socket.id).emit('server stats', engine.getStats());
+    let serverStats = engine.getStats();
+    serverStats.serverTick = Math.round(( (1000.0/tickRateAvg) + Number.EPSILON) * 100) / 100;
+    serverStats.uniqueVisitors = userCache.users.size;
+    io.to(socket.id).emit('server stats', serverStats);
   });
 
   socket.on('enter lounge', () => {
@@ -103,6 +107,10 @@ io.on('connection', (socket) => {
 
 setInterval(() => {
   if (engine.players.size > 0) {
+    lastUpdateTimestamp = currUpdateTimestamp;
+    currUpdateTimestamp = Date.now();
+    tickRateAvg = approxRollingAverage(tickRateAvg, currUpdateTimestamp - lastUpdateTimestamp);
+
     let state = { players: engine.getPlayers() };
     engine.bullets.size > 0 ? state.bullets = engine.getBullets() : null;
     engine.looseCoins.size > 0 ? state.coins = engine.getLooseCoins() : null;
@@ -112,7 +120,14 @@ setInterval(() => {
 
 
 setInterval(() => {
-    engine.update();
+  engine.update();
 }, ENGINE_RATE);
+
+
+function approxRollingAverage (avg, newSample) {
+  avg -= avg / 10;
+  avg += newSample / 10;
+  return avg;
+}
 
 module.exports = socketApi;

@@ -221,7 +221,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.serverClient.socket.on('feed', (update) => this.events.emit('feedUpdate', update));
         this.serverClient.socket.on('treasure found', (treasure) => this.events.emit('displayPopup', {title: "Treasure 💰", text: "You unearthed the treasure of " + (treasure.buriedBy ? treasure.buriedBy : "[anonymous]") + "! (" + treasure.coins + ")", gif: 'treasure'}));
         this.serverClient.socket.on('server stats', (stats) => {
-            this.events.emit('displayPopup', {title: "lounge stats", text: "uptime: " + stats.uptime});
+            this.events.emit('displayPopup', {title: "lounge stats", text: "population:  " + this.population + "   uptime:  " + stats.uptime + "   engine:  " + stats.engineTick + " hz  server:  " + stats.serverTick + "  hz unique visitors:  " + stats.uniqueVisitors});
         })
         
         setInterval(() => {

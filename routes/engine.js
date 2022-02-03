@@ -10,7 +10,7 @@ const ENGINE_RATE = 1000/60;
 const WALKING_SPEED = 2.5;
 const WALKING_FORCE = 0.002;
 const BULLET_VELO = 5;
-const MAX_ITEMS = 12;
+const MAX_ITEMS = 15;
 const COIN_SPEED = 3;
 
 const Key = {
@@ -69,6 +69,8 @@ class GameEngine {
     
         this.curr_timestamp = Date.now();
         this.prev_timestamp, this.deltat = ENGINE_RATE, this.lastDeltat;
+        this.N = 0;
+        this.engineRateAvg = ENGINE_RATE;
 
         tmx.parseFile('./public/assets/tiles/onlinepluto-tilemap-new.tmx', (err, map) => {
             if (err) throw err;
@@ -232,6 +234,7 @@ class GameEngine {
             
             this.lastDeltat = this.deltat;
             this.deltat = this.curr_timestamp - this.prev_timestamp;
+            this.engineRateAvg = this.approxRollingAverage(this.engineRateAvg, this.deltat);
 
             if (this.items.size < MAX_ITEMS) {
                 this.spawnRandomItem();
@@ -245,11 +248,18 @@ class GameEngine {
         }
     }
 
+    approxRollingAverage (avg, newSample) {
+        if (this.N < 10) {
+            this.N++;
+        }
+        avg -= avg / this.N;
+        avg += newSample / this.N;
+        return avg;
+    }
+
     spawnRandomItem() {
         if (this.items.size < MAX_ITEMS) {
-            this.spawnItem(this.engine.world, this.getRandomNum(50, this.planetWidth - 50), this.getRandomNum(50, this.planetHeight - 50), ITEMTYPE.bullet);
-            this.spawnItem(this.engine.world, this.getRandomNum(50, this.planetWidth - 50), this.getRandomNum(50, this.planetHeight - 50), ITEMTYPE.coin);
-            this.spawnItem(this.engine.world, this.getRandomNum(50, this.planetWidth - 50), this.getRandomNum(50, this.planetHeight - 50), ITEMTYPE.heart);
+            this.spawnItem(this.engine.world, this.getRandomNum(50, this.planetWidth - 50), this.getRandomNum(50, this.planetHeight - 50), this.getRandomInt(0, 2));
         }
     }
 
@@ -607,7 +617,8 @@ class GameEngine {
 
     getStats() {
         return {
-            uptime: (Date.now() - app.START_TIME)/1000
+            uptime: (Date.now() - app.START_TIME)/1000,
+            engineTick: Math.round(( (1000.0/this.engineRateAvg) + Number.EPSILON) * 100) / 100
         }
     }
 }
