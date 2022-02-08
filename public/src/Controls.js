@@ -2,6 +2,7 @@ import { PopUp } from "./PopUp";
 import { TextButton, OL } from "./utils";
 import VirtualJoystick from 'phaser3-rex-plugins/plugins/virtualjoystick.js';
 import { PLAYERITEM } from './Items';
+import { Leaderboard } from "./Leaderboard";
 
 export class HealthBar extends Phaser.GameObjects.Group {
     constructor(scene, heartsNum) {
@@ -107,6 +108,11 @@ export class Controls extends Phaser.Scene {
         }).setDepth(11);
         this.connectionIcon = this.add.image(30, -6, 'connection', 1).setScale(0.75).setOrigin(0, 0).setDepth(11);
 
+        var leaderboardButton = this.add.image(70, -4, 'leaderboard').setInteractive({ useHandCursor: true }).on('pointerdown', () => {
+            this.events.emit("getLeaderboard");
+        });
+        leaderboardButton.setOrigin(0, 0);
+        leaderboardButton.setDepth(11);
         var chatIcon = this.add.image(OL.world.width - 50, OL.world.height - 45, 'chatIcon', 0);
         chatIcon.setScale(4);
         chatIcon.setDepth(11);
@@ -202,8 +208,11 @@ export class Controls extends Phaser.Scene {
         }
 
         this.feed = new Feed(this, OL.world.width/2, 6);
+        this.leaderboard = new Leaderboard(this, OL.world.width/2, 75, 3);
 
         this.scene.get('DigitalPlanet').events.on('displayPopup', (info) => this.displayPopup(info));
+        this.scene.get('DigitalPlanet').events.on('displayLeaderboard', (leaderboard) => this.displayLeaderboard(leaderboard));
+        this.scene.get('DigitalPlanet').events.on('updateLeaderboard', (leaderboard) => this.leaderboard.setData(leaderboard));
         this.scene.get('DigitalPlanet').events.on('populationUpdate', (pop) => this.populationUpdate(pop));
         this.scene.get('DigitalPlanet').events.on('connectionStatus', (status) => this.setConnected(status));
         this.scene.get('DigitalPlanet').events.on('holdingItem', (status) => this.holdingItem(status));
@@ -316,5 +325,10 @@ export class Controls extends Phaser.Scene {
             this.popup.display(info.title, info.text, info.gif);
             this.prevPopupText = info.text;
         }
+    }
+
+    displayLeaderboard(leaderboard) {
+        this.leaderboard.setData(leaderboard);
+        this.leaderboard.toggleDisplay();
     }
 }

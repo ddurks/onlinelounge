@@ -32,7 +32,9 @@ export class Preloader extends Phaser.Scene {
 		this.load.spritesheet('shovelButton', 'assets/sprites/shovel-button-spritesheet.png', { frameWidth: 64, frameHeight: 64, margin: 0, spacing: 0 });
 		this.load.image('menuBar', 'assets/hud/menu-bar.png');
 		this.load.image('popup', 'assets/hud/popup.png');
+		this.load.image('board', 'assets/hud/board.png');
 		this.load.image('olLogo', 'assets/hud/logo.png');
+		this.load.image('leaderboard', 'assets/hud/leaderboard.png');
 		this.load.image('redButton', "assets/hud/red-button.png");
 		this.load.image('greenButton', "assets/hud/green-button.png");
 		this.load.image('chatIcon', 'assets/hud/square-talk.png', {frameWidth: 16, frameHeight: 16});

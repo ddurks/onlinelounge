@@ -31,7 +31,7 @@ class UserCache {
         
         for await (const line of rl) {
             let splitline = line.split(",");
-            this.users.set(splitline[0], {ip: splitline[0], username: line.length > 1 ? splitline[1] : null});
+            this.users.set(splitline[0], {ip: splitline[0], username: splitline.length > 1 ? splitline[1] : null});
         }
     }
 

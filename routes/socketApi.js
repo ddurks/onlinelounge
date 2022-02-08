@@ -27,6 +27,7 @@ io.on('connection', (socket) => {
 
   socket.on('new player', (newPlayer) => {
     newPlayer.id = socket.id;
+    newPlayer.ip = socket.handshake.address;
     engine.addPlayer(newPlayer);
     userCache.saveUser(socket.handshake.address, newPlayer.username);
     console.log("adding " + socket.id + " players connected: " + engine.players.size, newPlayer.currentArea);
@@ -73,6 +74,10 @@ io.on('connection', (socket) => {
     serverStats.serverTick = Math.round(( (1000.0/tickRateAvg) + Number.EPSILON) * 100) / 100;
     serverStats.uniqueVisitors = userCache.users.size;
     io.to(socket.id).emit('server stats', serverStats);
+  });
+
+  socket.on('leaderboard', () => {
+    io.to(socket.id).emit('leaderboard', engine.getLeaderboard());
   });
 
   socket.on('enter lounge', () => {

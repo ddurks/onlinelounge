@@ -132,6 +132,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.scene.get('Controls').events.off('holdingItem');
         this.scene.get('Controls').events.off('closeEvent');
         this.scene.get('Controls').events.off('serverStats');
+        this.scene.get('Controls').events.off('getLeaderboard');
 
         this.scene.get('Controls').events.on('openChat', () => this.openChatBox());
         this.scene.get('Controls').events.on('sendChat', () => this.sendChat());
@@ -143,6 +144,8 @@ export class DigitalPlanet extends Phaser.Scene {
         this.scene.get('Controls').events.on('closeEvent', () => this.windowClosed());
         this.scene.get('Controls').events.on('serverStats', () => this.serverClient.socket.emit('server stats'));
         this.scene.get('Controls').events.on('buryConfirmed', () => this.serverClient.socket.emit('player action', { treasure: { bury: true } }));
+        this.scene.get('Controls').events.on('getLeaderboard', () => this.serverClient.socket.emit('leaderboard'));
+        
         this.sessionID = this.serverClient.sessionID ? this.serverClient.sessionID : undefined;
         if (this.sessionID) {
             this.players.set(this.sessionID, this.player);
@@ -188,6 +191,8 @@ export class DigitalPlanet extends Phaser.Scene {
         this.serverClient.socket.off('get items');
         this.serverClient.socket.off('feed');
         this.serverClient.socket.off('server stats');
+        this.serverClient.socket.off('leaderboard');
+        this.serverClient.socket.off('leaderboard update');
 
         this.serverClient.socket.on('state', (state) => {
             if (this.entityInterpolationEnabled) {
@@ -223,6 +228,8 @@ export class DigitalPlanet extends Phaser.Scene {
         this.serverClient.socket.on('server stats', (stats) => {
             this.events.emit('displayPopup', {title: "lounge stats", text: "population:  " + this.population + "   uptime:  " + stats.uptime + "   engine:  " + stats.engineTick + " hz  server:  " + stats.serverTick + "  hz unique visitors:  " + stats.uniqueVisitors});
         })
+        this.serverClient.socket.on('leaderboard', (leaderboard) => this.events.emit('displayLeaderboard', leaderboard));
+        this.serverClient.socket.on('leaderboard update', leaderboard => this.events.emit('updateLeaderboard', leaderboard));
         
         setInterval(() => {
                 this.serverClient.socket.emit('player input', this.player.keysPressed);

@@ -1,4 +1,5 @@
-var Matter = require('matter-js');
+const Matter = require('matter-js');
+const Leaderboard = require('./leaderboard');
 var tmx = require('tmx-parser');
 var app = require('../app');
 
@@ -71,6 +72,8 @@ class GameEngine {
         this.prev_timestamp, this.deltat = ENGINE_RATE, this.lastDeltat;
         this.N = 0;
         this.engineRateAvg = ENGINE_RATE;
+
+        this.leaderboard = new Leaderboard();
 
         tmx.parseFile('./public/assets/tiles/onlinepluto-tilemap-new.tmx', (err, map) => {
             if (err) throw err;
@@ -196,6 +199,11 @@ class GameEngine {
                 break;
             case ITEMTYPE.coin:
                 player.coins++;
+                this.leaderboard.addStats({ 
+                    username: player.username, 
+                    ip: player.ip, 
+                    stats: { coins: player.coins }
+                }, () => this.leaderboardUpdate());
                 this.io.to(player.socketId).emit('coin update', player.coins);
                 break;
             case ITEMTYPE.heart:
@@ -212,23 +220,40 @@ class GameEngine {
             player.health -= 1;
             this.io.to(player.socketId).emit('health update', player.health);
             if (player.health === 0) {
+                player.deaths++;
+                this.leaderboard.addStats({ 
+                    username: player.username, 
+                    ip: player.ip, 
+                    stats: { deaths: player.deaths }
+                }, () => this.leaderboardUpdate());
                 this.dropCoins(player.socketId, player.coins);
                 let slayer, firedByPlayer = this.players.get(firedBy);
                 if (firedByPlayer) {
                     slayer = firedByPlayer.username ? firedByPlayer.username : "[anonymous]";
+                    firedByPlayer.kills++;
+                    this.leaderboard.addStats({ 
+                        username: firedByPlayer.username, 
+                        ip: firedByPlayer.ip, 
+                        stats: { kills: firedByPlayer.kills }
+                    }, () => this.leaderboardUpdate());
                 } else {
                     slayer = "[unknown]";
                 }
                 this.io.sockets.emit('player action', { socketId: player.socketId, actions: { faint: true } });
-                this.io.sockets.emit('feed', "💀 " + (player.username ? player.username : "[anonymous]") + " was slain by " + slayer);
+                this.io.sockets.emit('feed', (player.username ? player.username : "[anonymous]") + " (" + player.deaths + "💀)" + " was slain by " + slayer + " (" + firedByPlayer.kills + "🔫)");
             } else {
                 this.io.sockets.emit('player action', { socketId: player.socketId, actions: { flinch: true } });
             }
         }
     }
 
+    leaderboardUpdate() {
+        this.io.sockets.emit('leaderboard update', this.getLeaderboard());
+    }
+
     update() {
         if (this.players.size > 0) {
+            this.leaderboard = this.leaderboard.checkForReset();
             this.prev_timestamp = this.curr_timestamp;
             this.curr_timestamp = Date.now();
             
@@ -276,12 +301,15 @@ class GameEngine {
                         height:player.height, 
                         username:player.username, 
                         socketId:player.id, 
+                        ip: player.ip,
                         currentArea:player.currentArea, 
                         lookIndex:player.lookIndex,
                         health: HEALTH,
                         item: GUN,
                         bullets: BULLETS,
-                        coins: COINS
+                        coins: COINS,
+                        kills: 0,
+                        deaths: 0
                     }
                 ));
             let newPlayer = this.players.get(player.id);
@@ -620,6 +648,15 @@ class GameEngine {
             uptime: (Date.now() - app.START_TIME)/1000,
             engineTick: Math.round(( (1000.0/this.engineRateAvg) + Number.EPSILON) * 100) / 100
         }
+    }
+
+    getLeaderboard() {
+        return Object.entries(this.leaderboard).reduce((acc, [statName, statList]) => {
+            if (statName !== 'date') {
+                acc[statName] = statList.map((stat) => stat.number > 0 ? stat.username + " - " + stat.number : "");
+            }
+            return acc;
+        }, {});
     }
 }
 
