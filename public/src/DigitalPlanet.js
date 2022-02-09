@@ -154,28 +154,7 @@ export class DigitalPlanet extends Phaser.Scene {
 
         this.clearMaps();
         this.player.lookIndex = this.lookIndex;
-        this.serverClient.join(this.player, (sessionID) => {
-            this.events.emit('connectionStatus', true);
-            this.events.emit('populationUpdate', this.population);
-            this.sessionID = sessionID;
-            this.player.socketId = sessionID;
-            this.players.set(sessionID, this.player);
-            this.player = this.players.get(sessionID);
-            this.serverClient.socket.emit('get items', this.getCurrentArea(this.startData.mapKey));
-            this.serverClient.socket.on('disconnect', () => {
-                this.events.emit('connectionStatus', false);
-                this.events.emit('populationUpdate', "-");
-                this.players.forEach((player) => {
-                    if (player.socketId !== this.sessionID) {
-                        this.removePlayer(player.socketId);
-                    }
-                });
-                this.sessionID = false;
-                this.player.setHoldItem(false); 
-                this.clearMaps();
-                console.log("disconnected from server");
-            })
-        });
+        this.joinServer();
 
         // turn off events so they don't duplicate upon restart
         this.serverClient.socket.off('state');
@@ -234,6 +213,31 @@ export class DigitalPlanet extends Phaser.Scene {
         setInterval(() => {
                 this.serverClient.socket.emit('player input', this.player.keysPressed);
         }, INPUT_UPDATE_RATE);
+    }
+
+    joinServer() {
+        this.serverClient.join(this.player, (sessionID) => {
+            this.events.emit('connectionStatus', true);
+            this.events.emit('populationUpdate', this.population);
+            this.sessionID = sessionID;
+            this.player.socketId = sessionID;
+            this.players.set(sessionID, this.player);
+            this.player = this.players.get(sessionID);
+            this.serverClient.socket.emit('get items', this.getCurrentArea(this.startData.mapKey));
+            this.serverClient.socket.on('disconnect', () => {
+                this.events.emit('connectionStatus', false);
+                this.events.emit('populationUpdate', "-");
+                this.players.forEach((player) => {
+                    if (player.socketId !== this.sessionID) {
+                        this.removePlayer(player.socketId);
+                    }
+                });
+                this.sessionID = null;
+                this.player.setHoldItem(false); 
+                this.clearMaps();
+                console.log("disconnected from server");
+            })
+        });
     }
 
     nowHoldingItem(playerItem) {

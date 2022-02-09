@@ -85,15 +85,18 @@ export class Leaderboard extends Phaser.GameObjects.Group {
     toggleDisplay() {
         this.toggleVisible();
         this.pages[this.currentPage].toggleVisible();
+        this.titles[this.currentPage].setStyle({ backgroundColor: '#000000'});
     }
 
     pageTo(pageNum) {
         this.currentPage = pageNum;
         this.pages.forEach((page, index) => index === this.currentPage ? page.setVisible(true) : page.setVisible(false));
+        this.titles.forEach((title, index) => index === this.currentPage ? title.setStyle({ backgroundColor: '#000000'}) : title.setStyle({ backgroundColor: 'transparent' }));
     }
 
     close() {
         this.setVisible()
         this.pages.forEach((page) => page.setVisible(false));
+        this.titles.forEach((title) => title.setStyle({ backgroundColor: 'transparent' }));
     }
 }
