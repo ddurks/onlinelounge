@@ -21,15 +21,15 @@ class Leaderboard {
         for(let i = 0; i < 5; i++) {
             this.coins.push({
                 username: "",
-                number: 0
+                number: 1
             });
             this.kills.push({
                 username: "",
-                number: 0
+                number: 1
             });
             this.deaths.push({
                 username: "",
-                number: 0
+                number: 1
             });
         }
 
@@ -85,7 +85,6 @@ class Leaderboard {
             };
             for (let i = this[statName].length-1; i >=0; i--) {
                 if (statNumber > this[statName][i].number) {
-                    console.log("adjusting...")
                     updated = true;
                     for (let j = 0; j < i; j++) {
                         this[statName][j] = this[statName][j+1];
