@@ -5,7 +5,7 @@ import { Bullet, GunFlash, MapItem, ITEMTYPE, Sparkle, Coin, PLAYERITEM } from '
 
 const INPUT_UPDATE_RATE = 1000/30;
 
-const AREAS = {
+export const AREAS = {
     'digitalplanet':0,
     'lounge':1
 }

@@ -101,6 +101,10 @@
       opacity: 0.2;
       width: 270px;
     }
+    #spawns {
+      margin-top: 10px;
+      margin-left: 20px;
+    }
     
     input[type="submit"]:active {
       top:3px;
@@ -111,7 +115,10 @@
     <div class="login">
         <input type="text" placeholder="username" id="username" name="username" maxlength="16">
         <input type="password" placeholder="password" id="password" name="password">
-        <a href="#" class="forgot">forgot password?</a>
+        <select name="spawns" id="spawns">
+          <option value="map">Digital Planet</option>
+          <option value="loungeMap">The Online Lounge</option>
+        </select> 
         <input type="submit" value="sign in" name="loginButton">
     </div>
     <div class="shadow"></div>

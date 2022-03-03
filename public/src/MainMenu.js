@@ -1,6 +1,31 @@
 import { OL } from './utils';
 import { GameServerClient } from './GameServerClient';
 
+const MAP_DATA = {
+    'digitalplanet': {
+        mapKey: "map",
+        groundTileset: {
+            name: "online-pluto-tileset-extruded",
+            ref: "groundTiles"
+        },
+        objectTileset: {
+            name: "online-tileset-extruded",
+            ref: "objectTiles"
+        },
+    },
+    'lounge': {
+        mapKey: "loungeMap",
+        groundTileset: {
+            name: "online-lounge-objects-extruded",
+            ref: "loungeTiles"
+        },
+        objectTileset: {
+            name: "online-lounge-objects-extruded",
+            ref: "loungeTiles"
+        }
+    }
+}
+
 export class MainMenu extends Phaser.Scene {
     constructor() {
         super('MainMenu');
@@ -48,6 +73,17 @@ export class MainMenu extends Phaser.Scene {
 
         OL.username = inputUsername.value;
         OL.password = inputPassword.value;
+
+        var spawnDropdownValue = document.getElementById('spawns').value;
+        switch(spawnDropdownValue) {
+            case MAP_DATA.lounge.mapKey:
+                this.mapData = MAP_DATA.lounge;
+                break;
+            default:
+                this.mapData = MAP_DATA.digitalplanet;
+
+        }
+
         this.clickStart();
     }
 
@@ -60,15 +96,9 @@ export class MainMenu extends Phaser.Scene {
                 y: 50
             },
             butterflies: 3,
-            mapKey: "map",
-            groundTileset: {
-                name: "online-pluto-tileset-extruded",
-                ref: "groundTiles"
-            },
-            objectTileset: {
-                name: "online-tileset-extruded",
-                ref: "objectTiles"
-            },
+            mapKey: this.mapData.mapKey,
+            groundTileset: this.mapData.groundTileset,
+            objectTileset: this.mapData.objectTileset,
             serverClient: this.serverClient
         });
     }

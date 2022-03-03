@@ -315,7 +315,7 @@ class GameEngine {
             let newPlayer = this.players.get(player.id);
             newPlayer.frictionAir = (0.2);
             this.Body.setMass(newPlayer, 1);
-            this.Composite.add(this.engine.world, newPlayer);
+            this.Composite.add(player.currentArea === AREAS.digitalplanet ? this.engine.world : this.loungeEngine.world, newPlayer);
             this.io.sockets.emit('feed', (player.username ? player.username : "[anonymous]") + " has joined the lounge 🕺");
             this.io.to(player.id).emit('bullet update', BULLETS);
             this.io.to(player.id).emit('health update', HEALTH);
