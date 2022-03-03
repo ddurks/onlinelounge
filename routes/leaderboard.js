@@ -21,15 +21,15 @@ class Leaderboard {
         for(let i = 0; i < 5; i++) {
             this.coins.push({
                 username: "",
-                number: 1
+                number: 0
             });
             this.kills.push({
                 username: "",
-                number: 1
+                number: 0
             });
             this.deaths.push({
                 username: "",
-                number: 1
+                number: 0
             });
         }
 
