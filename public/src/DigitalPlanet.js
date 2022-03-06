@@ -82,11 +82,8 @@ export class DigitalPlanet extends Phaser.Scene {
         });
 
         this.player, this.onlineBouncer;
-        if (this.startData.spawn) {
-            this.spawnPlayer1(this.startData.spawn.x, this.startData.spawn.y);
-        }
         this.map.findObject('player', (object) => {
-            if (object.name === 'spawn' && !this.startData.spawn) {
+            if (object.name === 'spawn') {
                 this.spawnPlayer1(object.x, object.y);
             }
 

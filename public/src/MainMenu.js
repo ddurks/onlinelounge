@@ -11,7 +11,7 @@ const MAP_DATA = {
         objectTileset: {
             name: "online-tileset-extruded",
             ref: "objectTiles"
-        },
+        }
     },
     'lounge': {
         mapKey: "loungeMap",
@@ -91,10 +91,6 @@ export class MainMenu extends Phaser.Scene {
         this.text.setText('Welcome ' + OL.username);
         this.scene.start('Controls');
         this.scene.start('DigitalPlanet', {
-            spawn: {
-                x: 50,
-                y: 50
-            },
             butterflies: 3,
             mapKey: this.mapData.mapKey,
             groundTileset: this.mapData.groundTileset,
