@@ -26,6 +26,9 @@ const MAP_DATA = {
     }
 }
 
+MAP_DATA.digitalplanet.exitTo = MAP_DATA.lounge;
+MAP_DATA.lounge.exitTo = MAP_DATA.digitalplanet;
+
 export class MainMenu extends Phaser.Scene {
     constructor() {
         super('MainMenu');
@@ -81,7 +84,6 @@ export class MainMenu extends Phaser.Scene {
                 break;
             default:
                 this.mapData = MAP_DATA.digitalplanet;
-
         }
 
         this.clickStart();
@@ -95,7 +97,8 @@ export class MainMenu extends Phaser.Scene {
             mapKey: this.mapData.mapKey,
             groundTileset: this.mapData.groundTileset,
             objectTileset: this.mapData.objectTileset,
-            serverClient: this.serverClient
+            serverClient: this.serverClient,
+            exitTo: this.mapData.exitTo
         });
     }
 }

@@ -22,14 +22,14 @@ const Key = {
 }
 
 const AREAS = {
-    'digitalplanet':0,
-    'lounge':1
+    'digitalplanet':1,
+    'lounge':2
 }
 
 const ITEMTYPE = {
-    'heart': 0,
-    'coin': 1,
-    'bullet': 2
+    'heart': 1,
+    'coin': 2,
+    'bullet': 3
 }
 
 const PLAYERITEM = {
@@ -284,7 +284,7 @@ class GameEngine {
 
     spawnRandomItem() {
         if (this.items.size < MAX_ITEMS) {
-            this.spawnItem(this.engine.world, this.getRandomNum(50, this.planetWidth - 50), this.getRandomNum(50, this.planetHeight - 50), this.getRandomInt(0, 2));
+            this.spawnItem(this.engine.world, this.getRandomNum(50, this.planetWidth - 50), this.getRandomNum(50, this.planetHeight - 50), this.getRandomInt(1, 3));
         }
     }
 
