@@ -97,7 +97,7 @@ io.on('connection', (socket) => {
   })
 
   socket.on('get items', (area) => {
-    io.sockets.emit('get items', engine.getItems(area));
+    io.to(socket.id).emit('get items', engine.getItems(area));
   });
 
   socket.on('disconnect', () => {

@@ -11,7 +11,7 @@ const MAP_DATA = {
         objectTileset: {
             name: "online-tileset-extruded",
             ref: "objectTiles"
-        },
+        }
     },
     'lounge': {
         mapKey: "loungeMap",
@@ -25,6 +25,9 @@ const MAP_DATA = {
         }
     }
 }
+
+MAP_DATA.digitalplanet.exitTo = MAP_DATA.lounge;
+MAP_DATA.lounge.exitTo = MAP_DATA.digitalplanet;
 
 export class MainMenu extends Phaser.Scene {
     constructor() {
@@ -81,7 +84,6 @@ export class MainMenu extends Phaser.Scene {
                 break;
             default:
                 this.mapData = MAP_DATA.digitalplanet;
-
         }
 
         this.clickStart();
@@ -91,15 +93,12 @@ export class MainMenu extends Phaser.Scene {
         this.text.setText('Welcome ' + OL.username);
         this.scene.start('Controls');
         this.scene.start('DigitalPlanet', {
-            spawn: {
-                x: 50,
-                y: 50
-            },
             butterflies: 3,
             mapKey: this.mapData.mapKey,
             groundTileset: this.mapData.groundTileset,
             objectTileset: this.mapData.objectTileset,
-            serverClient: this.serverClient
+            serverClient: this.serverClient,
+            exitTo: this.mapData.exitTo
         });
     }
 }

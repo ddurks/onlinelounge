@@ -90,9 +90,9 @@ export class BulletItem extends Phaser.Physics.Matter.Sprite {
 }
 
 export const ITEMTYPE = {
-    'heart': 0,
-    'coin': 1,
-    'bullet': 2
+    'heart': 1,
+    'coin': 2,
+    'bullet': 3
 }
 
 export class MapItem extends Phaser.Physics.Matter.Sprite {

@@ -6,8 +6,8 @@ import { Bullet, GunFlash, MapItem, ITEMTYPE, Sparkle, Coin, PLAYERITEM } from '
 const INPUT_UPDATE_RATE = 1000/30;
 
 export const AREAS = {
-    'digitalplanet':0,
-    'lounge':1
+    'digitalplanet':1,
+    'lounge':2
 }
 
 export class DigitalPlanet extends Phaser.Scene {
@@ -35,7 +35,7 @@ export class DigitalPlanet extends Phaser.Scene {
         }
         this.startData = data;
         
-        if (this.startData.butterflies) {
+        if (this.startData.butterflies && this.getCurrentArea(this.startData.mapKey) === AREAS.digitalplanet) {
             this.MAX_BUTTERFLIES = this.startData.butterflies;
         } else {
             this.MAX_BUTTERFLIES = 0;
@@ -82,11 +82,8 @@ export class DigitalPlanet extends Phaser.Scene {
         });
 
         this.player, this.onlineBouncer;
-        if (this.startData.spawn) {
-            this.spawnPlayer1(this.startData.spawn.x, this.startData.spawn.y);
-        }
         this.map.findObject('player', (object) => {
-            if (object.name === 'spawn' && !this.startData.spawn) {
+            if (object.name === 'spawn') {
                 this.spawnPlayer1(object.x, object.y);
             }
 
@@ -343,14 +340,13 @@ export class DigitalPlanet extends Phaser.Scene {
     exitLounge() {
         this.player.currentArea = AREAS.digitalplanet;
         this.serverClient.socket.emit('exit lounge');
-        if (this.exitTo) {
-            this.exitTo.spawn = {
-                x: 525,
-                y: 325
-            }
-            this.camera.stopFollow();
-            this.scene.restart(this.exitTo);
+        this.exitTo.serverClient = this.serverClient;
+        this.exitTo.spawn = {
+            x: 525,
+            y: 325
         }
+        this.camera.stopFollow();
+        this.scene.restart(this.exitTo);
     }
 
     update(time, delta) {
@@ -604,7 +600,7 @@ export class DigitalPlanet extends Phaser.Scene {
     }
 
     updateItems(update) {
-        if (update.spawn) {
+        if (update.spawn && this.player.currentArea === AREAS.digitalplanet) {
             this.items.set(update.spawn.itemId, new MapItem(this, update.spawn.itemId, update.spawn.x, update.spawn.y, update.spawn.itemType));
         }
         if (update.remove) {
