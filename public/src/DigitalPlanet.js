@@ -63,7 +63,7 @@ export class DigitalPlanet extends Phaser.Scene {
     create() { 
         this.serverClient = this.startData.serverClient;
         this.startTime = Date.now();
-        this.looks = ['computer_guy', 'phone_guy', 'cute_guy'];
+        this.looks = ['computer_guy', 'phone_guy', 'cute_guy', 'walrus', 'online_guy', 'drawvid', 'obama'];
         this.map = this.make.tilemap({ key: this.startData.mapKey });
         this.groundTileset = this.map.addTilesetImage(this.startData.groundTileset.name, this.startData.groundTileset.ref);
         this.objectTileset = this.map.addTilesetImage(this.startData.objectTileset.name, this.startData.objectTileset.ref);
@@ -511,7 +511,7 @@ export class DigitalPlanet extends Phaser.Scene {
                             this.events.emit('playerLoaded', {texture: this.player.texture.key});
                         }
                         this.generatePlayer(playerData.socketId, playerData.x, playerData.y, playerData.username, playerData.lookIndex, playerData.item);
-                    } else if (playerToUpdate && playerToUpdate.body) {
+                    } else if (playerToUpdate && playerToUpdate.body !== undefined) {
                         if (playerToUpdate.socketId !== this.sessionID || OL.getDistance(this.player.x, this.player.y, playerData.x, playerData.y) > 3) {
                             playerToUpdate.updateFromData(playerData);
                         }

@@ -5,8 +5,65 @@ export class Preloader extends Phaser.Scene {
         super('Preloader');
     }
     preload() {
-        var logo = this.add.sprite(OL.world.centerX, OL.world.centerY, 'logo');
-        logo.setOrigin(0.5, 0.5);
+        // var logo = this.add.sprite(OL.world.centerX, OL.world.centerY, 'logo');
+        // logo.setOrigin(0.5, 0.5);
+		var progressBar = this.add.graphics();
+		var progressBox = this.add.graphics();
+		progressBox.fillStyle(0x222222, 0.8);
+		progressBox.fillRect(240, 270, 320, 50);
+		
+		var width = this.cameras.main.width;
+		var height = this.cameras.main.height;
+		var loadingText = this.make.text({
+			x: width / 2,
+			y: height / 2 - 50,
+			text: 'Loading...',
+			style: {
+				font: '20px monospace',
+				fill: '#ffffff'
+			}
+		});
+		loadingText.setOrigin(0.5, 0.5);
+		
+		var percentText = this.make.text({
+			x: width / 2,
+			y: height / 2 - 5,
+			text: '0%',
+			style: {
+				font: '18px monospace',
+				fill: '#ffffff'
+			}
+		});
+		percentText.setOrigin(0.5, 0.5);
+		
+		var assetText = this.make.text({
+			x: width / 2,
+			y: height / 2 + 50,
+			text: '',
+			style: {
+				font: '18px monospace',
+				fill: '#ffffff'
+			}
+		});
+		assetText.setOrigin(0.5, 0.5);
+		
+		this.load.on('progress', function (value) {
+			percentText.setText(parseInt(value * 100) + '%');
+			progressBar.clear();
+			progressBar.fillStyle(0xffffff, 1);
+			progressBar.fillRect(250, 280, 300 * value, 30);
+		});
+		
+		this.load.on('fileprogress', function (file) {
+			assetText.setText('Loading asset: ' + file.key);
+		});
+		this.load.on('complete', function () {
+			progressBar.destroy();
+			progressBox.destroy();
+			loadingText.destroy();
+			percentText.destroy();
+			assetText.destroy();
+		});
 
 		this.load.html('nameform', 'loginform.html');
 		this.load.html('chatBox', 'chatbox.html');
@@ -14,6 +71,10 @@ export class Preloader extends Phaser.Scene {
 		this.load.spritesheet('computer_guy', 'assets/sprites/computerguy-spritesheet-extruded.png', { frameWidth: 32, frameHeight: 32, margin: 1, spacing: 2 });
 		this.load.spritesheet('cute_guy', 'assets/sprites/cuteguy-spritesheet-extruded.png', { frameWidth: 32, frameHeight: 32, margin: 1, spacing: 2 });
 		this.load.spritesheet('phone_guy', 'assets/sprites/phoneguy-spritesheet-extruded.png', { frameWidth: 32, frameHeight: 32, margin: 1, spacing: 2 });
+		this.load.spritesheet('walrus', 'assets/sprites/walrus-extruded.png', { frameWidth: 32, frameHeight: 32, margin: 1, spacing: 2 });
+		this.load.spritesheet('obama', 'assets/sprites/obama-extruded.png', { frameWidth: 32, frameHeight: 32, margin: 1, spacing: 2 });
+		this.load.spritesheet('online_guy', 'assets/sprites/online_guy-extruded.png', { frameWidth: 32, frameHeight: 32, margin: 1, spacing: 2 });
+		this.load.spritesheet('drawvid', 'assets/sprites/drawvid-extruded.png', { frameWidth: 32, frameHeight: 32, margin: 1, spacing: 2 });
 		this.load.spritesheet('typingIcon', 'assets/sprites/typing.png', { frameWidth: 16, frameHeight: 16, margin: 0, spacing: 0 });
 		this.load.spritesheet('purpleButterfly', 'assets/sprites/butterfly-purple-extruded.png', { frameWidth: 16, frameHeight: 16, margin: 1, spacing: 2 });
 		this.load.spritesheet('blueButterfly', 'assets/sprites/butterfly-blue-extruded.png', { frameWidth: 16, frameHeight: 16, margin: 1, spacing: 2 });
