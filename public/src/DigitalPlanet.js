@@ -1,7 +1,7 @@
 import { OL } from './utils';
 import { Player, Key } from './Player';
 import { Butterfly, OnlineBouncer } from './Guys';
-import { Bullet, GunFlash, MapItem, ITEMTYPE, Sparkle, Coin, PLAYERITEM } from './Items';
+import { Bullet, GunFlash, MapItem, Sparkle, Coin, PLAYERITEM, SmokePuff } from './Items';
 
 const INPUT_UPDATE_RATE = 1000/30;
 
@@ -458,8 +458,9 @@ export class DigitalPlanet extends Phaser.Scene {
                     this.paused = true;
                 }
             }
-        }
-        if (playerToUpdate) {
+            if (playerAction.actions.smoke) {
+                new SmokePuff(this, playerToUpdate.x, playerToUpdate.y - 12);
+            }
             if (playerAction.actions.message) {
                 if (playerAction.actions.message === "NULL") {
                     playerToUpdate.setMsg("");

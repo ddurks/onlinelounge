@@ -78,6 +78,11 @@ export class Player extends Phaser.Physics.Matter.Sprite {
     generateItems(scene, player) {
         this.gun = scene.add.sprite(player.x - 12, player.y + 8, 'gun', 0).setVisible(false);
         this.shovel = scene.add.sprite(player.x - 12, player.y + 8, 'shovel', 0).setVisible(false);
+        this.beer = scene.add.sprite(player.x - 12, player.y + 8, 'beer').setVisible(false);
+        this.bong = scene.add.sprite(player.x - 12, player.y + 8, 'bong').setVisible(false);
+        this.water = scene.add.sprite(player.x - 12, player.y + 8, 'water').setVisible(false);
+        this.pizza = scene.add.sprite(player.x - 12, player.y + 8, 'pizza').setVisible(false);
+        this.controller = scene.add.sprite(player.x - 12, player.y + 8, 'controller').setVisible(false);
         this.item = this.gun;
     }
 
@@ -256,7 +261,22 @@ export class Player extends Phaser.Physics.Matter.Sprite {
                 break;
             case PLAYERITEM.shovel:
                 this.item = this.shovel.setVisible(true);
-                break;     
+                break; 
+            case PLAYERITEM.beer:    
+                this.item = this.beer.setVisible(true);
+                break;
+            case PLAYERITEM.bong:    
+                this.item = this.bong.setVisible(true);
+                break;
+            case PLAYERITEM.water:    
+                this.item = this.water.setVisible(true);
+                break;
+            case PLAYERITEM.pizza:    
+                this.item = this.pizza.setVisible(true);
+                break;
+            case PLAYERITEM.controller:    
+                this.item = this.controller.setVisible(true);
+                break;
         }
         this.updatePlayerStuff();
     }

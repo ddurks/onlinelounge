@@ -35,7 +35,12 @@ const ITEMTYPE = {
 const PLAYERITEM = {
     'gun': 1,
     'shovel': 2,
-    'bury': 3
+    'bury': 3,
+    'beer': 4,
+    'controller': 5,
+    'water': 6,
+    'pizza': 7,
+    'bong': 8
 }
 
 class Item {
@@ -503,6 +508,49 @@ class GameEngine {
                     commandPlayer.item = PLAYERITEM.bury;
                 }
                 return { item: commandPlayer.item }
+            }
+            if (command === "/beer") {
+                if (commandPlayer.item === PLAYERITEM.beer) {
+                    commandPlayer.item = false;
+                } else {
+                    commandPlayer.item = PLAYERITEM.beer;
+                }
+                return { item: commandPlayer.item }
+            }
+            if (command === "/pizza") {
+                if (commandPlayer.item === PLAYERITEM.pizza) {
+                    commandPlayer.item = false;
+                } else {
+                    commandPlayer.item = PLAYERITEM.pizza;
+                }
+                return { item: commandPlayer.item }
+            }
+            if (command === "/bong") {
+                if (commandPlayer.item === PLAYERITEM.bong) {
+                    commandPlayer.item = false;
+                } else {
+                    commandPlayer.item = PLAYERITEM.bong;
+                }
+                return { item: commandPlayer.item }
+            }
+            if (command === "/water") {
+                if (commandPlayer.item === PLAYERITEM.water) {
+                    commandPlayer.item = false;
+                } else {
+                    commandPlayer.item = PLAYERITEM.water;
+                }
+                return { item: commandPlayer.item }
+            }
+            if (command === "/gaming" || command === "/game" || command === "/controller") {
+                if (commandPlayer.item === PLAYERITEM.controller) {
+                    commandPlayer.item = false;
+                } else {
+                    commandPlayer.item = PLAYERITEM.controller;
+                }
+                return { item: commandPlayer.item }
+            }
+            if (command === "/smoke") {
+                this.io.sockets.emit('player action', { socketId: socketId, actions: { smoke: true } });
             }
         }
         return null;

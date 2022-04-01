@@ -38,7 +38,7 @@ export class MainMenu extends Phaser.Scene {
     create() {
         this.input.keyboard.on('keydown', this.handleKey, this);
 
-        this.text = this.add.text(10, 10, 'Please login to play', { color: '#fbf236', fontFamily: 'Arial', fontSize: '16px '});
+        this.text = this.add.text(10, 10, 'onlinelounge.drawvid.com', { color: '#fbf236', fontFamily: 'Arial', fontSize: '16px '});
 
         var element = this.add.dom(OL.world.width/2, OL.world.height/2).createFromCache('nameform');
 
@@ -72,10 +72,10 @@ export class MainMenu extends Phaser.Scene {
 
     login() {
         var inputUsername = document.getElementById('username');
-        var inputPassword = document.getElementById('password');
+        // var inputPassword = document.getElementById('password');
 
         OL.username = inputUsername.value;
-        OL.password = inputPassword.value;
+        // OL.password = inputPassword.value;
 
         var spawnDropdownValue = document.getElementById('spawns').value;
         switch(spawnDropdownValue) {

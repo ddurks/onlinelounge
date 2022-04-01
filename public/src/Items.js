@@ -3,7 +3,12 @@ import { Key } from './Player';
 export const PLAYERITEM = {
     'gun': 1,
     'shovel': 2,
-    'bury': 3
+    'bury': 3,
+    'beer': 4,
+    'controller': 5,
+    'water': 6,
+    'pizza': 7,
+    'bong': 8
 }
 
 export class Coin extends Phaser.Physics.Matter.Sprite {
@@ -41,6 +46,30 @@ export class Sparkle extends Phaser.Physics.Matter.Sprite {
         });
 
         this.anims.play('sparkle');
+
+        this.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+            this.destroy();
+            scene.matter.world.remove(this);
+        });
+        return this;
+    }
+}
+
+export class SmokePuff extends Phaser.Physics.Matter.Sprite {
+    constructor(scene, x, y) {
+        super(scene.matter.world, x, y, 'smoke');
+
+        this.setCollisionCategory(null);
+        scene.add.existing(this);
+
+        this.anims.create({
+            key: 'smoke',
+            frameRate: 6,
+            frames: this.anims.generateFrameNumbers('smoke', { frames: [0, 1, 2, 3, 4, 5]}),
+            repeat: 0
+        });
+
+        this.anims.play('smoke');
 
         this.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
             this.destroy();

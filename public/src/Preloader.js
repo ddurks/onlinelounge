@@ -5,61 +5,52 @@ export class Preloader extends Phaser.Scene {
         super('Preloader');
     }
     preload() {
-        // var logo = this.add.sprite(OL.world.centerX, OL.world.centerY, 'logo');
-        // logo.setOrigin(0.5, 0.5);
-		var progressBar = this.add.graphics();
-		var progressBox = this.add.graphics();
-		progressBox.fillStyle(0x222222, 0.8);
-		progressBox.fillRect(240, 270, 320, 50);
+        var logo = this.add.sprite(OL.world.centerX, OL.world.centerY - 50, 'logo').setScale(0.5);
+        logo.setOrigin(0.5, 0.5);
 		
-		var width = this.cameras.main.width;
-		var height = this.cameras.main.height;
+		var width = OL.world.width;
+		var height = OL.world.height;
 		var loadingText = this.make.text({
 			x: width / 2,
-			y: height / 2 - 50,
+			y: height / 2 + 100,
 			text: 'Loading...',
 			style: {
 				font: '20px monospace',
-				fill: '#ffffff'
+				fill: '#33ff33'
 			}
 		});
 		loadingText.setOrigin(0.5, 0.5);
 		
 		var percentText = this.make.text({
 			x: width / 2,
-			y: height / 2 - 5,
+			y: height / 2 + 140,
 			text: '0%',
 			style: {
 				font: '18px monospace',
-				fill: '#ffffff'
+				fill: '#33ff33'
 			}
 		});
 		percentText.setOrigin(0.5, 0.5);
 		
 		var assetText = this.make.text({
 			x: width / 2,
-			y: height / 2 + 50,
+			y: height / 2 + 180,
 			text: '',
 			style: {
 				font: '18px monospace',
-				fill: '#ffffff'
+				fill: '#33ff33'
 			}
 		});
 		assetText.setOrigin(0.5, 0.5);
 		
 		this.load.on('progress', function (value) {
 			percentText.setText(parseInt(value * 100) + '%');
-			progressBar.clear();
-			progressBar.fillStyle(0xffffff, 1);
-			progressBar.fillRect(250, 280, 300 * value, 30);
 		});
 		
 		this.load.on('fileprogress', function (file) {
 			assetText.setText('Loading asset: ' + file.key);
 		});
 		this.load.on('complete', function () {
-			progressBar.destroy();
-			progressBox.destroy();
 			loadingText.destroy();
 			percentText.destroy();
 			assetText.destroy();
@@ -91,6 +82,7 @@ export class Preloader extends Phaser.Scene {
 		this.load.spritesheet('playermarker', 'assets/sprites/playermarker.png', { frameWidth: 16, frameHeight: 16, margin: 0, spacing: 0 });
 		this.load.spritesheet('shovel', 'assets/sprites/shovel-spritesheet.png', { frameWidth: 16, frameHeight: 16, margin: 0, spacing: 0 });
 		this.load.spritesheet('shovelButton', 'assets/sprites/shovel-button-spritesheet.png', { frameWidth: 64, frameHeight: 64, margin: 0, spacing: 0 });
+		this.load.spritesheet('smoke', 'assets/sprites/smoke_spritesheet.png', { frameWidth: 32, frameHeight: 32, margin: 0, spacing: 0 });
 		this.load.image('menuBar', 'assets/hud/menu-bar.png');
 		this.load.image('popup', 'assets/hud/popup.png');
 		this.load.image('board', 'assets/hud/board.png');
@@ -104,6 +96,11 @@ export class Preloader extends Phaser.Scene {
 		this.load.image('x', "assets/hud/x.png");
 		this.load.image('joystick', "assets/hud/joystick.png");
 		this.load.image('joystickBg', "assets/hud/joystick_bg.png");
+		this.load.image('beer', "assets/items/lounge_beer.png" );
+		this.load.image('bong', "assets/items/bong.png" );
+		this.load.image('water', "assets/items/lil_water.png" );
+		this.load.image('pizza', "assets/items/pizza.png" );
+		this.load.image('controller', "assets/items/controller.png" );
 		this.load.image('zoomIn', "assets/hud/zoomIn.png");
 		this.load.image('zoomOut', "assets/hud/zoomOut.png");
 		this.load.image('groundTiles', "assets/tiles/online-pluto-tileset-extruded.png");
