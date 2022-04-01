@@ -511,7 +511,7 @@ export class DigitalPlanet extends Phaser.Scene {
                             this.events.emit('playerLoaded', {texture: this.player.texture.key});
                         }
                         this.generatePlayer(playerData.socketId, playerData.x, playerData.y, playerData.username, playerData.lookIndex, playerData.item);
-                    } else if (playerToUpdate && playerToUpdate.body !== undefined) {
+                    } else if (playerToUpdate && playerToUpdate.body && this.player.body !== undefined) {
                         if (playerToUpdate.socketId !== this.sessionID || OL.getDistance(this.player.x, this.player.y, playerData.x, playerData.y) > 3) {
                             playerToUpdate.updateFromData(playerData);
                         }
