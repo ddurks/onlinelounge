@@ -27,6 +27,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.zoomLevel = 1;
         this.zoomMax = 3;
         this.entityInterpolationEnabled = true;
+        this.restarting = false;
     }
 
     init(data) {
@@ -171,10 +172,12 @@ export class DigitalPlanet extends Phaser.Scene {
         this.serverClient.socket.off('leaderboard update');
 
         this.serverClient.socket.on('state', (state) => {
-            if (this.entityInterpolationEnabled) {
-                this.updateGameStateWithInterpolation(state);
-            } else {
-                this.updateGameState(state);
+            if (!this.restarting) {
+                if (this.entityInterpolationEnabled) {
+                    this.updateGameStateWithInterpolation(state);
+                } else {
+                    this.updateGameState(state);
+                }
             }
         });
         this.serverClient.socket.on('player action', (playerAction) => this.updatePlayerAction(playerAction));
@@ -210,6 +213,8 @@ export class DigitalPlanet extends Phaser.Scene {
         setInterval(() => {
                 this.serverClient.socket.emit('player input', this.player.keysPressed);
         }, INPUT_UPDATE_RATE);
+
+        this.restarting = false;
     }
 
     joinServer() {
@@ -322,6 +327,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.player.currentArea = AREAS.lounge;
         this.serverClient.socket.emit('enter lounge');
         this.camera.stopFollow();
+        this.restarting = true;
         this.scene.restart({
             mapKey: "loungeMap",
             groundTileset: {
@@ -346,6 +352,7 @@ export class DigitalPlanet extends Phaser.Scene {
             y: 325
         }
         this.camera.stopFollow();
+        this.restarting = true;
         this.scene.restart(this.exitTo);
     }
 
