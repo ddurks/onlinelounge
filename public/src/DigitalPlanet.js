@@ -526,7 +526,7 @@ export class DigitalPlanet extends Phaser.Scene {
                         console.log(playerToUpdate, "no body");
                         this.removePlayer(playerData.socketId);
                     }
-                } else {
+                } else if (player.socketId !== this.player.socketId) {
                     this.removePlayer(playerData.socketId);
                 }
             });
