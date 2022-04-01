@@ -10,7 +10,6 @@
     "debug": "~2.6.9",
     "express": "~4.16.1",
     "matter-js": "^0.17.1",
-    "moji-translate": "^1.0.8",
     "morgan": "~1.9.1",
     "socket.io": "^4.4.0",
     "tmx-parser": "^1.5.0",

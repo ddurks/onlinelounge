@@ -207,6 +207,21 @@ export class Controls extends Phaser.Scene {
             }).setScrollFactor(0);
         }
 
+        this.controlsButton = this.add.image(OL.world.width - 108, 16, 'controls').setInteractive({ useHandCursor: true }).on('pointerdown', () => this.popup.displayControls());
+        this.controlsButton.setDepth(12);
+        this.add.existing(this.controlsButton).setScrollFactor(0);
+        this.add.text(OL.world.width - 110, 36, "CONTROLS", {
+            fontFamily: 'Arial',
+            fontSize: '8px',
+            fontStyle: 'bold',
+            color:  '#000000',
+            wordWrap: {
+                width: 320,
+                useAdvancedWrap: true
+            },
+            align: 'center'
+        }).setOrigin(0.5,0.5).setDepth(11);
+
         this.feed = new Feed(this, OL.world.width/2, 6);
         this.leaderboard = new Leaderboard(this, OL.world.width/2, 75, 3);
 

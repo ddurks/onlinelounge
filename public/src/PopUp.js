@@ -63,6 +63,12 @@ export class PopUp extends Phaser.GameObjects.Group {
         this.buttonText.setVisible(false);
         this.buttonText.setScrollFactor(0);
 
+        if (OL.IS_MOBILE) {
+            this.controls = scene.add.image(OL.world.width/2, OL.world.height/2, 'mobileControls').setDepth(12).setOrigin(0.5,0.5).setVisible(false);
+        } else {
+            this.controls = scene.add.image(OL.world.width/2, OL.world.height/2, 'desktopControls').setDepth(12).setOrigin(0.5,0.5).setVisible(false);
+        }
+
         scene.add.dom(OL.world.width/2, OL.world.height/2 - 30).createFromCache('gifViewer').setScrollFactor(0).setOrigin(0.5, 0.5);
         document.getElementById("gif-viewer").style.display = "none";
     
@@ -87,7 +93,6 @@ export class PopUp extends Phaser.GameObjects.Group {
         this.playerIcon.on( 'pointerdown', () => this.displayLookPopup("look 👀", playerSprite.texture));
     }
 
-
     buttonClicked(scene) {
         switch (this.buttonText.text) {
             case "bury":
@@ -97,6 +102,14 @@ export class PopUp extends Phaser.GameObjects.Group {
                 scene.events.emit('lookChange');
         }
         this.close();
+    }
+
+    displayControls() {
+        this.title.setText("controls");
+        this.title.setVisible(true);
+        this.popup.setVisible(true);
+        this.x.setVisible(true);
+        this.controls.setVisible(true);
     }
 
     displayBuryPopup() {
@@ -151,6 +164,7 @@ export class PopUp extends Phaser.GameObjects.Group {
         this.button.setVisible(false);
         this.buttonText.setVisible(false);
         this.sprite.setVisible(false);
+        this.controls.setVisible(false);
         if (this.sprite.anims) {
             this.sprite.anims.stop();
         }
