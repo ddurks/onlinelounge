@@ -166,6 +166,7 @@ export class DigitalPlanet extends Phaser.Scene {
         this.serverClient.socket.off('treasure found');
         this.serverClient.socket.off('item');
         this.serverClient.socket.off('get items');
+        this.serverClient.socket.off('reset items');
         this.serverClient.socket.off('feed');
         this.serverClient.socket.off('server stats');
         this.serverClient.socket.off('leaderboard');
@@ -202,6 +203,7 @@ export class DigitalPlanet extends Phaser.Scene {
         });
         this.serverClient.socket.on('item', (update) => this.updateItems(update));
         this.serverClient.socket.on('get items', (list) => this.setItems(list));
+        this.serverClient.socket.on('reset items', () => this.clearMaps());
         this.serverClient.socket.on('feed', (update) => this.events.emit('feedUpdate', update));
         this.serverClient.socket.on('treasure found', (treasure) => this.events.emit('displayPopup', {title: "Treasure 💰", text: "You unearthed the treasure of " + (treasure.buriedBy ? treasure.buriedBy : "[anonymous]") + "! (" + treasure.coins + ")", gif: 'treasure'}));
         this.serverClient.socket.on('server stats', (stats) => {
@@ -237,6 +239,7 @@ export class DigitalPlanet extends Phaser.Scene {
                 this.sessionID = null;
                 this.player.setHoldItem(false); 
                 this.clearMaps();
+                alert('disconnected from the server, try reloading the page to reconnect');
                 console.log("disconnected from server");
             })
         });

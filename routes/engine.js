@@ -11,7 +11,8 @@ const ENGINE_RATE = 1000/60;
 const WALKING_SPEED = 2.5;
 const WALKING_FORCE = 0.002;
 const BULLET_VELO = 5;
-const MAX_ITEMS = 15;
+const RELOAD_INTERVAL = 60000;
+const MAX_ITEMS = 25;
 const COIN_SPEED = 3;
 
 const Key = {
@@ -258,7 +259,12 @@ class GameEngine {
 
     update() {
         if (this.players.size > 0) {
+            let leaderboardDate = this.leaderboard.date;
             this.leaderboard = this.leaderboard.checkForReset();
+            if (leaderboardDate !== this.leaderboard.date) {
+                console.log("reset Leaderboard & Treasures");
+                this.treasures = new Array();
+            }
             this.prev_timestamp = this.curr_timestamp;
             this.curr_timestamp = Date.now();
             
@@ -271,6 +277,19 @@ class GameEngine {
             }
         
             Array.from(this.players.values()).forEach((player) => {
+                player.timeOnline += this.deltat;
+                if (Date.now() - player.reloadTimestamp > RELOAD_INTERVAL) {
+                    player.bullets += 3;
+                    this.io.to(player.socketId).emit('bullet update', player.bullets);
+                    player.coins += parseInt(player.timeOnline/RELOAD_INTERVAL, 10);
+                    this.io.to(player.socketId).emit('coin update', player.coins);
+                    this.leaderboard.addStats({ 
+                        username: player.username, 
+                        ip: player.ip, 
+                        stats: { coins: player.coins }
+                    }, () => this.leaderboardUpdate());
+                    player.reloadTimestamp = Date.now();
+                }
                 this.handleInputState(player);
             });
             this.Engine.update(this.engine, this.deltat, this.deltat/this.lastDeltat);
@@ -294,7 +313,7 @@ class GameEngine {
     }
 
     addPlayer(player) {
-        const HEALTH = 3, COINS = 3, BULLETS = 3, GUN = false;
+        const HEALTH = 3, COINS = 0, BULLETS = 0, GUN = false;
         if (!this.players.has(player.id)) {
             this.players.set(player.id, 
                 this.Bodies.rectangle(
@@ -314,7 +333,9 @@ class GameEngine {
                         bullets: BULLETS,
                         coins: COINS,
                         kills: 0,
-                        deaths: 0
+                        deaths: 0,
+                        timeOnline: 0,
+                        reloadTimestamp: Date.now()
                     }
                 ));
             let newPlayer = this.players.get(player.id);
@@ -363,6 +384,11 @@ class GameEngine {
             this.io.to(socketId).emit('coin update', player.coins);
             this.io.to(socketId).emit('treasure found', treasure);
             this.treasures.splice(index, 1);
+            this.leaderboard.addStats({ 
+                username: player.username, 
+                ip: player.ip, 
+                stats: { coins: player.coins }
+            }, () => this.leaderboardUpdate());
         }     
     }
 
@@ -551,6 +577,17 @@ class GameEngine {
             }
             if (command === "/smoke") {
                 this.io.sockets.emit('player action', { socketId: socketId, actions: { smoke: true } });
+            }
+            if (command === "/reset$") {
+                this.items = new Map();
+                this.io.sockets.emit('reset items');
+            }
+            if (command === "/bullets$") {
+                commandPlayer.bullets += 5;
+                this.io.to(commandPlayer.socketId).emit('bullet update', commandPlayer.bullets);
+            }
+            if (command === "/invincible$") {
+                commandPlayer.health = 1000000;
             }
         }
         return null;
