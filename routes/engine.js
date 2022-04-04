@@ -579,6 +579,9 @@ class GameEngine {
                 this.io.sockets.emit('player action', { socketId: socketId, actions: { smoke: true } });
             }
             if (command === "/reset$") {
+                Array.from(this.items.values()).forEach(item => {
+                    this.removeItem(this.engine.world, item.itemId);
+                });
                 this.items = new Map();
                 this.io.sockets.emit('reset items');
             }
