@@ -1,44 +1,55 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <meta charset="utf-8" />
-    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>the online lounge</title>
+    <script>
+      window.OFFLINE_MODE = true;
+    </script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-        }
-        html, body {margin: 0; height: 100%; overflow: hidden}
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+      }
 
-        body {
-            background-color: black;
-            padding: 0px;
-            margin: 0px;
-        }
+      body {
+        background-color: black;
+        padding: 0px;
+        margin: 0px;
+      }
 
-        .container {
-            display: flex;
-            justify-content: center;
-        }
+      .container {
+        display: flex;
+        justify-content: center;
+      }
 
-        .item {
-            margin: 1rem;
-        }
+      .item {
+        margin: 1rem;
+      }
 
-        #phaser-div {
-            position: fixed;
-            top:0;
-        }
+      #phaser-div {
+        position: fixed;
+        top: 0;
+      }
 
-        canvas {
-            margin-top: 0;
-        }
+      canvas {
+        margin-top: 0;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div id="phaser-div"></div>
     <script src="app.bundle.js"></script>
-</body>
+  </body>
 </html>
