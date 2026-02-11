@@ -29,13 +29,14 @@ export class WorldServerClient {
     this.isOffline = false;
     this.lastItems = new Map(); // Track items to detect spawn/remove
     this.lastCoinCount = undefined;
+    this.onProgress = null; // Progress callback
+    this.onDetailedProgress = null; // Detailed progress callback
   }
 
   /**
    * Get server assignment from matchmaker via WebSocket (or direct for local dev)
-   * @param {Function} onProgress - Optional callback(progress, message) for UI updates during world startup
    */
-  async getServerAssignment(onProgress = null) {
+  async getServerAssignment() {
     // Skip matchmaker only if worldserver is configured for localhost
     const isLocalWorldServer =
       WORLDSERVER_BASE_URL.includes("localhost") ||
@@ -66,7 +67,7 @@ export class WorldServerClient {
 
         matchmakerWs.onopen = () => {
           // Send createWorld message
-          if (onProgress) onProgress(0, "Creating world...");
+          if (this.onProgress) this.onProgress(0, "Creating world...");
           matchmakerWs.send(
             JSON.stringify({
               t: "createWorld",
@@ -80,7 +81,7 @@ export class WorldServerClient {
 
           if (msg.t === "worldCreated") {
             // World created, now join it
-            if (onProgress) onProgress(5, "Joining world...");
+            if (this.onProgress) this.onProgress(5, "Joining world...");
             matchmakerWs.send(
               JSON.stringify({
                 t: "joinWorld",
@@ -89,18 +90,33 @@ export class WorldServerClient {
               }),
             );
           } else if (msg.t === "status") {
-            // Progress update from matchmaker during world startup
-            if (onProgress) {
+            // Progress update from matchmaker during world startup (legacy format)
+            if (this.onProgress) {
               const progress = msg.progress || 0;
               const statusMsg =
                 msg.msg === "RUNNING" ? "Connected!" : "Starting server";
-              onProgress(progress, statusMsg);
+              this.onProgress(progress, statusMsg);
+            }
+          } else if (msg.t === "progress") {
+            // New detailed progress format with stage information
+            if (this.onDetailedProgress) {
+              this.onDetailedProgress({
+                stage: msg.stage,
+                stageName: msg.stageName,
+                stageDescription: msg.stageDescription,
+                progress: msg.progress,
+                elapsed: msg.elapsed,
+              });
+            }
+            // Also send simplified progress callback for compatibility
+            if (this.onProgress) {
+              this.onProgress(msg.progress, msg.stageName);
             }
           } else if (msg.t === "joinResult") {
             // Got server assignment
             clearTimeout(timeout);
             matchmakerWs.close();
-            if (onProgress) onProgress(100, "Connecting to game...");
+            if (this.onProgress) this.onProgress(100, "Connecting to game...");
             resolve({
               serverUrl: `wss://${msg.endpoint.ip}:${msg.endpoint.port || 443}`,
               jwt: msg.token,
@@ -132,13 +148,18 @@ export class WorldServerClient {
    * Connect to WorldServer
    * @param {string} username - Player username
    * @param {Function} onProgress - Optional callback(progress, message) for UI updates
+   * @param {Function} onDetailedProgress - Optional callback(progressData) for detailed stage information
    */
-  async connect(username, onProgress = null) {
+  async connect(username, onProgress = null, onDetailedProgress = null) {
+    // IMPORTANT: Store callbacks on instance FIRST before anything async happens
+    this.onProgress = onProgress;
+    this.onDetailedProgress = onDetailedProgress;
+    
     this.username = username;
 
     try {
-      // Get server assignment from matchmaker (passing progress callback)
-      const assignment = await this.getServerAssignment(onProgress);
+      // Get server assignment from matchmaker (passing progress callbacks)
+      const assignment = await this.getServerAssignment();
       const { serverUrl, jwt } = assignment;
 
       this.jwt = jwt;
@@ -721,9 +742,9 @@ export class GameServerClient {
   /**
    * Connect to server
    */
-  async connect(username) {
+  async connect(username, onProgress = null, onDetailedProgress = null) {
     try {
-      this.sessionID = await this.client.connect(username);
+      this.sessionID = await this.client.connect(username, onProgress, onDetailedProgress);
       this.connected = true;
 
       // Listen for game state updates

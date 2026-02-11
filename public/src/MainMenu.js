@@ -75,8 +75,9 @@ export class MainMenu extends Phaser.Scene {
       0x333333,
     );
     this.progressBarBg.setVisible(false);
+    this.progressBarBg.setDepth(100);
 
-    // Progress bar fill
+    // Progress bar fill - use rectangle for reliable rendering
     this.progressBar = this.add.rectangle(
       centerX - 150,
       centerY,
@@ -86,8 +87,21 @@ export class MainMenu extends Phaser.Scene {
     );
     this.progressBar.setOrigin(0, 0.5);
     this.progressBar.setVisible(false);
+    this.progressBar.setDepth(101);
 
-    // Status text
+    // Stage info text (above progress bar)
+    this.stageText = this.add.text(centerX, centerY - 60, "", {
+      color: "#00ff88",
+      fontFamily: "Arial",
+      fontSize: "14px",
+      align: "center",
+      wordWrap: { width: 280 }
+    });
+    this.stageText.setOrigin(0.5, 1);
+    this.stageText.setVisible(false);
+    this.stageText.setDepth(102);
+
+    // Status text (below progress bar)
     this.statusText = this.add.text(centerX, centerY + 40, "", {
       color: "#ffffff",
       fontFamily: "Arial",
@@ -96,6 +110,7 @@ export class MainMenu extends Phaser.Scene {
     });
     this.statusText.setOrigin(0.5, 0);
     this.statusText.setVisible(false);
+    this.statusText.setDepth(102);
   }
 
   handleKey(e) {
@@ -147,25 +162,41 @@ export class MainMenu extends Phaser.Scene {
       // Progress callback that updates UI
       const onProgress = (progress, message) => {
         // Update progress bar width (0-300px for 0-100%)
-        const barWidth = Math.min(progress, 100) * 3;
-        // Use setSize instead of setDisplaySize for immediate rendering
-        this.progressBar.setSize(barWidth, 16);
+        const percentage = Math.min(progress, 100);
+        const barWidth = (percentage / 100) * 300;
+        this.progressBar.setDisplaySize(barWidth, 16);
 
         // Update status text
         if (message) {
-          this.statusText.setText(`${Math.min(progress, 100)}% - ${message}`);
+          this.statusText.setText(`${percentage}% - ${message}`);
         } else {
-          this.statusText.setText(`${Math.min(progress, 100)}%`);
+          this.statusText.setText(`${percentage}%`);
         }
       };
 
-      // Connect to WorldServer with progress callback
-      await this.serverClient.connect(OL.username, onProgress);
+      // Detailed progress callback for stage information
+      const onDetailedProgress = (progressData) => {
+        // Update stage text
+        this.stageText.setVisible(true);
+        this.stageText.setText(`${progressData.stageName}\n${progressData.stageDescription}`);
+
+        // Also update progress bar
+        const percentage = Math.min(progressData.progress, 100);
+        const barWidth = (percentage / 100) * 300;
+        this.progressBar.setDisplaySize(barWidth, 16);
+
+        // Update status text to show percentage
+        this.statusText.setText(`${percentage}%`);
+      };
+
+      // Connect to WorldServer with progress callbacks
+      await this.serverClient.connect(OL.username, onProgress, onDetailedProgress);
 
       // Connection complete, hide progress UI
       this.progressBarBg.setVisible(false);
       this.progressBar.setVisible(false);
       this.statusText.setVisible(false);
+      this.stageText.setVisible(false);
       this.clickStart();
     } catch (error) {
       console.error("Failed to connect:", error);
