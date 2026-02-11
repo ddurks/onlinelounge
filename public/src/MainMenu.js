@@ -1,5 +1,5 @@
 import { OL } from "./utils";
-import { GameServerClient } from "./GameServerClient";
+import { GameServerClient } from "./WorldServerClient";
 
 const MAP_DATA = {
   digitalplanet: {
@@ -61,6 +61,41 @@ export class MainMenu extends Phaser.Scene {
         this.login();
       }
     });
+
+    // Create progress bar and status text (hidden by default)
+    const centerX = OL.world.width / 2;
+    const centerY = OL.world.height / 2 + 200;
+
+    // Progress bar background
+    this.progressBarBg = this.add.rectangle(
+      centerX,
+      centerY,
+      300,
+      20,
+      0x333333,
+    );
+    this.progressBarBg.setVisible(false);
+
+    // Progress bar fill
+    this.progressBar = this.add.rectangle(
+      centerX - 150,
+      centerY,
+      0,
+      16,
+      0x00ff00,
+    );
+    this.progressBar.setOrigin(0, 0.5);
+    this.progressBar.setVisible(false);
+
+    // Status text
+    this.statusText = this.add.text(centerX, centerY + 40, "", {
+      color: "#ffffff",
+      fontFamily: "Arial",
+      fontSize: "14px",
+      align: "center",
+    });
+    this.statusText.setOrigin(0.5, 0);
+    this.statusText.setVisible(false);
   }
 
   handleKey(e) {
@@ -93,7 +128,55 @@ export class MainMenu extends Phaser.Scene {
         this.mapData = MAP_DATA.digitalplanet;
     }
 
-    this.clickStart();
+    // Connect to WorldServer before starting game
+    this.connectAndStart();
+  }
+
+  async connectAndStart() {
+    try {
+      // Hide login form
+      const Element = document.querySelector(".nameform");
+      if (Element) Element.style.display = "none";
+
+      // Show progress UI
+      this.progressBarBg.setVisible(true);
+      this.progressBar.setVisible(true);
+      this.statusText.setVisible(true);
+      this.statusText.setText("Connecting...");
+
+      // Progress callback that updates UI
+      const onProgress = (progress, message) => {
+        // Update progress bar width (0-300px for 0-100%)
+        const barWidth = Math.min(progress, 100) * 3;
+        // Use setSize instead of setDisplaySize for immediate rendering
+        this.progressBar.setSize(barWidth, 16);
+
+        // Update status text
+        if (message) {
+          this.statusText.setText(`${Math.min(progress, 100)}% - ${message}`);
+        } else {
+          this.statusText.setText(`${Math.min(progress, 100)}%`);
+        }
+      };
+
+      // Connect to WorldServer with progress callback
+      await this.serverClient.connect(OL.username, onProgress);
+
+      // Connection complete, hide progress UI
+      this.progressBarBg.setVisible(false);
+      this.progressBar.setVisible(false);
+      this.statusText.setVisible(false);
+      this.clickStart();
+    } catch (error) {
+      console.error("Failed to connect:", error);
+      this.statusText.setText(`Connection failed: ${error.message}`);
+      this.progressBarBg.setVisible(false);
+      this.progressBar.setVisible(false);
+
+      // Show login form again
+      const Element = document.querySelector(".nameform");
+      if (Element) Element.style.display = "block";
+    }
   }
 
   clickStart() {

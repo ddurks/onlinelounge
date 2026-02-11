@@ -10,7 +10,6 @@ import {
   PLAYERITEM,
   SmokePuff,
 } from "./Items";
-import { IS_OFFLINE_MODE } from "./GameServerClient";
 
 const INPUT_UPDATE_RATE = 1000 / 30;
 
@@ -37,6 +36,9 @@ export class DigitalPlanet extends Phaser.Scene {
     this.zoomMax = 3;
     this.entityInterpolationEnabled = true;
     this.restarting = false;
+    this.lastInputSent = 0;
+    this.lastDirection = -1; // -1 = no input
+    this.lastHeldItem = null; // Track last held item to only emit when it changes
   }
 
   init(data) {
@@ -88,11 +90,11 @@ export class DigitalPlanet extends Phaser.Scene {
     this.map = this.make.tilemap({ key: this.startData.mapKey });
     this.groundTileset = this.map.addTilesetImage(
       this.startData.groundTileset.name,
-      this.startData.groundTileset.ref
+      this.startData.groundTileset.ref,
     );
     this.objectTileset = this.map.addTilesetImage(
       this.startData.objectTileset.name,
-      this.startData.objectTileset.ref
+      this.startData.objectTileset.ref,
     );
     this.belowLayer = this.map.createLayer("below", this.groundTileset, 0, 0);
     this.worldLayer = this.map.createLayer("world", this.objectTileset, 0, 0);
@@ -108,17 +110,19 @@ export class DigitalPlanet extends Phaser.Scene {
       }
     });
 
-    this.player, this.onlineBouncer;
+    // Create player and find world objects
     this.map.findObject("player", (object) => {
       if (object.name === "spawn") {
-        this.spawnPlayer1(object.x, object.y);
+        // Don't use map spawn point - server is authoritative
+        // Spawn at origin and wait for server position via gameSnapshot
+        this.spawnPlayer1(0, 0);
       }
 
       if (object.name === "bouncerSpawn") {
         this.onlineBouncer = new OnlineBouncer(
           this,
           object.x + 16,
-          object.y - 24
+          object.y - 24,
         );
       }
     });
@@ -152,11 +156,11 @@ export class DigitalPlanet extends Phaser.Scene {
       down: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S, false),
       right: this.input.keyboard.addKey(
         Phaser.Input.Keyboard.KeyCodes.D,
-        false
+        false,
       ),
       space: this.input.keyboard.addKey(
         Phaser.Input.Keyboard.KeyCodes.SPACE,
-        false
+        false,
       ),
     };
 
@@ -166,63 +170,40 @@ export class DigitalPlanet extends Phaser.Scene {
       0,
       -48,
       this.map.widthInPixels,
-      this.map.heightInPixels
+      this.map.heightInPixels,
     );
 
-    // turn off events so they don't duplicate upon restart
-    this.scene.get("Controls").events.off("openChat");
-    this.scene.get("Controls").events.off("sendChat");
-    this.scene.get("Controls").events.off("zoomIn");
-    this.scene.get("Controls").events.off("zoomOut");
-    this.scene.get("Controls").events.off("lookChange");
-    this.scene.get("Controls").events.off("buryConfirmed");
-    this.scene.get("Controls").events.off("useItem");
-    this.scene.get("Controls").events.off("holdingItem");
-    this.scene.get("Controls").events.off("closeEvent");
-    this.scene.get("Controls").events.off("serverStats");
-    this.scene.get("Controls").events.off("getLeaderboard");
+    // Setup event handlers (remove old ones to prevent duplicates on restart)
+    const controlsEvents = this.scene.get("Controls").events;
+    const eventHandlers = [
+      ["openChat", () => this.openChatBox()],
+      ["sendChat", () => this.sendChat()],
+      ["zoomIn", () => this.zoomIn()],
+      ["zoomOut", () => this.zoomOut()],
+      ["lookChange", () => this.changeLook()],
+      ["useItem", (item) => this.useItem(item)],
+      ["holdingItem", (item) => this.nowHoldingItem(item)],
+      ["closeEvent", () => this.windowClosed()],
+      ["serverStats", () => this.serverClient.send({ t: "serverStats" })],
+      [
+        "buryConfirmed",
+        () => this.serverClient.send({ t: "action", action: "bury" }),
+      ],
+      ["getLeaderboard", () => this.serverClient.send({ t: "leaderboard" })],
+    ];
 
-    this.scene.get("Controls").events.on("openChat", () => this.openChatBox());
-    this.scene.get("Controls").events.on("sendChat", () => this.sendChat());
-    this.scene.get("Controls").events.on("zoomIn", () => this.zoomIn());
-    this.scene.get("Controls").events.on("zoomOut", () => this.zoomOut());
-    this.scene.get("Controls").events.on("lookChange", () => this.changeLook());
-    this.scene
-      .get("Controls")
-      .events.on("useItem", (playerItem) => this.useItem(playerItem));
-    this.scene
-      .get("Controls")
-      .events.on("holdingItem", (item) => this.nowHoldingItem(item));
-    this.scene
-      .get("Controls")
-      .events.on("closeEvent", () => this.windowClosed());
-    this.scene
-      .get("Controls")
-      .events.on("serverStats", () =>
-        this.serverClient.socket.emit("server stats")
-      );
-    this.scene
-      .get("Controls")
-      .events.on("buryConfirmed", () =>
-        this.serverClient.socket.emit("player action", {
-          treasure: { bury: true },
-        })
-      );
-    this.scene
-      .get("Controls")
-      .events.on("getLeaderboard", () =>
-        this.serverClient.socket.emit("leaderboard")
-      );
+    eventHandlers.forEach(([event]) => controlsEvents.off(event));
+    eventHandlers.forEach(([event, handler]) =>
+      controlsEvents.on(event, handler),
+    );
 
     this.sessionID = this.serverClient.sessionID
       ? this.serverClient.sessionID
       : undefined;
     if (this.sessionID) {
-      this.players.set(this.sessionID, this.player);
-      this.serverClient.socket.emit(
-        "get items",
-        this.getCurrentArea(this.startData.mapKey)
-      );
+      // Don't add local player to the players map - that's only for remote players
+      // Local player is managed separately as this.player
+      // Note: getItems is not valid for OnlineLounge game logic
     }
 
     this.clearMaps();
@@ -230,24 +211,32 @@ export class DigitalPlanet extends Phaser.Scene {
     this.joinServer();
 
     // turn off events so they don't duplicate upon restart
-    this.serverClient.socket.off("state");
-    this.serverClient.socket.off("player action");
-    this.serverClient.socket.off("player left");
-    this.serverClient.socket.off("enter lounge");
-    this.serverClient.socket.off("exit lounge");
-    this.serverClient.socket.off("health update");
-    this.serverClient.socket.off("bullet update");
-    this.serverClient.socket.off("coin update");
-    this.serverClient.socket.off("treasure found");
-    this.serverClient.socket.off("item");
-    this.serverClient.socket.off("get items");
-    this.serverClient.socket.off("reset items");
-    this.serverClient.socket.off("feed");
-    this.serverClient.socket.off("server stats");
-    this.serverClient.socket.off("leaderboard");
-    this.serverClient.socket.off("leaderboard update");
+    this.serverClient.off("state");
+    this.serverClient.off("playerAction");
+    this.serverClient.off("playerLeft");
+    this.serverClient.off("enterLounge");
+    this.serverClient.off("exitLounge");
+    this.serverClient.off("healthUpdate");
+    this.serverClient.off("bulletUpdate");
+    this.serverClient.off("coinUpdate");
+    this.serverClient.off("treasureFound");
+    this.serverClient.off("item");
+    this.serverClient.off("getItems");
+    this.serverClient.off("resetItems");
+    this.serverClient.off("feed");
+    this.serverClient.off("serverStats");
+    this.serverClient.off("leaderboard");
+    this.serverClient.off("leaderboardUpdate");
 
-    this.serverClient.socket.on("state", (state) => {
+    // Handle new game-state message format from WorldServer
+    this.serverClient.on("gameSnapshot", (state) => {
+      if (!this.restarting) {
+        this.updateGameStateFromWorldServer(state);
+      }
+    });
+
+    // Fallback for raw game state
+    this.serverClient.on("state", (state) => {
       if (!this.restarting) {
         if (this.entityInterpolationEnabled) {
           this.updateGameStateWithInterpolation(state);
@@ -256,41 +245,41 @@ export class DigitalPlanet extends Phaser.Scene {
         }
       }
     });
-    this.serverClient.socket.on("player action", (playerAction) =>
-      this.updatePlayerAction(playerAction)
+    this.serverClient.on("playerAction", (playerAction) => {
+      this.updatePlayerAction(playerAction);
+    });
+    this.serverClient.on("playerLeft", (playerId) =>
+      this.removePlayer(playerId),
     );
-    this.serverClient.socket.on("player left", (socketId) =>
-      this.removePlayer(socketId)
-    );
-    this.serverClient.socket.on("enter lounge", (socketId) => {
-      let playerWhoEnteredLounge = this.players.get(socketId);
+    this.serverClient.on("enterLounge", (playerId) => {
+      let playerWhoEnteredLounge = this.players.get(playerId);
       if (playerWhoEnteredLounge) {
         playerWhoEnteredLounge.currentArea = AREAS.lounge;
       }
     });
-    this.serverClient.socket.on("exit lounge", (socketId) => {
-      let playerWhoExitedLounge = this.players.get(socketId);
+    this.serverClient.on("exitLounge", (playerId) => {
+      let playerWhoExitedLounge = this.players.get(playerId);
       if (playerWhoExitedLounge) {
         playerWhoExitedLounge.currentArea = AREAS.digitalplanet;
       }
     });
-    this.serverClient.socket.on("health update", (update) =>
-      this.events.emit("healthUpdate", update)
+    this.serverClient.on("healthUpdate", (update) =>
+      this.events.emit("healthUpdate", update),
     );
-    this.serverClient.socket.on("bullet update", (update) =>
-      this.events.emit("bulletUpdate", update)
+    this.serverClient.on("bulletUpdate", (update) =>
+      this.events.emit("bulletUpdate", update),
     );
-    this.serverClient.socket.on("coin update", (update) => {
+    this.serverClient.on("coinUpdate", (update) => {
       new Sparkle(this, this.player.x, this.player.y);
       this.events.emit("coinUpdate", update);
     });
-    this.serverClient.socket.on("item", (update) => this.updateItems(update));
-    this.serverClient.socket.on("get items", (list) => this.setItems(list));
-    this.serverClient.socket.on("reset items", () => this.clearMaps());
-    this.serverClient.socket.on("feed", (update) =>
-      this.events.emit("feedUpdate", update)
+    this.serverClient.on("item", (update) => this.updateItems(update));
+    this.serverClient.on("getItems", (list) => this.setItems(list));
+    this.serverClient.on("resetItems", () => this.clearMaps());
+    this.serverClient.on("feed", (update) =>
+      this.events.emit("feedUpdate", update),
     );
-    this.serverClient.socket.on("treasure found", (treasure) =>
+    this.serverClient.on("treasureFound", (treasure) =>
       this.events.emit("displayPopup", {
         title: "Treasure 💰",
         text:
@@ -300,9 +289,9 @@ export class DigitalPlanet extends Phaser.Scene {
           treasure.coins +
           ")",
         gif: "treasure",
-      })
+      }),
     );
-    this.serverClient.socket.on("server stats", (stats) => {
+    this.serverClient.on("serverStats", (stats) => {
       this.events.emit("displayPopup", {
         title: "lounge stats",
         text:
@@ -318,24 +307,23 @@ export class DigitalPlanet extends Phaser.Scene {
           stats.uniqueVisitors,
       });
     });
-    this.serverClient.socket.on("leaderboard", (leaderboard) =>
-      this.events.emit("displayLeaderboard", leaderboard)
+    this.serverClient.on("leaderboard", (leaderboard) =>
+      this.events.emit("displayLeaderboard", leaderboard),
     );
-    this.serverClient.socket.on("leaderboard update", (leaderboard) =>
-      this.events.emit("updateLeaderboard", leaderboard)
+    this.serverClient.on("leaderboardUpdate", (leaderboard) =>
+      this.events.emit("updateLeaderboard", leaderboard),
     );
 
-    setInterval(() => {
-      this.serverClient.socket.emit("player input", this.player.keysPressed);
-    }, INPUT_UPDATE_RATE);
+    // Note: Input is now sent via handleUserInput() with proper throttling
+    // Removed old setInterval that sent malformed keysPressed object
 
     this.restarting = false;
   }
 
   joinServer() {
     this.serverClient.join(this.player, (sessionID) => {
-      // Set offline status if in offline mode
-      if (IS_OFFLINE_MODE) {
+      // Set offline status if not connected to server
+      if (!this.serverClient.connected) {
         this.events.emit("connectionStatus", false);
         this.events.emit("populationUpdate", "-");
         this.events.emit("feedUpdate", "⚠️ DEMO ONLY - CURRENTLY OFFLINE");
@@ -344,52 +332,51 @@ export class DigitalPlanet extends Phaser.Scene {
         this.events.emit("populationUpdate", this.population);
       }
       this.sessionID = sessionID;
-      this.player.socketId = sessionID;
-      this.players.set(sessionID, this.player);
-      this.player = this.players.get(sessionID);
-      this.serverClient.socket.emit(
-        "get items",
-        this.getCurrentArea(this.startData.mapKey)
-      );
-      this.serverClient.socket.on("disconnect", () => {
+      this.player.playerId = sessionID;
+      // Don't add local player to players map - only for remote players
+      this.serverClient.off("disconnected");
+      this.serverClient.on("disconnected", () => {
         this.events.emit("connectionStatus", false);
         this.events.emit("populationUpdate", "-");
         this.players.forEach((player) => {
-          if (player.socketId !== this.sessionID) {
-            this.removePlayer(player.socketId);
+          if (player.playerId !== this.sessionID) {
+            this.removePlayer(player.playerId);
           }
         });
         this.sessionID = null;
         this.player.setHoldItem(false);
         this.clearMaps();
         alert(
-          "disconnected from the server, try reloading the page to reconnect"
+          "disconnected from the server, try reloading the page to reconnect",
         );
-        console.log("disconnected from server");
       });
     });
   }
 
   nowHoldingItem(playerItem) {
-    switch (playerItem) {
-      case PLAYERITEM.gun:
-        this.serverClient.socket.emit("player action", {
-          message: "/gun",
-          typing: false,
-        });
-        break;
-      case PLAYERITEM.bury:
-        this.serverClient.socket.emit("player action", {
-          message: "/bury",
-          typing: false,
-        });
-        break;
-      case PLAYERITEM.shovel:
-        this.serverClient.socket.emit("player action", {
-          message: "/shovel",
-          typing: false,
-        });
-        break;
+    // Optimistic update: immediately change local player item and UI
+    this.player.setHoldItem(playerItem);
+    // Call Controls.holdingItem directly to avoid event loop
+    this.scene.get("Controls").holdingItem(playerItem);
+    this.lastHeldItem = playerItem;
+
+    // Send command to server to sync (fire and forget, UI already updated)
+    const itemCommands = {
+      [PLAYERITEM.gun]: "/gun",
+      [PLAYERITEM.shovel]: "/shovel",
+      [PLAYERITEM.bury]: "/bury",
+      [PLAYERITEM.beer]: "/beer",
+      [PLAYERITEM.controller]: "/controller",
+      [PLAYERITEM.water]: "/water",
+      [PLAYERITEM.pizza]: "/pizza",
+      [PLAYERITEM.bong]: "/bong",
+    };
+
+    if (itemCommands[playerItem]) {
+      this.serverClient.send({
+        t: "action",
+        message: itemCommands[playerItem],
+      });
     }
   }
 
@@ -401,11 +388,22 @@ export class DigitalPlanet extends Phaser.Scene {
     if (this.player.currentArea === AREAS.digitalplanet) {
       switch (playerItem) {
         case PLAYERITEM.gun:
-          this.serverClient.socket.emit("shoot bullet", this.player.direction);
+          console.log(
+            "[useItem] Shooting in direction:",
+            this.player.direction,
+            "keys pressed:",
+            this.player.keysPressed,
+          );
+          this.serverClient.send({
+            t: "action",
+            action: "shoot",
+            direction: this.player.direction,
+          });
           break;
         case PLAYERITEM.shovel:
-          this.serverClient.socket.emit("player action", {
-            treasure: { dig: true },
+          this.serverClient.send({
+            t: "action",
+            action: "dig",
           });
           break;
         case PLAYERITEM.bury:
@@ -416,6 +414,12 @@ export class DigitalPlanet extends Phaser.Scene {
   }
 
   changeLook() {
+    // Guard: ensure player exists before changing look
+    if (!this.player) {
+      console.warn("changeLook: player not yet spawned");
+      return;
+    }
+
     if (this.lookIndex < this.looks.length - 1) {
       this.lookIndex++;
     } else {
@@ -425,39 +429,52 @@ export class DigitalPlanet extends Phaser.Scene {
       x: this.player.x,
       y: this.player.y,
     };
-    this.serverClient.socket.emit("player action", {
+    this.serverClient.send({
+      t: "action",
       lookIndex: this.lookIndex,
     });
     this.camera.stopFollow();
-    this.player.setCollisionCategory(null);
-    // matter body is not actually removed by this, not sure why (works in changePlayerLook)
-    this.matter.world.remove(this.players.get(this.sessionID));
-    this.removePlayer(this.sessionID);
+
+    // Remove old player's matter body properly
+    if (this.player.body) {
+      this.player.setCollisionCategory(null);
+      this.matter.world.remove(this.player.body);
+    }
+
+    // Destroy old player sprite
+    this.player.destroyStuff && this.player.destroyStuff();
+    this.player.destroy();
+
+    // Create new player with new look
     this.player = this.generatePlayer(
-      this.sessionID,
+      null, // Local player should NOT have a playerId
       pos.x,
       pos.y,
       OL.username,
-      this.lookIndex
+      this.lookIndex,
     );
-    this.player.body.type = "player1";
-    this.player.currentArea = this.getCurrentArea(this.startData.mapKey);
-    this.player.createPlayerMarker();
-    this.players.set(this.sessionID, this.player);
-    this.events.emit("playerLoaded", { texture: this.looks[this.lookIndex] });
-    this.camera.startFollow(this.player, true);
+
+    if (this.player && this.player.body) {
+      this.player.body.type = "player1";
+      this.player.currentArea = this.getCurrentArea(this.startData.mapKey);
+      this.player.createPlayerMarker();
+      this.events.emit("playerLoaded", { texture: this.looks[this.lookIndex] });
+      this.camera.startFollow(this.player, true);
+    } else {
+      console.error("changeLook: failed to generate new player");
+    }
   }
 
   spawnPlayer1(x, y) {
     this.player = this.generatePlayer(null, x, y, OL.username, this.lookIndex);
     this.player.body.type = "player1";
     this.player.currentArea = this.getCurrentArea(this.startData.mapKey);
-    this.player.createPlayerMarker();
+    // Don't create marker yet - wait for first server position update
     this.events.emit("playerLoaded", { texture: this.player.texture.key });
   }
 
   changePlayerLook(player, index) {
-    let socketId = player.socketId;
+    let playerId = player.playerId;
     let username = player.username;
     let pos = {
       x: player.x,
@@ -465,20 +482,20 @@ export class DigitalPlanet extends Phaser.Scene {
     };
     player.setCollisionCategory(null);
     this.matter.world.remove(player);
-    this.removePlayer(socketId);
+    this.removePlayer(playerId);
     let newPlayer = this.generatePlayer(
-      socketId,
+      playerId,
       pos.x,
       pos.y,
       username,
-      index
+      index,
     );
-    this.players.set(socketId, newPlayer);
+    this.players.set(playerId, newPlayer);
   }
 
   enterLounge() {
     this.player.currentArea = AREAS.lounge;
-    this.serverClient.socket.emit("enter lounge");
+    this.serverClient.send({ t: "enterLounge" });
     this.camera.stopFollow();
     this.restarting = true;
     this.scene.restart({
@@ -498,7 +515,7 @@ export class DigitalPlanet extends Phaser.Scene {
 
   exitLounge() {
     this.player.currentArea = AREAS.digitalplanet;
-    this.serverClient.socket.emit("exit lounge");
+    this.serverClient.send({ t: "exitLounge" });
     this.exitTo.serverClient = this.serverClient;
     this.exitTo.spawn = {
       x: 525,
@@ -539,7 +556,8 @@ export class DigitalPlanet extends Phaser.Scene {
 
   openChatBox() {
     this.player.startTyping();
-    this.serverClient.socket.emit("player action", {
+    this.serverClient.send({
+      t: "action",
       typing: this.player.typing,
     });
     this.input.keyboard.enabled = false;
@@ -547,33 +565,33 @@ export class DigitalPlanet extends Phaser.Scene {
 
   sendChat() {
     let message = document.getElementById("chat-entry").value;
-    
-    // In offline mode, display message locally
-    if (IS_OFFLINE_MODE) {
-      if (message && message !== "NULL") {
-        this.player.setMsg(message);
-      } else {
-        this.player.setMsg("");
-      }
+
+    // Display message locally immediately (optimistic update)
+    if (message && message !== "NULL") {
+      this.player.setMsg(message);
     } else {
-      // Online mode - send to server
-      this.serverClient.socket.emit("player action", {
+      this.player.setMsg("");
+    }
+
+    // Send to server if connected
+    if (this.serverClient.connected) {
+      this.serverClient.send({
+        t: "action",
         message: message ? message : "NULL",
         typing: false,
       });
     }
-    
+
     this.input.keyboard.enabled = true;
-    if (!IS_OFFLINE_MODE) {
-      this.player.setMsg("");
-    }
   }
 
-  generatePlayer(socketId, x, y, username, lookIndex, heldItem) {
-    let player = new Player(this, x, y, this.looks[lookIndex], username);
-    player.socketId = socketId;
-    if (socketId) {
-      this.players.set(socketId, player);
+  generatePlayer(playerId, x, y, username, lookIndex, heldItem) {
+    const textureKey = this.looks[lookIndex];
+    let player = new Player(this, x, y, textureKey, username);
+    player.playerId = playerId;
+
+    if (playerId) {
+      this.players.set(playerId, player);
     }
     if (heldItem) {
       player.setHoldItem(heldItem);
@@ -581,12 +599,12 @@ export class DigitalPlanet extends Phaser.Scene {
     return player;
   }
 
-  removePlayer(socketId) {
-    let playerWhoLeft = this.players.get(socketId);
+  removePlayer(playerId) {
+    let playerWhoLeft = this.players.get(playerId);
     if (playerWhoLeft) {
       playerWhoLeft.destroyStuff();
       playerWhoLeft.destroy();
-      this.players.delete(socketId);
+      this.players.delete(playerId);
     }
   }
 
@@ -595,7 +613,7 @@ export class DigitalPlanet extends Phaser.Scene {
       let butterfly = new Butterfly(
         this,
         this.player.x + OL.getRandomInt(-250, 250),
-        this.player.y + OL.getRandomInt(-250, 250)
+        this.player.y + OL.getRandomInt(-250, 250),
       );
       this.butterflies.push(butterfly);
       return butterfly;
@@ -623,27 +641,61 @@ export class DigitalPlanet extends Phaser.Scene {
   }
 
   updatePlayerAction(playerAction) {
-    let playerToUpdate = this.players.get(playerAction.socketId);
+    // Server broadcasts death with playerId = the player who died
+    // Only that specific player should see the death splash screen
+    const isThisPlayerDying = playerAction.playerId === this.sessionID;
+    let playerToUpdate = this.players.get(playerAction.playerId);
+    // Handle LOCAL player death - show splash screen and pause
+    if (isThisPlayerDying && this.player) {
+      if (playerAction.actions.faint || playerAction.actions.death) {
+        this.player.faint();
+        new SmokePuff(this, this.player.x, this.player.y - 12);
+        this.events.emit("coinUpdate", 0);
+        this.events.emit("displayPopup", {
+          title: "💀",
+          text: "close this window to continue",
+          gif: "dead",
+        });
+        this.paused = true;
+      }
+      if (playerAction.actions.smoke) {
+        new SmokePuff(this, this.player.x, this.player.y - 12);
+      }
+      // Handle item change from command - local player shows gun in their hand
+      if (playerAction.actions.itemChange !== undefined) {
+        this.player.setHoldItem(playerAction.actions.itemChange);
+        // Emit on Controls scene so the UI buttons update
+        this.scene
+          .get("Controls")
+          .events.emit("holdingItem", playerAction.actions.itemChange);
+      }
+      // Handle item pickup for local player - play sparkle
+      if (playerAction.actions.itemPickup !== undefined) {
+        new Sparkle(this, this.player.x, this.player.y);
+      }
+      // Handle chat for local player
+      if (playerAction.actions.message !== undefined) {
+        if (playerAction.actions.message === "NULL") {
+          this.player.setMsg("");
+        } else {
+          this.player.setMsg(playerAction.actions.message);
+        }
+      }
+      return; // Don't process remote player logic for the local player
+    }
+
+    // Handle REMOTE player actions - NO splash screen for death, just animation
     if (playerToUpdate) {
       if (playerAction.actions.flinch) {
         playerToUpdate.flinch();
       }
-      if (playerAction.actions.faint) {
+      if (playerAction.actions.faint || playerAction.actions.death) {
         playerToUpdate.faint();
-        if (playerAction.socketId === this.sessionID) {
-          this.events.emit("coinUpdate", 0);
-          this.events.emit("displayPopup", {
-            title: "💀",
-            text: "close this window to continue",
-            gif: "dead",
-          });
-          this.paused = true;
-        }
       }
       if (playerAction.actions.smoke) {
         new SmokePuff(this, playerToUpdate.x, playerToUpdate.y - 12);
       }
-      if (playerAction.actions.message) {
+      if (playerAction.actions.message !== undefined) {
         if (playerAction.actions.message === "NULL") {
           playerToUpdate.setMsg("");
         } else {
@@ -653,34 +705,75 @@ export class DigitalPlanet extends Phaser.Scene {
       if (playerAction.actions.typing) {
         playerToUpdate.startTyping();
       }
-      if (
-        playerToUpdate.socketId !== this.sessionID &&
-        playerAction.actions.lookIndex >= 0
-      ) {
+      // Handle look change for remote players
+      if (playerAction.actions.lookIndex !== undefined) {
         this.changePlayerLook(playerToUpdate, playerAction.actions.lookIndex);
       }
-    }
-    if (
-      playerAction.actions.commandResult !== null &&
-      playerAction.actions.commandResult !== undefined
-    ) {
-      if (
-        playerAction.actions.commandResult.item ||
-        playerAction.actions.commandResult.item === false
-      ) {
-        if (playerAction.socketId === this.sessionID) {
-          this.player.setHoldItem(playerAction.actions.commandResult.item);
-          this.events.emit(
-            "holdingItem",
-            playerAction.actions.commandResult.item
-          );
-        } else {
-          if (playerToUpdate) {
-            playerToUpdate.setHoldItem(playerAction.actions.commandResult.item);
-          }
+      // Handle item change for remote players
+      if (playerAction.actions.itemChange !== undefined) {
+        playerToUpdate.setHoldItem(playerAction.actions.itemChange);
+      }
+      // Handle item pickup - play sparkle
+      if (playerAction.actions.itemPickup !== undefined) {
+        new Sparkle(this, playerToUpdate.x, playerToUpdate.y);
+      }
+      // Handle zone transitions for other players
+      if (playerAction.actions.enterLounge) {
+        // Remote player entered lounge - remove from current map if we're not in lounge
+        if (this.player.currentArea !== AREAS.lounge) {
+          playerToUpdate.destroy();
+          this.players.delete(playerAction.playerId);
+        }
+      }
+      if (playerAction.actions.exitLounge) {
+        // Remote player exited lounge - remove from current map if we're in lounge
+        if (this.player.currentArea === AREAS.lounge) {
+          playerToUpdate.destroy();
+          this.players.delete(playerAction.playerId);
         }
       }
     }
+  }
+
+  updateGameStateFromWorldServer(state) {
+    // The snapshot is already converted by WorldServerClient
+    // state.players = remote players only (already filtered)
+    // state.you = local player data from server
+
+    // Update local player position from server state
+    if (state.you && this.player) {
+      if (state.you.x !== undefined && state.you.y !== undefined) {
+        // Server-authoritative position update
+        // For Matter physics, we need to update both position and sync the body
+        this.player.setPosition(state.you.x, state.you.y);
+
+        // Also clear velocity to prevent the body from fighting position
+        if (this.player.body) {
+          this.player.setVelocity(0, 0);
+        }
+      }
+
+      // Update local player's held item from server
+      if (state.you.currentItem !== undefined) {
+        this.player.setHoldItem(state.you.currentItem);
+        // Only emit holdingItem event if the item actually changed to avoid spamming the UI
+        if (state.you.currentItem !== this.lastHeldItem) {
+          this.lastHeldItem = state.you.currentItem;
+          // Emit on Controls scene so the UI buttons update (also works with null to hide buttons)
+          this.scene
+            .get("Controls")
+            .events.emit("holdingItem", state.you.currentItem);
+        }
+      }
+
+      // Create marker on first update if not already created
+      if (!this.player.playermarker) {
+        this.player.createPlayerMarker();
+      }
+    }
+
+    // Process the state (remote players, bullets, coins)
+    this.updateGameState(state);
   }
 
   updateGameStateWithInterpolation(state) {
@@ -701,52 +794,51 @@ export class DigitalPlanet extends Phaser.Scene {
 
   updatePlayers(state) {
     if (state.players) {
+      // Population includes local player + remote players
+      const totalPopulation = state.players.length + 1; // +1 for local player
       if (
-        state.players.length > this.population ||
-        state.players.length < this.population
+        totalPopulation > this.population ||
+        totalPopulation < this.population
       ) {
-        this.population = state.players.length;
+        this.population = totalPopulation;
         this.events.emit("populationUpdate", this.population);
       }
+
+      // Track which remote players are in the current update
+      const remotePlayerIds = new Set(state.players.map((p) => p.playerId));
+
       state.players.forEach((playerData) => {
         if (playerData.currentArea === this.player.currentArea) {
-          var playerToUpdate = this.players.get(playerData.socketId);
+          var playerToUpdate = this.players.get(playerData.playerId);
+
           if (!playerToUpdate) {
-            if (playerData.socketId === this.sessionID) {
-              this.events.emit("playerLoaded", {
-                texture: this.player.texture.key,
-              });
-            }
-            this.generatePlayer(
-              playerData.socketId,
+            let newRemotePlayer = this.generatePlayer(
+              playerData.playerId,
               playerData.x,
               playerData.y,
               playerData.username,
               playerData.lookIndex,
-              playerData.item
+              playerData.currentItem,
             );
+            // Don't create marker for remote players - only local player has marker
           } else if (
             playerToUpdate &&
             playerToUpdate.body &&
             this.player.body !== undefined
           ) {
-            if (
-              playerToUpdate.socketId !== this.sessionID ||
-              OL.getDistance(
-                this.player.x,
-                this.player.y,
-                playerData.x,
-                playerData.y
-              ) > 3
-            ) {
-              playerToUpdate.updateFromData(playerData);
-            }
+            playerToUpdate.updateFromData(playerData);
           } else {
-            console.log(playerToUpdate, "no body");
-            this.removePlayer(playerData.socketId);
+            this.removePlayer(playerData.playerId);
           }
-        } else if (playerData.socketId !== this.player.socketId) {
-          this.removePlayer(playerData.socketId);
+        } else {
+          this.removePlayer(playerData.playerId);
+        }
+      });
+
+      // Remove players that are no longer in the state (left the area/server)
+      Array.from(this.players.keys()).forEach((playerId) => {
+        if (!remotePlayerIds.has(playerId)) {
+          this.removePlayer(playerId);
         }
       });
     }
@@ -766,10 +858,13 @@ export class DigitalPlanet extends Phaser.Scene {
               bullet.bulletId,
               bullet.x,
               bullet.y,
-              bullet.direction
-            )
+              bullet.direction,
+            ),
           );
-          new GunFlash(this, bullet.x, bullet.y, bullet.direction);
+          // Only show gun flash for bullets from OTHER players, not the local player
+          if (bullet.playerId !== this.sessionID) {
+            new GunFlash(this, bullet.x, bullet.y, bullet.direction);
+          }
         } else if (bulletToUpdate && bulletToUpdate.body) {
           bulletToUpdate.setPosition(bullet.x, bullet.y);
         } else {
@@ -802,7 +897,7 @@ export class DigitalPlanet extends Phaser.Scene {
         if (!coinToUpdate) {
           this.looseCoins.set(
             coin.itemId,
-            new Coin(this, coin.itemId, coin.x, coin.y)
+            new Coin(this, coin.itemId, coin.x, coin.y),
           );
         } else if (coinToUpdate && coinToUpdate.body) {
           coinToUpdate.setPosition(coin.x, coin.y);
@@ -833,7 +928,7 @@ export class DigitalPlanet extends Phaser.Scene {
         if (!this.items.has(item.itemId)) {
           this.items.set(
             item.itemId,
-            new MapItem(this, item.itemId, item.x, item.y, item.itemType)
+            new MapItem(this, item.itemId, item.x, item.y, item.itemType),
           );
         }
       });
@@ -849,8 +944,8 @@ export class DigitalPlanet extends Phaser.Scene {
           update.spawn.itemId,
           update.spawn.x,
           update.spawn.y,
-          update.spawn.itemType
-        )
+          update.spawn.itemType,
+        ),
       );
     }
     if (update.remove) {
@@ -874,6 +969,14 @@ export class DigitalPlanet extends Phaser.Scene {
       this.playerMovementHandler();
     }
     this.entityInterpolation();
+
+    // Update local player UI elements (name, marker, etc)
+    if (this.player && this.player.body) {
+      this.player.msgDecayHandler(delta);
+      this.player.updatePlayerStuff();
+    }
+
+    // Update remote players
     this.players.forEach((player) => {
       if (player.body) {
         player.msgDecayHandler(delta);
@@ -893,7 +996,7 @@ export class DigitalPlanet extends Phaser.Scene {
       let portion = Date.now() - this.lastTickAt;
       let ratio = portion / targetTick < 1 ? portion / targetTick : 1;
       for (let i = 0; i < this.lastStateUpdate.players.length; i++) {
-        let player = this.players.get(this.lastStateUpdate.players[i].socketId);
+        let player = this.players.get(this.lastStateUpdate.players[i].playerId);
         if (
           player &&
           this.lastStateUpdate.players[i] &&
@@ -902,12 +1005,12 @@ export class DigitalPlanet extends Phaser.Scene {
           let interpX = this.lerp(
             this.lastStateUpdate.players[i].x,
             this.stateQueue[0].players[i].x,
-            ratio
+            ratio,
           );
           let interpY = this.lerp(
             this.lastStateUpdate.players[i].y,
             this.stateQueue[0].players[i].y,
-            ratio
+            ratio,
           );
           player.setPosition(interpX, interpY);
         }
@@ -925,35 +1028,76 @@ export class DigitalPlanet extends Phaser.Scene {
 
   playerMobileMovementHandler() {
     this.handleUserInput(
-      this.scene.get("Controls").joystick.createCursorKeys()
+      this.scene.get("Controls").joystick.createCursorKeys(),
     );
   }
 
   handleUserInput(controls) {
     if (this.player.anims) {
+      let currentDirection = -1;
+
       if (controls.left.isDown) {
         this.player.keysPressed[Key.a] = 1;
         this.player.direction = Key.a;
+        currentDirection = Key.a;
       } else {
         this.player.keysPressed[Key.a] = 0;
       }
       if (controls.right.isDown) {
         this.player.keysPressed[Key.d] = 1;
         this.player.direction = Key.d;
+        currentDirection = Key.d;
       } else {
         this.player.keysPressed[Key.d] = 0;
       }
       if (controls.up.isDown) {
         this.player.keysPressed[Key.w] = 1;
         this.player.direction = Key.w;
+        currentDirection = Key.w;
       } else {
         this.player.keysPressed[Key.w] = 0;
       }
       if (controls.down.isDown) {
         this.player.keysPressed[Key.s] = 1;
         this.player.direction = Key.s;
+        currentDirection = Key.s;
       } else {
         this.player.keysPressed[Key.s] = 0;
+      }
+
+      // Send input to server if direction changed or enough time has passed
+      const now = Date.now();
+
+      // Calculate mx and mz from all currently pressed keys (allows diagonal)
+      let mx = 0,
+        mz = 0;
+      if (this.player.keysPressed[Key.a] === 1) mx -= 1;
+      if (this.player.keysPressed[Key.d] === 1) mx += 1;
+      if (this.player.keysPressed[Key.w] === 1) mz -= 1;
+      if (this.player.keysPressed[Key.s] === 1) mz += 1;
+
+      // Create a composite key for tracking direction changes
+      const compositeDirection = `${mx},${mz}`;
+
+      if (
+        compositeDirection !== this.lastCompositeDirection ||
+        now - this.lastInputSent > INPUT_UPDATE_RATE
+      ) {
+        this.lastCompositeDirection = compositeDirection;
+        this.lastInputSent = now;
+
+        // Send to server using proper "in" message format
+        const inputSequence = (this.inputSequence || 0) + 1;
+        this.inputSequence = inputSequence;
+
+        this.serverClient.send({
+          t: "in",
+          seq: inputSequence,
+          mx: mx,
+          mz: mz,
+          yaw: 0,
+          jump: false,
+        });
       }
 
       this.updatePlayerFromInput(this.player);
@@ -961,33 +1105,17 @@ export class DigitalPlanet extends Phaser.Scene {
   }
 
   updatePlayerFromInput(player) {
+    // Server-authoritative movement: Just update animations, don't apply forces
+    // Server will update position via gameSnapshot messages
     if (player.keysPressed[Key.a] === 1) {
-      //this.player.setVelocity(-OL.WALKING_SPEED, this.player.body.velocity.y);
-      this.player.applyForce({ x: -OL.WALKING_FORCE, y: 0 });
       this.player.anims.play("left", true);
-    }
-    if (player.keysPressed[Key.d] === 1) {
-      //this.player.setVelocity(OL.WALKING_SPEED, this.player.body.velocity.y);
-      this.player.applyForce({ x: OL.WALKING_FORCE, y: 0 });
+    } else if (player.keysPressed[Key.d] === 1) {
       this.player.anims.play("right", true);
-    }
-    if (player.keysPressed[Key.w] === 1) {
-      //this.player.setVelocity(this.player.body.velocity.x, -OL.WALKING_SPEED);
-      this.player.applyForce({ x: 0, y: -OL.WALKING_FORCE });
+    } else if (player.keysPressed[Key.w] === 1) {
       this.player.anims.play("up", true);
-    }
-    if (player.keysPressed[Key.s] === 1) {
-      //this.player.setVelocity(this.player.body.velocity.x, OL.WALKING_SPEED);
-      this.player.applyForce({ x: 0, y: OL.WALKING_FORCE });
+    } else if (player.keysPressed[Key.s] === 1) {
       this.player.anims.play("down", true);
-    }
-
-    if (
-      !this.player.keysPressed[Key.w] &&
-      !this.player.keysPressed[Key.a] &&
-      !this.player.keysPressed[Key.s] &&
-      !this.player.keysPressed[Key.d]
-    ) {
+    } else {
       this.player.anims.pause();
     }
   }

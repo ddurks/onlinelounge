@@ -132,7 +132,7 @@ export class Controls extends Phaser.Scene {
       OL.world.width - 50,
       OL.world.height - 45,
       "chatIcon",
-      0
+      0,
     );
     chatIcon.setScale(4);
     chatIcon.setDepth(11);
@@ -148,7 +148,7 @@ export class Controls extends Phaser.Scene {
         color: "#000000",
         fontSize: "32px",
       },
-      () => this.chat()
+      () => this.chat(),
     );
     this.chatButton.setDepth(11);
     this.add.existing(this.chatButton).setScrollFactor(0);
@@ -222,6 +222,9 @@ export class Controls extends Phaser.Scene {
 
     this.itemButton = this.gunButton;
 
+    // Listen for holdingItem events to update UI buttons
+    this.events.on("holdingItem", (item) => this.holdingItem(item));
+
     if (this.popup) {
       this.popup.destroy();
     }
@@ -231,8 +234,11 @@ export class Controls extends Phaser.Scene {
       .image(OL.world.width - 30, 130, "bullet", 2)
       .setScrollFactor(0)
       .setScale(2)
+      .setDepth(11)
       .setInteractive({ useHandCursor: true })
-      .on("pointerdown", () => this.events.emit("holdingItem", PLAYERITEM.gun));
+      .on("pointerdown", () => {
+        this.events.emit("holdingItem", PLAYERITEM.gun);
+      });
     this.bulletNumText = this.add
       .text(OL.world.width - 30, 130, 0, {
         fontFamily: "Arial",
@@ -251,10 +257,11 @@ export class Controls extends Phaser.Scene {
       .image(OL.world.width - 30, 170, "coin", 4)
       .setScrollFactor(0)
       .setScale(2)
+      .setDepth(11)
       .setInteractive({ useHandCursor: true })
-      .on("pointerdown", () =>
-        this.events.emit("holdingItem", PLAYERITEM.bury)
-      );
+      .on("pointerdown", () => {
+        this.events.emit("holdingItem", PLAYERITEM.bury);
+      });
     this.coinsText = this.add
       .text(OL.world.width - 30, 170, 0, {
         fontFamily: "Arial",
@@ -273,10 +280,11 @@ export class Controls extends Phaser.Scene {
       .image(OL.world.width - 30, 210, "shovel", 1)
       .setScrollFactor(0)
       .setScale(2)
+      .setDepth(11)
       .setInteractive({ useHandCursor: true })
-      .on("pointerdown", () =>
-        this.events.emit("holdingItem", PLAYERITEM.shovel)
-      );
+      .on("pointerdown", () => {
+        this.events.emit("holdingItem", PLAYERITEM.shovel);
+      });
     if (OL.IS_MOBILE) {
       this.joystick = new VirtualJoystick(this, {
         x: 125,
@@ -321,12 +329,12 @@ export class Controls extends Phaser.Scene {
     this.scene
       .get("DigitalPlanet")
       .events.on("displayLeaderboard", (leaderboard) =>
-        this.displayLeaderboard(leaderboard)
+        this.displayLeaderboard(leaderboard),
       );
     this.scene
       .get("DigitalPlanet")
       .events.on("updateLeaderboard", (leaderboard) =>
-        this.leaderboard.setData(leaderboard)
+        this.leaderboard.setData(leaderboard),
       );
     this.scene
       .get("DigitalPlanet")

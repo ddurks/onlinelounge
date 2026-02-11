@@ -109,22 +109,26 @@ export class Player extends Phaser.Physics.Matter.Sprite {
   }
 
   createPlayerMarker() {
-    this.playermarker = this.scene.add.sprite(
-      this.x,
-      this.y - (this.size * 2) / 3,
-      "playermarker"
-    );
+    try {
+      this.playermarker = this.scene.add.sprite(
+        this.x,
+        this.y - (this.size * 2) / 3,
+        "playermarker",
+      );
 
-    this.playermarker.anims.create({
-      key: "float",
-      frameRate: 8,
-      frames: this.anims.generateFrameNumbers("playermarker", {
-        frames: [0, 0, 0, 0, 1, 2, 3],
-      }),
-      repeat: -1,
-    });
+      this.playermarker.anims.create({
+        key: "float",
+        frameRate: 8,
+        frames: this.anims.generateFrameNumbers("playermarker", {
+          frames: [0, 0, 0, 0, 1, 2, 3],
+        }),
+        repeat: -1,
+      });
 
-    this.playermarker.play("float");
+      this.playermarker.play("float");
+    } catch (error) {
+      console.error("Failed to create player marker:", error);
+    }
   }
 
   generateSpeakText(scene, player) {
@@ -147,7 +151,7 @@ export class Player extends Phaser.Physics.Matter.Sprite {
     var typingIcon = scene.add.sprite(
       player.x + player.size / 2,
       player.y - player.size,
-      "typingIcon"
+      "typingIcon",
     );
 
     typingIcon.anims.create({
@@ -198,10 +202,19 @@ export class Player extends Phaser.Physics.Matter.Sprite {
   }
 
   updateFromData(playerData) {
-    if (playerData.health <= 0) {
+    if (playerData.health !== undefined && playerData.health <= 0) {
       this.faint();
     } else {
-      if (playerData.gun === true || playerData.gun === false) {
+      // Handle currentItem field (from WorldServer)
+      if (playerData.currentItem !== undefined) {
+        this.setHoldItem(playerData.currentItem);
+      }
+      // Legacy item field support
+      else if (playerData.item !== undefined) {
+        this.setHoldItem(playerData.item);
+      }
+      // Legacy gun field support
+      else if (playerData.gun === true || playerData.gun === false) {
         this.setHoldItem(playerData.gun);
       }
       this.setPosition(playerData.x, playerData.y);
@@ -256,30 +269,34 @@ export class Player extends Phaser.Physics.Matter.Sprite {
 
   updateHeldItemPosition(item, dynamic) {
     if (item.visible) {
+      // Helper to safely set frame only if it exists
+      const trySetFrame = (frameIndex) => {
+        if (
+          dynamic &&
+          item.texture &&
+          item.texture.getFrameTotal &&
+          item.texture.getFrameTotal() > frameIndex
+        ) {
+          item.setFrame(frameIndex);
+        }
+      };
+
       if (this.direction === Key.s) {
         item.x = this.x - 12;
         item.y = this.y + 8;
-        if (dynamic) {
-          item.setFrame(0);
-        }
+        trySetFrame(0);
       } else if (this.direction === Key.d) {
         item.x = this.x + 14;
         item.y = this.y + 8;
-        if (dynamic) {
-          item.setFrame(1);
-        }
+        trySetFrame(1);
       } else if (this.direction === Key.w) {
         item.x = this.x - 12;
         item.y = this.y + 8;
-        if (dynamic) {
-          item.setFrame(2);
-        }
+        trySetFrame(2);
       } else if (this.direction === Key.a) {
         item.x = this.x - 14;
         item.y = this.y + 8;
-        if (dynamic) {
-          item.setFrame(3);
-        }
+        trySetFrame(3);
       }
     }
   }

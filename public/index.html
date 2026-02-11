@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <meta charset="utf-8" />
@@ -8,9 +8,6 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <title>the online lounge</title>
-    <script>
-      window.OFFLINE_MODE = true;
-    </script>
     <style>
       * {
         margin: 0;
@@ -47,6 +44,13 @@
         margin-top: 0;
       }
     </style>
+    <script>
+      // Backend configuration - override with environment variables
+      window.WORLDSERVER_URL =
+        window.WORLDSERVER_URL || "wss://onlinelounge-world.drawvid.com:443";
+      window.MATCHMAKER_URL =
+        window.MATCHMAKER_URL || "wss://matchmaker.drawvid.com";
+    </script>
   </head>
   <body>
     <div id="phaser-div"></div>
