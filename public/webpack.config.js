@@ -30,10 +30,7 @@ module.exports = {
         process.env.WORLDSERVER_URL ||
           (process.env.NODE_ENV === "development"
             ? "ws://localhost:7778"
-            : "wss://onlinelounge-world.drawvid.com:443"),
-      ),
-      "process.env.MATCHMAKER_URL": JSON.stringify(
-        process.env.MATCHMAKER_URL || "wss://matchmaker.drawvid.com",
+            : "wss://world-lounge.drawvid.com"),
       ),
     }),
   ],

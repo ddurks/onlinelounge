@@ -5,17 +5,12 @@
 
 // Configuration
 const GAME_KEY = "onlinelounge";
-const MATCHMAKER_TIMEOUT = 200000; // 200 seconds for world server startup
-const CONNECTION_TIMEOUT = 10000; // 10 seconds for WebSocket handshake
+const CONNECTION_TIMEOUT = 10000;
 
-// Backend URLs from webpack DefinePlugin or window globals (for S3 static site)
 const WORLDSERVER_BASE_URL =
   process.env.WORLDSERVER_URL ||
   (typeof window !== "undefined" && window.WORLDSERVER_URL) ||
-  "wss://onlinelounge-world.drawvid.com:443";
-const MATCHMAKER_URL =
-  (typeof window !== "undefined" && window.MATCHMAKER_URL) ||
-  "wss://matchmaker.drawvid.com";
+  "wss://world-lounge.drawvid.com";
 
 export class WorldServerClient {
   constructor() {
@@ -34,114 +29,16 @@ export class WorldServerClient {
   }
 
   /**
-   * Get server assignment from matchmaker via WebSocket (or direct for local dev)
+   * Get server assignment — direct connection, no matchmaker
    */
   async getServerAssignment() {
-    // Skip matchmaker only if worldserver is configured for localhost
-    const isLocalWorldServer =
+    const isLocal =
       WORLDSERVER_BASE_URL.includes("localhost") ||
       WORLDSERVER_BASE_URL.includes("127.0.0.1");
-    if (isLocalWorldServer) {
-      return {
-        serverUrl: WORLDSERVER_BASE_URL,
-        jwt: "local-dev-bypass",
-      };
-    }
-
-    return new Promise((resolve, reject) => {
-      try {
-        // Connect to WebSocket matchmaker
-        // Custom domain mapping already includes stage routing, so don't add /prod
-        const matchmakerUrl = MATCHMAKER_URL.replace(/^http/, "wss");
-        const matchmakerWs = new WebSocket(matchmakerUrl);
-
-        // Increase timeout to account for server startup time
-        const timeout = setTimeout(() => {
-          matchmakerWs.close();
-          reject(
-            new Error(
-              "Matchmaker connection timeout (world server took too long to start)",
-            ),
-          );
-        }, MATCHMAKER_TIMEOUT);
-
-        matchmakerWs.onopen = () => {
-          // Send createWorld message
-          if (this.onProgress) this.onProgress(0, "Creating world...");
-          matchmakerWs.send(
-            JSON.stringify({
-              t: "createWorld",
-              gameKey: GAME_KEY,
-            }),
-          );
-        };
-
-        matchmakerWs.onmessage = (event) => {
-          const msg = JSON.parse(event.data);
-
-          if (msg.t === "worldCreated") {
-            // World created, now join it
-            if (this.onProgress) this.onProgress(5, "Joining world...");
-            matchmakerWs.send(
-              JSON.stringify({
-                t: "joinWorld",
-                gameKey: GAME_KEY,
-                worldId: msg.worldId,
-              }),
-            );
-          } else if (msg.t === "status") {
-            // Progress update from matchmaker during world startup (legacy format)
-            if (this.onProgress) {
-              const progress = msg.progress || 0;
-              const statusMsg =
-                msg.msg === "RUNNING" ? "Connected!" : "Starting server";
-              this.onProgress(progress, statusMsg);
-            }
-          } else if (msg.t === "progress") {
-            // New detailed progress format with stage information
-            if (this.onDetailedProgress) {
-              this.onDetailedProgress({
-                stage: msg.stage,
-                stageName: msg.stageName,
-                stageDescription: msg.stageDescription,
-                progress: msg.progress,
-                elapsed: msg.elapsed,
-              });
-            }
-            // Also send simplified progress callback for compatibility
-            if (this.onProgress) {
-              this.onProgress(msg.progress, msg.stageName);
-            }
-          } else if (msg.t === "joinResult") {
-            // Got server assignment
-            clearTimeout(timeout);
-            matchmakerWs.close();
-            if (this.onProgress) this.onProgress(100, "Connecting to game...");
-            resolve({
-              serverUrl: `wss://${msg.endpoint.ip}:${msg.endpoint.port || 443}`,
-              jwt: msg.token,
-            });
-          } else if (msg.t === "err") {
-            clearTimeout(timeout);
-            matchmakerWs.close();
-            reject(new Error(msg.msg || "Matchmaker error"));
-          }
-        };
-
-        matchmakerWs.onerror = (error) => {
-          clearTimeout(timeout);
-          console.error("Matchmaker WebSocket error:", error);
-          reject(error);
-        };
-
-        matchmakerWs.onclose = () => {
-          clearTimeout(timeout);
-        };
-      } catch (error) {
-        console.error("Failed to connect to matchmaker:", error);
-        reject(error);
-      }
-    });
+    return {
+      serverUrl: WORLDSERVER_BASE_URL,
+      jwt: isLocal ? "local-dev-bypass" : "no-auth",
+    };
   }
 
   /**
@@ -154,7 +51,7 @@ export class WorldServerClient {
     // IMPORTANT: Store callbacks on instance FIRST before anything async happens
     this.onProgress = onProgress;
     this.onDetailedProgress = onDetailedProgress;
-    
+
     this.username = username;
 
     try {
@@ -744,7 +641,11 @@ export class GameServerClient {
    */
   async connect(username, onProgress = null, onDetailedProgress = null) {
     try {
-      this.sessionID = await this.client.connect(username, onProgress, onDetailedProgress);
+      this.sessionID = await this.client.connect(
+        username,
+        onProgress,
+        onDetailedProgress,
+      );
       this.connected = true;
 
       // Listen for game state updates

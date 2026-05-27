@@ -1,75 +1,47 @@
-# OnlineLounge Frontend
+# OnlineLounge
 
-Phaser 3 multiplayer web game client for OnlineLounge. Deployed as a static site on S3. Connects to the DrawVidverse backend (world server + matchmaker) via WebSocket.
+2D multiplayer browser game. Live at [onlinelounge.drawvid.com](https://onlinelounge.drawvid.com).
 
-## Development
-
-### Prerequisites
-
-- Node.js 16+
-- Backend running separately (from `drawvidverse` project)
-
-### Quick Start
+## Quick Start
 
 ```bash
-# Install dependencies
 npm install
-
-# Development: Start webpack-dev-server with hot reloading
-npm run dev
-# Opens automatically on http://localhost:8080
-```
-
-This will:
-
-1. Start webpack-dev-server on port 8080 with hot module reloading
-2. Automatically open in your browser
-3. Connect to production world server and matchmaker
-
-### Scripts
-
-- `npm run dev` - Start webpack-dev-server (development with hot reload)
-- `npm run build` - Production webpack bundle (optimized)
-- `npm run build:dev` - Development webpack bundle (sourcemaps)
-- `npm run deploy` - Build + deploy to S3 CloudFront CDN
-
-### Environment Variables
-
-Before running dev, optionally override backend URLs:
-
-```bash
-# These will be injected into the static HTML at build time
-export WORLDSERVER_URL=ws://localhost:7778
-export MATCHMAKER_URL=http://localhost:3000
-npm run dev
-```
-
-Or pass via shell directly:
-
-```bash
 WORLDSERVER_URL=ws://localhost:7778 npm run dev
+# Opens http://localhost:8080
 ```
 
-### Architecture
-
-- **Frontend**: Phaser 3.90.0 + Webpack 5 + webpack-dev-server
-- **Deployment**: S3 + CloudFront CDN (static site)
-- **Backend**: Separate service (DrawVidverse WorldServer) - runs independently
-- **Protocol**: WebSocket with JWT authentication
-- **Development Server**: webpack-dev-server on localhost:8080 with hot reload
-
-See [FRONTEND_INTEGRATION.md](FRONTEND_INTEGRATION.md) for technical details about WebSocket protocol and message format conversion.
-
-## Deployment
+The worldserver must be running separately. From the `drawvidverse` repo:
 
 ```bash
-npm run deploy
+npm run dev:onlinelounge --workspace=packages/drawvid-worldserver
 ```
 
-This:
+## Scripts
 
-1. Builds the production bundle (optimized, minified)
-2. Uploads to S3
-3. Invalidates CloudFront cache
+- `npm run dev` — webpack-dev-server on port 8080 (set `WORLDSERVER_URL` env var for local backend)
+- `npm run build` — Production webpack bundle
+- `npm run build:dev` — Development bundle with sourcemaps
 
-Requires AWS credentials configured for the `drawvid` profile.
+## Deploy
+
+```bash
+./deploy.sh
+```
+
+Builds with webpack, uploads to S3 (`onlinelounge-drawvid-frontend-593615615124`), invalidates CloudFront (`E3E6AK9OMDPA7M`).
+
+## Architecture
+
+- **Framework**: Phaser 3.90.0 + Webpack 5
+- **Frontend CDN**: CloudFront → onlinelounge.drawvid.com
+- **World server**: wss://world-lounge.drawvid.com (nginx → PM2 on Lightsail, port 7778)
+- **Auth**: Open access — no JWT required
+
+## World Server URL Config
+
+The server URL is baked in at build time via webpack and also set at runtime in `index.html`. If you change the server URL, update **both**:
+
+1. `public/index.html` — `window.WORLDSERVER_URL`
+2. `public/webpack.config.js` — production fallback in `DefinePlugin`
+
+Then redeploy.
