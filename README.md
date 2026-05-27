@@ -13,7 +13,7 @@ WORLDSERVER_URL=ws://localhost:7778 npm run dev
 The worldserver must be running separately. From the `drawvidverse` repo:
 
 ```bash
-npm run dev:onlinelounge --workspace=packages/drawvid-worldserver
+npm run dev:onlinelounge --workspace=worldserver
 ```
 
 ## Scripts
